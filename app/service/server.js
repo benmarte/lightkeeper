@@ -194,6 +194,11 @@ function pauseSaver(ms) {
     return;
   }
   saverTimer = setTimeout(function () { pauseSaver(0); }, ms);
+  // A screen saver already on goes away too: it takes the first key it gets, so a
+  // Back sent only while it shows reaches nothing behind it (as GlassHouse does).
+  luna('com.webos.service.tvpower/power/getPowerState', {}, function (r) {
+    if (r && r.state === 'Screen Saver') luna('com.webos.service.networkinput/test/sendKeyCode', { keyCode: 412 });
+  });
   if (saverChild) return;
   var child = saverChild = spawn(LUNA_SEND, ['-i', 'luna://com.webos.service.tvpower/power/registerScreenSaverRequest',
     JSON.stringify({ subscribe: true, clientName: APP_ID })], { stdio: ['ignore', 'pipe', 'ignore'] });
@@ -735,6 +740,9 @@ function start() {
     });
   })(0);
   setInterval(watchApp, 30000);
+  // Stopped by the boot hook (an update, a new start): the screen saver watch goes too.
+  process.on('SIGTERM', function () { process.exit(0); });
+  process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
 module.exports = { validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
