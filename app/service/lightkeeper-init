@@ -6,7 +6,7 @@
 # removed it leads nowhere, and nothing here runs again.
 #
 # A new start of this script stops the old one: the generation in
-# /tmp/lightkeeper.gen, which every loop checks at each event. Log: /tmp/lightkeeper.log.
+# /tmp/lightkeeper.gen, which every loop checks, and the old loops' luna-send stopped below. Log: /tmp/lightkeeper.log.
 APP=io.github.chiotas.lightkeeper
 HOOK=/var/lib/webosbrew/init.d/60-lightkeeper
 CONFIG=/var/lib/lightkeeper/config.json
@@ -29,6 +29,12 @@ davanti() {
     sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
 }
 lancia() { $LS -n 1 -w 5000 luna://com.webos.applicationManager/launch "{\"id\":\"$1\"}" >/dev/null 2>&1; }
+
+# The loops of an earlier start stay blocked on their luna-send for good, events or not:
+# those luna-send are stopped, and the loops, no longer the current generation, end.
+for s in $(ps -ef | awk -v me=$$ '/[6]0-lightkeeper/ && $2 != me {print $2}'); do
+  for c in $(ps -ef | awk -v p="$s" '$3 == p && /[l]una-send/ {print $2}'); do kill "$c" 2>/dev/null; done
+done
 
 # The server, restarted if it stops, but not more than ten times in a row
 # within a minute of starting: a server that cannot start must not loop at boot.

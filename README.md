@@ -29,7 +29,7 @@ Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon 
 
 ## Install
 
-1. **Download** `io.github.chiotas.lightkeeper_1.0.0_all.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
+1. **Download** `io.github.chiotas.lightkeeper_1.0.1_all.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
 2. **Install it on the TV**, in one of these ways:
    - GlassHouse dashboard → **Apps** tab → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)). You can also paste the release's link to the `.ipk` there.
    - [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), or `ares-install` from LG's webOS CLI.

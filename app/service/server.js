@@ -22,7 +22,7 @@ var crypto = require('crypto');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.0';
+var VERSION = '1.0.1';
 var APP_ID = 'io.github.chiotas.lightkeeper';
 var PORT = +process.env.LIGHTKEEPER_PORT || 8090;
 var HERE = __dirname;
