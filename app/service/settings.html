@@ -319,18 +319,15 @@ footer a { color: var(--muted); }
           <label for="power"><span data-t="power">Open at power on</span><span class="sub" data-t="powerLede">When the TV comes on over an input or LG's Home.</span></label>
           <input type="checkbox" class="switch" id="power" role="switch">
         </div>
+        <div class="row">
+          <div class="label"><span data-t="saver">Screen saver</span><span class="sub" id="saver-state"></span></div>
+          <button class="btn" type="button" id="saver" data-t="saverPause">Pause for an hour</button>
+        </div>
+        <p class="note" data-t="saverLede">LG's screen saver keeps still pictures from marking an OLED screen. Pause it while you try things out; it comes back by itself.</p>
       </section>
 
       <section aria-labelledby="h-more">
-        <h2 id="h-more" data-t="more">Language and PIN</h2>
-        <div class="row">
-          <label for="language" data-t="language">Language</label>
-          <select id="language">
-            <option value="auto" data-t="auto">Same as the device</option>
-            <option value="en">English</option>
-            <option value="it">Italiano</option>
-          </select>
-        </div>
+        <h2 id="h-more" data-t="more">PIN</h2>
         <div class="row">
           <div class="label"><span data-t="pin">PIN for this page</span><span class="sub" id="pin-state"></span></div>
           <div class="pinrow">
@@ -389,44 +386,16 @@ footer a { color: var(--muted); }
       key: 'Key that opens Lightkeeper', keyLede: 'Through GlassHouse. With Home, Back from the last app also comes here.',
       keyHome: 'Home', keyNone: 'None', active: 'Active.', pending: 'Active within a minute, once GlassHouse has restarted.',
       noglasshouse: 'GlassHouse is not installed, so the key cannot be changed.', failed: 'The TV did not take the change. Try again.',
-      power: 'Open at power on', powerLede: 'When the TV comes on over an input or LG\'s Home.', more: 'Language and PIN',
-      language: 'Language', auto: 'Same as the device', pin: 'PIN for this page', pinOn: 'Asked before any change here.',
+      power: 'Open at power on', powerLede: 'When the TV comes on over an input or LG\'s Home.', more: 'PIN',
+      saver: 'Screen saver', saverPause: 'Pause for an hour', saverResume: 'Resume now', saverOn: 'On, as LG set it.',
+      saverUntil: 'Paused until ', saverLede: 'LG\'s screen saver keeps still pictures from marking an OLED screen. Pause it while you try things out; it comes back by itself.',
+      pin: 'PIN for this page', pinOn: 'Asked before any change here.',
       pinOff: 'Anyone on your network can change these settings.', pinSet: 'Set', pinClear: 'Remove the PIN',
       pinBad: 'A PIN is 4 to 8 digits.', pinDone: 'PIN set. Keep it somewhere safe.', pinCleared: 'PIN removed.',
       removeTitle: 'Remove Lightkeeper', removeLede: 'Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.',
       removeYes: 'Remove for good', cancel: 'Cancel', removed: 'Lightkeeper has been removed from the TV. You can close this page.',
       licence: 'MIT licence, use at your own risk', lockTitle: 'Enter the PIN', unlock: 'Unlock', wrong: 'Wrong PIN.',
       locked: 'Too many tries. Wait a minute and try again.'
-    },
-    it: {
-      title: 'Impostazioni', caption: 'Come appare sulla TV', saving: 'Salvataggio…', saved: 'Salvato', offline: 'La TV non risponde',
-      notSaved: 'Non salvato: ', tiles: 'Voci', tilesLede: 'Le app e gli ingressi in fondo alla Home, in quest\'ordine.',
-      add: 'Aggiungi una voce…', apps: 'App', inputs: 'Ingressi', up: 'Sposta su', down: 'Sposta giù', drop: 'Togli',
-      nameOnTv: 'Nome sulla TV', onTv: 'Sulla TV: ', empty: 'Nessuna voce. Aggiungi le app e gli ingressi che usi di più.',
-      full: 'Al massimo dodici voci.', show: 'Mostra', names: 'Nomi', logos: 'Loghi', icons: 'Icone delle app', background: 'Sfondo',
-      device: 'Apparecchio', dev_console: 'Console giochi', dev_hdmi: 'HDMI',
-      showLede: 'I loghi sono bianchi; un\'app senza logo mostra la sua icona della TV. Gli ingressi mostrano l\'apparecchio che scegli.',
-      yours: 'La tua immagine', yoursBy: 'caricata da questa pagina', rights: 'tutti i diritti riservati', pd: 'pubblico dominio',
-      cc0: 'pubblico dominio (CC0)', own: 'fatta per Lightkeeper', night: 'Notte sul mare', nightShort: 'Notte', dawn: 'Alba sul mare',
-      dawnShort: 'Alba', monk: 'Il monaco in riva al mare', monkShort: 'Il monaco', choose: 'Scegli un\'immagine',
-      useDefault: 'Togli la mia immagine', size: 'Dimensione',
-      sizeNote: 'L\'immagine viene tagliata a 16:9 e ridimensionata qui, prima dell\'invio.',
-      sending: 'Invio dell\'immagine… ', notImage: 'Il browser non riesce ad aprire questo file come immagine.',
-      veil: 'Velo', veilLede: 'Quanto è scura l\'immagine dietro l\'ora e le voci.', light: 'Chiaro', dark: 'Scuro',
-      clockWeather: 'Ora e meteo', clock: 'Orologio', c24: '24 ore', c12: '12 ore', weatherFor: 'Meteo di',
-      search: 'Cerca una città', searching: 'Ricerca…', noCity: 'Nessuna città con questo nome.', searchFail: 'La ricerca non risponde. Riprova.',
-      units: 'Unità', noWeather: 'Niente meteo', weatherBy: 'Meteo di', remote: 'Telecomando e accensione',
-      key: 'Tasto che apre Lightkeeper', keyLede: 'Tramite GlassHouse. Con Home, anche Indietro dall\'ultima app torna qui.',
-      keyHome: 'Home', keyNone: 'Nessuno', active: 'Attivo.', pending: 'Attivo entro un minuto, quando GlassHouse si è riavviato.',
-      noglasshouse: 'GlassHouse non è installato, quindi il tasto non si può cambiare.', failed: 'La TV non ha accettato la modifica. Riprova.',
-      power: 'Apri all\'accensione', powerLede: 'Quando la TV si accende su un ingresso o sulla Home LG.', more: 'Lingua e PIN',
-      language: 'Lingua', auto: 'Come il dispositivo', pin: 'PIN di questa pagina', pinOn: 'Richiesto prima di ogni modifica.',
-      pinOff: 'Chiunque sulla tua rete può cambiare queste impostazioni.', pinSet: 'Imposta', pinClear: 'Togli il PIN',
-      pinBad: 'Il PIN ha da 4 a 8 cifre.', pinDone: 'PIN impostato. Tienilo in un posto sicuro.', pinCleared: 'PIN tolto.',
-      removeTitle: 'Rimuovi Lightkeeper', removeLede: 'Ridà il tasto Home a LG, smette di aprirsi all\'accensione e cancella queste impostazioni e l\'app.',
-      removeYes: 'Rimuovi definitivamente', cancel: 'Annulla', removed: 'Lightkeeper è stata rimossa dalla TV. Puoi chiudere questa pagina.',
-      licence: 'Licenza MIT, uso a proprio rischio', lockTitle: 'Inserisci il PIN', unlock: 'Sblocca', wrong: 'PIN sbagliato.',
-      locked: 'Troppi tentativi. Aspetta un minuto e riprova.'
     }
   };
   var ICON = {
@@ -443,15 +412,7 @@ footer a { color: var(--muted); }
   function $(id) { return document.getElementById(id); }
   try { pin = sessionStorage.getItem('pin') || ''; } catch (e) {}
 
-  function lang() {
-    var l = cfg && (cfg.language === 'en' || cfg.language === 'it') ? cfg.language : String(navigator.language || 'en').slice(0, 2);
-    return T[l] ? l : 'en';
-  }
-
   function translate() {
-    var l = lang();
-    t = T[l];
-    document.documentElement.lang = l;
     var els = document.querySelectorAll('[data-t]');
     for (var i = 0; i < els.length; i++) if (t[els[i].getAttribute('data-t')]) els[i].textContent = t[els[i].getAttribute('data-t')];
     $('city').placeholder = t.search;
@@ -494,7 +455,6 @@ footer a { color: var(--muted); }
       cfg = r.config;
       if (r.keyStatus) keyNote(r.keyStatus);
       status(t.saved);
-      if (has(change, 'language')) { translate(); render(); }
       preview();
       if (done) done(true);
     });
@@ -539,11 +499,9 @@ footer a { color: var(--muted); }
         box.appendChild(disegnaLogo(logo, 80, 176, 96));
         s.appendChild(box);
       } else if (modo !== 'text') {
-        var img = document.createElement('img');
-        img.src = '/icon?id=' + encodeURIComponent(tile.id);
-        img.alt = '';
-        img.onerror = function () { img.style.visibility = 'hidden'; };
-        s.appendChild(img);
+        var icona = '/icon?id=' + encodeURIComponent(tile.id);
+        if (modo === 'logo') bianca(s, icona, 80, 176, 96);
+        else s.appendChild(iconaTv(icona, 'hidden'));
       }
       var label = document.createElement('i');
       label.textContent = tile.title;
@@ -610,7 +568,32 @@ footer a { color: var(--muted); }
     return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</svg>';
   }
 
+  // An app without a logo: its icon made white in the logo's place, else the TV's own.
+  function iconaTv(url, nascondi) {
+    var img = document.createElement('img');
+    img.src = url;
+    img.alt = '';
+    img.onerror = function () { if (nascondi) img.style.visibility = 'hidden'; else img.style.display = 'none'; };
+    return img;
+  }
+
+  function bianca(dove, url, alto, maxW, maxH) {
+    var box = document.createElement('div');
+    if (dove.className === 'ic dev') box = dove;
+    else { box.className = 'logo'; dove.insertBefore(box, dove.firstChild); }
+    iconaBianca(url, function (w) {
+      if (w) box.appendChild(misuraBianca(w, alto, maxW, maxH));
+      else if (box === dove) { dove.className = 'ic'; dove.appendChild(iconaTv(url)); }
+      else if (box.parentNode) dove.replaceChild(iconaTv(url, 'hidden'), box);
+    });
+  }
+
   function saveTiles() { save({ tiles: cfg.tiles }); renderTiles(); preview(); }
+
+  function tileNow(id) {
+    for (var n = 0; n < (cfg.tiles || []).length; n++) if (cfg.tiles[n].id === id) return cfg.tiles[n];
+    return null;
+  }
 
   function renderTiles() {
     var list = $('tiles'), tiles = cfg.tiles || [];
@@ -631,11 +614,8 @@ footer a { color: var(--muted); }
         ic.className = 'ic dev';
         ic.appendChild(disegnaLogo(logo, 22, 34, 26));
       } else {
-        var img = document.createElement('img');
-        img.src = '/icon?id=' + encodeURIComponent(tile.id);
-        img.alt = '';
-        img.onerror = function () { img.style.display = 'none'; };
-        ic.appendChild(img);
+        ic.className = 'ic dev';
+        bianca(ic, '/icon?id=' + encodeURIComponent(tile.id), 22, 34, 26);
       }
       li.appendChild(ic);
 
@@ -653,6 +633,8 @@ footer a { color: var(--muted); }
         if (!v) { input.value = tile.title; return; }
         if (v === tile.title) return;
         tile.title = v;
+        var ora = tileNow(tile.id);
+        if (ora) ora.title = v;
         save({ tiles: cfg.tiles });
         preview();
       };
@@ -678,7 +660,11 @@ footer a { color: var(--muted); }
           dev.appendChild(o);
         });
         dev.value = tile.device || indovinaApparecchio(orig || tile.title);
-        dev.onchange = function () { tile.device = dev.value; saveTiles(); };
+        dev.onchange = function () {
+          var ora = tileNow(tile.id);
+          if (ora) ora.device = dev.value;
+          saveTiles();
+        };
         name.appendChild(dev);
       }
       li.appendChild(name);
@@ -692,10 +678,18 @@ footer a { color: var(--muted); }
         b.title = t[a[0]];
         if ((a[0] === 'up' && i === 0) || (a[0] === 'down' && i === tiles.length - 1)) b.disabled = true;
         b.onclick = function () {
-          if (a[0] === 'drop') tiles.splice(i, 1);
-          else { var x = tiles[i]; tiles[i] = tiles[a[1]]; tiles[a[1]] = x; }
+          // cfg.tiles as it is now: a save since this row was drawn has replaced it.
+          var now = cfg.tiles, k = -1;
+          for (var n = 0; n < now.length; n++) if (now[n].id === tile.id) k = n;
+          if (k === -1) return;
+          if (a[0] === 'drop') now.splice(k, 1);
+          else {
+            var to = a[0] === 'up' ? k - 1 : k + 1;
+            if (to < 0 || to >= now.length) return;
+            var x = now[k]; now[k] = now[to]; now[to] = x;
+          }
           saveTiles();
-          var again = $('tiles').children[a[0] === 'drop' ? Math.min(i, tiles.length - 1) : a[1]];
+          var again = $('tiles').children[a[0] === 'drop' ? Math.min(k, now.length - 1) : (a[0] === 'up' ? k - 1 : k + 1)];
           var focus = again && again.querySelector(a[0] === 'drop' ? 'input' : '.icon-btn:not([disabled])');
           if (focus) focus.focus();
         };
@@ -869,7 +863,7 @@ footer a { color: var(--muted); }
   function search(q) {
     var seq = ++searchSeq, x = new XMLHttpRequest();
     cityNote(t.searching);
-    x.open('GET', 'https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&language=' + lang() + '&name=' + encodeURIComponent(q));
+    x.open('GET', 'https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&language=' + String(navigator.language || 'en').slice(0, 2) + '&name=' + encodeURIComponent(q));
     x.timeout = 8000;
     x.onload = function () {
       if (seq !== searchSeq) return;
@@ -906,7 +900,7 @@ footer a { color: var(--muted); }
     save({ weather: null });
   };
 
-  /* ---------- remote, power, language, PIN ---------- */
+  /* ---------- remote, power, screen saver, PIN ---------- */
 
   function keyNote(state) {
     var n = $('key-note');
@@ -927,7 +921,21 @@ footer a { color: var(--muted); }
   }
   $('key').onchange = function () { save({ key: this.value }); };
   $('power').onchange = function () { save({ openAtPowerOn: this.checked }); };
-  $('language').onchange = function () { save({ language: this.value }); };
+
+  // The pause is the server's, for an hour at most, and ends with a restart of the TV.
+  function renderSaver() {
+    var fino = cfg.saverPausedUntil || 0, pausa = fino > Date.now(), d = new Date(fino);
+    $('saver-state').textContent = pausa ? t.saverUntil + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes() : t.saverOn;
+    $('saver').textContent = pausa ? t.saverResume : t.saverPause;
+  }
+  $('saver').onclick = function () {
+    api('POST', '/api/screensaver', { pause: !(cfg.saverPausedUntil > Date.now()) }, function (r) {
+      if (!r) return status(t.notSaved + t.offline, true);
+      cfg = r.config;
+      renderSaver();
+      status(t.saved);
+    });
+  };
 
   function radios(name, value, onPick) {
     var els = document.querySelectorAll('input[name=' + name + ']');
@@ -994,7 +1002,7 @@ footer a { color: var(--muted); }
     radios('size', size, function (v) { try { localStorage.setItem('size', v); } catch (e) {} });
     $('veil').value = cfg.veil;
     $('power').checked = cfg.openAtPowerOn;
-    $('language').value = cfg.language;
+    renderSaver();
     $('city').value = cfg.weather ? cfg.weather.name : '';
     $('version').textContent = 'Lightkeeper ' + cfg.version;
     renderPin();

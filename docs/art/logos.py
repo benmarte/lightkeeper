@@ -10,7 +10,7 @@ import json, os, re, sys
 
 SLUGS = ['netflix', 'youtube', 'plex', 'spotify', 'twitch', 'appletv', 'dazn', 'crunchyroll', 'paramountplus',
          'mubi', 'tidal', 'applemusic', 'jellyfin', 'kodi', 'emby', 'vimeo',
-         'playstation5', 'playstation4', 'steamdeck', 'nvidia', 'googletv']
+         'playstation5', 'playstation4', 'steamdeck', 'nvidia', 'googletv', 'accuweather', 'lg']
 pkg = sys.argv[1]
 version = json.load(open(os.path.join(pkg, 'package.json')))['version']
 shapes = {}

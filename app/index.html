@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Lightkeeper</title>
@@ -86,10 +86,7 @@ var EXEC = 'luna://org.webosbrew.hbchannel.service/exec';
 // This page's own directory, which holds the server under service/.
 var APP_DIR = decodeURIComponent(location.pathname.replace(/\/[^\/]*$/, ''));
 
-var TEXT = {
-  en: { settings: 'Settings', phone: 'or on your phone: ', empty: 'Choose your tiles in Settings' },
-  it: { settings: 'Impostazioni', phone: 'o dal telefono: ', empty: 'Scegli le voci nelle Impostazioni' }
-};
+var TEXT = { settings: 'Settings', phone: 'or on your phone: ', empty: 'Choose your tiles in Settings' };
 
 var nav = document.querySelector('nav');
 var ora = document.getElementById('ora');
@@ -99,7 +96,7 @@ var veil = document.getElementById('veil');
 var sistema = window.webOSSystem || window.PalmSystem;
 var chiamate = []; // the bridges stay alive until the service answers
 
-var cfg = cached() || { tiles: [], veil: 80, clock: '24', language: 'auto', tileStyle: 'text', units: 'c', weather: null, background: {} };
+var cfg = cached() || { tiles: [], veil: 80, clock: '24', tileStyle: 'text', units: 'c', weather: null, background: {} };
 var shown = '';     // the config the page shows, as JSON
 var voci = [];      // the tiles, then the gear
 var sel = 0;
@@ -107,12 +104,6 @@ var meteoAlle = 0, meteoPer = '';
 
 function cached() {
   try { return JSON.parse(localStorage.getItem('config')); } catch (e) { return null; }
-}
-
-function lingua() {
-  var l = cfg.language === 'en' || cfg.language === 'it' ? cfg.language :
-    String(navigator.language || 'en').slice(0, 2);
-  return TEXT[l] ? l : 'en';
 }
 
 function luna(uri, params, cb) {
@@ -145,7 +136,7 @@ function seleziona(i, colPuntatore) {
     if (el.offsetLeft < spostamento) spostamento = el.offsetLeft;
     nav.style.webkitTransform = nav.style.transform = 'translateX(' + -spostamento + 'px)';
   }
-  var t = TEXT[lingua()];
+  var t = TEXT;
   if (voci[sel] && voci[sel].gear) {
     hint.textContent = (voci.length === 1 ? t.empty : t.settings) +
       (cfg.address ? ' · ' + t.phone + cfg.address + ':' + (cfg.port || 8090) : '');
@@ -159,6 +150,25 @@ function lancia(i) {
   if (voci[i].gear) return apri(BROWSER, { target: SERVER + '/' });
   try { localStorage.setItem('ultima', String(i)); } catch (e) {}
   apri(voci[i].id);
+}
+
+function iconaTv(url) {
+  var img = document.createElement('img');
+  img.src = url;
+  img.onerror = function () { img.style.visibility = 'hidden'; };
+  return img;
+}
+
+// The app's icon made white in a logo's place; the TV's own icon where it cannot be.
+// Asked for only once, with CORS: a copy loaded plainly first would taint the canvas.
+function bianca(a, url) {
+  var box = document.createElement('div');
+  box.className = 'logo';
+  a.insertBefore(box, a.firstChild);
+  iconaBianca(url, function (w) {
+    if (w) box.appendChild(misuraBianca(w, 80, 176, 96));
+    else if (box.parentNode) a.replaceChild(iconaTv(url), box);
+  });
 }
 
 var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' +
@@ -185,10 +195,9 @@ function disegna() {
         box.appendChild(disegnaLogo(logo, 80, 176, 96));
         a.appendChild(box);
       } else if (modo !== 'text') {
-        var img = document.createElement('img');
-        img.src = SERVER + '/icon?id=' + encodeURIComponent(v.id);
-        img.onerror = function () { img.style.visibility = 'hidden'; };
-        a.appendChild(img);
+        var icona = SERVER + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
+        if (modo === 'logo') bianca(a, icona);
+        else a.appendChild(iconaTv(icona));
       }
       var label = document.createElement('i');
       label.textContent = v.title;
@@ -200,10 +209,11 @@ function disegna() {
   });
   veil.style.opacity = (typeof cfg.veil === 'number' ? cfg.veil : 80) / 100;
   // An uploaded picture comes from the server; the app's own backgrounds are beside this page.
-  var mio = cfg.background && cfg.background.custom ? 'url(' + SERVER + '/background.jpg?rev=' + cfg.background.rev + '), ' : '';
+  // With the server's start in the address: a picture that failed while it was down is asked again.
+  var mio = cfg.background && cfg.background.custom ?
+    'url(' + SERVER + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) + '), ' : '';
   var preset = /^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy';
   document.body.style.backgroundImage = mio + 'url(backgrounds/' + preset + '.jpg)';
-  document.documentElement.lang = lingua();
   seleziona(Math.min(ultima(), voci.length - 1));
   aggiorna();
 }

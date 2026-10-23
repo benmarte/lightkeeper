@@ -20,6 +20,7 @@ var os = require('os');
 var net = require('net');
 var crypto = require('crypto');
 var execFile = require('child_process').execFile;
+var spawn = require('child_process').spawn;
 
 var VERSION = '1.0.0';
 var APP_ID = 'io.github.chiotas.lightkeeper';
@@ -41,6 +42,8 @@ var PRESETS = (function () {
 })();
 
 var MAX_JSON = 64 * 1024;
+// When this server started: the Home asks again for what failed while it was down.
+var STARTED = Date.now();
 var MAX_IMAGE = 12 * 1024 * 1024;
 var MAX_TILES = 12;
 
@@ -74,7 +77,6 @@ var USUAL_APPS = ['netflix', 'amazon', 'youtube.leanback.v4', 'com.disney.disney
   'cdp-30', 'spotify-beehive', 'com.apple.appletv'];
 
 var DEFAULTS = {
-  language: 'auto',
   clock: '24',
   units: 'c',
   weather: null,
@@ -170,7 +172,47 @@ function publicConfig() {
   c.version = VERSION;
   c.address = lanAddress();
   c.port = PORT;
+  c.saverPausedUntil = saverUntil > Date.now() ? saverUntil : 0;
+  c.started = STARTED;
   return c;
+}
+
+/*
+ * The screen saver paused for a while: the TV asks every client registered
+ * with registerScreenSaverRequest before it starts the screen saver, and one
+ * answering ack false keeps it off. Until saverUntil, then LG's again. Held in
+ * memory only, so a restart of the TV ends it too: an OLED should not show a
+ * still picture for long.
+ */
+var saverUntil = 0, saverChild = null, saverTimer = null;
+
+function pauseSaver(ms) {
+  saverUntil = ms ? Date.now() + ms : 0;
+  clearTimeout(saverTimer);
+  if (!ms) {
+    if (saverChild) saverChild.kill();
+    return;
+  }
+  saverTimer = setTimeout(function () { pauseSaver(0); }, ms);
+  if (saverChild) return;
+  var child = saverChild = spawn(LUNA_SEND, ['-i', 'luna://com.webos.service.tvpower/power/registerScreenSaverRequest',
+    JSON.stringify({ subscribe: true, clientName: APP_ID })], { stdio: ['ignore', 'pipe', 'ignore'] });
+  var rest = '';
+  child.stdout.on('data', function (d) {
+    var lines = (rest + d).split('\n');
+    rest = lines.pop();
+    lines.forEach(function (l) {
+      var ts = /"timestamp"\s*:\s*(\d+)/.exec(l);
+      if (ts) {
+        luna('com.webos.service.tvpower/power/responseScreenSaverRequest',
+          { clientName: APP_ID, ack: Date.now() >= saverUntil, timestamp: +ts[1] });
+      }
+    });
+  });
+  child.on('exit', function () {
+    if (saverChild === child) saverChild = null;
+    if (Date.now() < saverUntil) setTimeout(function () { if (!saverChild && Date.now() < saverUntil) pauseSaver(saverUntil - Date.now()); }, 5000);
+  });
 }
 
 var ID_RE = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
@@ -193,8 +235,7 @@ function validate(body, keyNames) {
   var fields = Object.keys(body);
   for (var i = 0; i < fields.length; i++) {
     var k = fields[i], v = body[k];
-    if (k === 'language') { if (['auto', 'en', 'it'].indexOf(v) === -1) return 'language'; out[k] = v; }
-    else if (k === 'clock') { if (v !== '24' && v !== '12') return 'clock'; out[k] = v; }
+    if (k === 'clock') { if (v !== '24' && v !== '12') return 'clock'; out[k] = v; }
     else if (k === 'units') { if (v !== 'c' && v !== 'f') return 'units'; out[k] = v; }
     else if (k === 'tileStyle') { if (['text', 'logo', 'icon'].indexOf(v) === -1) return 'tileStyle'; out[k] = v; }
     else if (k === 'veil') { if (!num(v, 0, 100)) return 'veil'; out[k] = Math.round(v); }
@@ -559,6 +600,14 @@ function handle(req, res) {
     return listApps(function (apps) {
       var f = iconFile(apps, id);
       if (!f) return send(res, 404, { ok: false, error: 'no icon' });
+      // As data for a page that turns it white: a canvas may always read a data: picture.
+      if (/(?:^|&)data=1(?:&|$)/.test(query)) {
+        return fs.readFile(f, function (err, data) {
+          if (err) return send(res, 404, { ok: false, error: 'no icon' });
+          send(res, 200, { ok: true, src: 'data:' + (TYPES[path.extname(f).toLowerCase()] || 'image/png') + ';base64,' + data.toString('base64') },
+            { 'Access-Control-Allow-Origin': '*' });
+        });
+      }
       sendFile(res, f, 'max-age=86400', { 'Content-Security-Policy': "default-src 'none'" });
     });
   }
@@ -626,6 +675,13 @@ function handle(req, res) {
     config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
     saveConfig();
     return send(res, 200, { ok: true, config: publicConfig() });
+  }
+  if (m === 'POST' && p === '/api/screensaver') {
+    return readJson(req, res, function (body) {
+      if (typeof body.pause !== 'boolean') return send(res, 400, { ok: false, error: 'pause expected' });
+      pauseSaver(body.pause ? 3600000 : 0);
+      send(res, 200, { ok: true, config: publicConfig() });
+    });
   }
   if (m === 'POST' && p === '/api/pin') {
     return readJson(req, res, function (body) {

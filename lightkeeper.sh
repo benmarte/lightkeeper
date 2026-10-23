@@ -119,7 +119,7 @@ case "$1" in
         grep -m1 -oE '\"state\": *\"installed\"|\"state\": *\"[^\"]*fail[^\"]*\"|\"errorText\": *\"[^\"]*\"|\"returnValue\": *false'
       rm -f /tmp/$ID.ipk
       sh $APPDIR/service/setup.sh
-      luna-send -n 1 -w 5000 luna://com.webos.applicationManager/launch '{\"id\":\"$ID\"}' >/dev/null 2>&1"
+      luna-send -n 1 -w 5000 luna://com.webos.applicationManager/launch '{\"id\":\"$ID\"}' </dev/null >/dev/null 2>&1"
     echo "Lightkeeper is on the TV. Settings: http://$TV:8090/" ;;
   uninstall)
     tv "if [ -f $APPDIR/service/server.js ]; then node $APPDIR/service/server.js --uninstall; fi

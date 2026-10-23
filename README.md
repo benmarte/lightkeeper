@@ -58,7 +58,7 @@ The preview at the top is the Home as the TV draws it, and it changes as you go.
 - **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. For each HDMI input you pick the device plugged into it (PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more): Lightkeeper guesses it from the name the input has on the TV.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
 - **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
-- **Language.** English or Italian, or the same as the device.
+- **Screen saver.** Pause LG's screen saver for an hour while you try things out. It comes back by itself, as an OLED should not show a still picture for long.
 - **Remote and power.** Pick which key opens Lightkeeper: Home, or another key GlassHouse can change on your remote, such as the coloured keys. With Home, pressing Back in the last app also returns to Lightkeeper. *Open at power on* brings Lightkeeper up when the TV switches on over an input or LG's Home. If you switch on with the Netflix button, you stay on Netflix.
 - **PIN.** An optional PIN for the settings page.
 
@@ -141,7 +141,7 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
 - l'orologio a 24 o 12 ore;
 - la città del meteo, cercata su Open-Meteo, in °C o °F;
-- la lingua;
+- una pausa di un'ora dello screensaver di LG, per fare prove;
 - il tasto che apre Lightkeeper; con Home, anche Indietro dall'ultima app torna qui;
 - l'apertura all'accensione;
 - un PIN facoltativo per la pagina.
