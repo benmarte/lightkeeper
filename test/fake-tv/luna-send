@@ -1,0 +1,17 @@
+#!/bin/sh
+# A stand-in for the TV's luna-send, for test/check.js and local previews.
+# Answers the calls Lightkeeper makes; writes are logged to $FAKE_TV/calls.log.
+F=$(cd "$(dirname "$0")" && pwd)
+for a; do uri=$params; params=$a; done
+echo "$uri $params" >> "$F/calls.log"
+case "$uri" in
+  */listApps) sed "s#@F@#$F#g" "$F/apps.json" ;;
+  */getAllInputStatus) echo '{"returnValue":true,"devices":[{"id":"HDMI_1","label":"HDMI 1","appId":"com.webos.app.hdmi1"},{"id":"HDMI_2","label":"HDMI 2","appId":"com.webos.app.hdmi2"},{"id":"HDMI_3","label":"Game console","appId":"com.webos.app.hdmi3"}]}' ;;
+  */getConfigs)
+    if [ -f "$F/chain-has-filter" ]; then
+      echo "{\"returnValue\":true,\"configs\":{\"com.webos.surfacemanager.keyFilters\":[{\"file\":\"${LIGHTKEEPER_TVWEB:-$F/tvweb}/remotekeys-filter.js\",\"handler\":\"handleGlasshouseKeys\"}]}}"
+    else
+      echo '{"returnValue":true,"configs":{"com.webos.surfacemanager.keyFilters":[{"file":"/usr/lib/qt5/qml/KeyFilters/a.js","handler":"h"}]}}'
+    fi ;;
+  *) echo '{"returnValue":true}' ;;
+esac

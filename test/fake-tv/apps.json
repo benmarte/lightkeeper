@@ -1,0 +1,14 @@
+{"returnValue":true,"apps":[
+{"id":"netflix","title":"Netflix","icon":"@F@/icons/netflix.png","folderPath":"@F@","visible":true},
+{"id":"amazon","title":"Prime Video","icon":"@F@/icons/amazon.png","folderPath":"@F@","visible":true},
+{"id":"youtube.leanback.v4","title":"YouTube","icon":"@F@/icons/youtube.png","folderPath":"@F@","visible":true},
+{"id":"cdp-30","title":"Plex","icon":"@F@/icons/plex.png","folderPath":"@F@","visible":true},
+{"id":"spotify-beehive","title":"Spotify","icon":"@F@/icons/music.png","folderPath":"@F@","visible":true},
+{"id":"com.webos.app.browser","title":"Web Browser","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":true},
+{"id":"com.webos.app.hdmi1","title":"HDMI 1","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":false},
+{"id":"com.webos.app.hdmi2","title":"HDMI 2","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":false},
+{"id":"com.webos.app.hdmi3","title":"HDMI 3","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":false},
+{"id":"com.webos.app.livetv","title":"Live TV","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":true},
+{"id":"com.webos.app.membership","title":"LG Account","visible":false},
+{"id":"io.github.chiotas.lightkeeper","title":"Lightkeeper","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":true}
+]}

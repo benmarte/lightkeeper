@@ -1,0 +1,124 @@
+#!/bin/sh
+# Lightkeeper boot hook, linked from /var/lib/webosbrew/init.d/60-lightkeeper by
+# setup.sh. It keeps the settings server running, opens Lightkeeper when the TV
+# comes on (if "Open at power on" is set) and, while Lightkeeper has the Home key,
+# when Back leaves the last app. The link points into the app: once the app is
+# removed it leads nowhere, and nothing here runs again.
+#
+# A new start of this script stops the old one: the generation in
+# /tmp/lightkeeper.gen, which every loop checks at each event. Log: /tmp/lightkeeper.log.
+APP=io.github.chiotas.lightkeeper
+HOOK=/var/lib/webosbrew/init.d/60-lightkeeper
+CONFIG=/var/lib/lightkeeper/config.json
+LOG=/tmp/lightkeeper.log
+LS=/usr/bin/luna-send
+HERE=$(dirname "$(readlink -f "$0")")
+GEN=$$
+# node fails at every start if its working directory is gone, as an app update leaves it.
+cd / || exit 0
+[ -x /usr/bin/node ] && [ -f "$HERE/server.js" ] || exit 0
+echo "$GEN" > /tmp/lightkeeper.gen
+[ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 65536 ] && mv -f "$LOG" "$LOG.old"
+
+diario() { echo "$(date '+%F %T') $*" >> "$LOG"; }
+vivo() { [ -e "$HOOK" ] && [ "$(cat /tmp/lightkeeper.gen 2>/dev/null)" = "$GEN" ]; }
+# The config is written pretty-printed by the server, one setting per line.
+set_to() { grep -q "\"$1\": $2" "$CONFIG" 2>/dev/null; }
+davanti() {
+  $LS -n 1 -w 3000 luna://com.webos.applicationManager/getForegroundAppInfo '{}' 2>/dev/null |
+    sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p'
+}
+lancia() { $LS -n 1 -w 5000 luna://com.webos.applicationManager/launch "{\"id\":\"$1\"}" >/dev/null 2>&1; }
+
+# The server, restarted if it stops, but not more than ten times in a row
+# within a minute of starting: a server that cannot start must not loop at boot.
+# The old server, checked by name: a pid left from before a reboot may belong to anything now.
+vecchio=$(cat /tmp/lightkeeper.pid 2>/dev/null)
+[ -n "$vecchio" ] && grep -q lightkeeper "/proc/$vecchio/cmdline" 2>/dev/null && kill "$vecchio" 2>/dev/null
+(
+  fails=0
+  while vivo && [ $fails -lt 10 ]; do
+    started=$(date +%s)
+    /usr/bin/node "$HERE/server.js" >> "$LOG" 2>&1 &
+    echo $! > /tmp/lightkeeper.pid
+    wait $!
+    vivo || break
+    if [ $(( $(date +%s) - started )) -lt 60 ]; then fails=$((fails+1)); else fails=0; fi
+    diario "server stopped, starting it again"
+    sleep 5
+  done
+) </dev/null >/dev/null 2>&1 &
+
+# Only over an input or LG's Home: whoever switches on with the Netflix button stays on Netflix.
+apri() {
+  sleep 1
+  fg=$(davanti)
+  case "$fg" in
+    ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.inputcommon|com.webos.app.hdmi*)
+      diario "opening Lightkeeper (in front: ${fg:-nothing})"
+      lancia "$APP" ;;
+    *) diario "not opening: $fg is in front" ;;
+  esac
+}
+
+# Signed in to an LG account, webOS 6 opens com.webos.app.membership about 42 s
+# after a cold start, and on some TVs it spins for good: for 2 minutes after
+# switching on, it is closed as soon as it shows and Lightkeeper is put back.
+via_account() {
+  n=0
+  while [ $n -lt 40 ]; do
+    sleep 3; n=$((n+1))
+    [ "$(davanti)" = com.webos.app.membership ] || continue
+    diario "closing com.webos.app.membership"
+    $LS -n 1 -w 5000 luna://com.webos.applicationManager/closeByAppId '{"id":"com.webos.app.membership"}' >/dev/null 2>&1
+    sleep 1
+    lancia "$APP"
+    return
+  done
+}
+
+# Switching on, from standby (Quick Start+) or a cold start.
+(
+  # This script starts about 40 s into a cold start: the first "Active" is the start.
+  spento=1
+  while vivo; do
+    $LS -i luna://com.webos.service.tvpower/power/getPowerState '{"subscribe":true}' 2>/dev/null |
+    while read -r riga; do
+      vivo || exit
+      stato=$(echo "$riga" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
+      [ -n "$stato" ] || continue
+      case "$stato" in
+        Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri; via_account & }; spento=0 ;;
+        "Screen Saver"|"Screen Off") spento=0 ;;
+        Prepared) ;;
+        *) spento=1 ;;
+      esac
+    done
+    spento=0 # luna-send started again with the TV already on
+    sleep 5
+  done
+) </dev/null >/dev/null 2>&1 &
+
+# Back from the last app: sam opens LG's Home, for the same reason ("undefined")
+# as any other launch. So what counts is the full-screen window before it: if it
+# was not Lightkeeper (whose Down arrow opens LG's Home on purpose), Lightkeeper is
+# put in its place. Screen savers and overlays do not count.
+(
+  while vivo; do
+    $LS -i luna://com.webos.applicationManager/getAppLifeEvents '{"subscribe":true}' 2>/dev/null |
+    while read -r riga; do
+      vivo || exit
+      case "$riga" in *'"event":"foreground"'*_WEBOS_WINDOW_TYPE_CARD*) ;; *) continue ;; esac
+      app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+      if [ "$app" = com.webos.app.home ] && [ -n "$prima" ] && [ "$prima" != "$APP" ] &&
+         [ "$prima" != "$app" ] && set_to key '"home"'; then
+        # Launched at once, Lightkeeper ended up under LG's Home, still opening.
+        diario "LG's Home after $prima: opening Lightkeeper"
+        sleep 1; lancia "$APP"
+        sleep 2; [ "$(davanti)" = com.webos.app.home ] && { diario "still LG's Home: again"; lancia "$APP"; }
+      fi
+      prima=$app
+    done
+    sleep 5
+  done
+) </dev/null >/dev/null 2>&1 &

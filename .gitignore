@@ -1,0 +1,12 @@
+.DS_Store
+dist/
+test/fake-tv/data/
+test/fake-tv/calls.log
+test/fake-tv/hook
+test/fake-tv/chain-has-filter
+# Design notes kept on this computer only.
+.impeccable/
+PRODUCT.md
+DESIGN.md
+test/fake-tv/tvweb/remotekeys.json
+docs/screenshots/candidati/

@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#120e0a">
+<title>Lightkeeper</title>
+<style>
+/* For phones, computers and the TV's own browser (Chromium 53 on webOS 4): ES5, no flex gap, no inset. */
+/* Before Chromium 62 there are no variable fonts: fixed weights first, then the variable
+   face, which newer engines use for every weight. Each in-between weight follows a fallback. */
+@font-face { font-family: Jost; src: url(/jost-200.woff2) format('woff2'); font-weight: 200; }
+@font-face { font-family: Jost; src: url(/jost-300.woff2) format('woff2'); font-weight: 300; }
+@font-face { font-family: Jost; src: url(/jost-500.woff2) format('woff2'); font-weight: 500; }
+@font-face { font-family: Jost; src: url(/jost.woff2) format('woff2'); font-weight: 100 900; }
+:root {
+  --ground: #120e0a;
+  --raised: #1b1611;
+  --ink: #f4f1ec;
+  --muted: #a9a29a;
+  --line: rgba(244, 241, 236, .13);
+  --line-strong: rgba(244, 241, 236, .3);
+  --wash: rgba(244, 241, 236, .07);
+  --warn: #f0a593;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { background: var(--ground); color-scheme: dark; }
+body {
+  font: 400 17px/1.5 Jost, -apple-system, 'Segoe UI', sans-serif; color: var(--ink);
+  background: var(--ground); -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;
+}
+::selection { background: rgba(244, 241, 236, .28); color: var(--ink); }
+[hidden] { display: none !important; }
+a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+button, input, select { font: inherit; color: inherit; }
+:focus { outline: 2px solid var(--ink); outline-offset: 3px; }
+/* Older engines know no :focus-visible and keep the ring for every focus, which the remote needs. */
+:focus:not(:focus-visible) { outline: none; }
+
+.top { max-width: 1240px; margin: 0 auto; padding: 28px 24px 0; display: flex; align-items: baseline; justify-content: space-between; }
+.top h1 { font-size: 30px; font-weight: 300; letter-spacing: .02em; }
+.top h1 span { color: var(--muted); font-weight: 300; margin-left: 10px; }
+#status { color: var(--ink); transition: opacity .25s; }
+#status.err { color: var(--warn); }
+
+.layout { max-width: 1240px; margin: 0 auto; padding: 24px 24px 0; }
+/* The preview: the Home itself at 1920 × 1080, scaled to fit. */
+.preview-col { position: -webkit-sticky; position: sticky; top: 0; z-index: 2; background: var(--ground); padding: 8px 0 14px; }
+.preview { position: relative; width: 100%; padding-top: 56.25%; overflow: hidden; border-radius: 10px; background: #000; box-shadow: 0 18px 50px rgba(0, 0, 0, .55); }
+.caption { display: flex; justify-content: space-between; margin-top: 10px; font-size: 14px; color: var(--muted); min-height: 21px; }
+.caption #status { margin-left: 16px; text-align: right; }
+.screen {
+  position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; overflow: hidden;
+  -webkit-transform-origin: 0 0; transform-origin: 0 0;
+  font-family: Jost, sans-serif; color: #f4f1ec; text-shadow: 0 2px 24px rgba(0, 0, 0, .5);
+  background: #000 center / cover no-repeat;
+}
+.screen .veil {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background:
+    radial-gradient(1100px 620px at 0 0, rgba(18,13,8,.92) 0, rgba(18,13,8,0) 100%),
+    linear-gradient(to top, rgba(18,13,8,1) 0, rgba(18,13,8,.7) 20%, rgba(18,13,8,0) 50%);
+}
+.screen header, .screen nav { position: absolute; left: 112px; }
+.screen header { top: 68px; }
+.screen .ora { font-size: 150px; font-weight: 200; line-height: 1; letter-spacing: -.02em; }
+.screen .ora small { font-size: 52px; font-weight: 300; letter-spacing: .02em; margin-left: 14px; }
+.screen .meteo { margin-top: 18px; height: 40px; font-size: 34px; font-weight: 300; opacity: .9; display: flex; align-items: center; }
+.screen .meteo svg { width: 34px; height: 34px; margin-left: 14px; }
+.screen nav { bottom: 104px; display: flex; align-items: flex-end; }
+.screen nav span { position: relative; margin-right: 72px; font-size: 44px; font-weight: 400; font-weight: 380; letter-spacing: .01em; opacity: .72; white-space: nowrap; }
+.screen nav span.sel { opacity: 1; font-weight: 500; font-weight: 450; }
+.screen nav span.sel::after { content: ""; position: absolute; left: 0; bottom: -20px; width: 36px; height: 3px; border-radius: 2px; background: currentColor; }
+.screen nav i { font-style: normal; }
+.screen nav.icons { margin-left: -28px; }
+.screen nav.icons span { width: 188px; margin-right: 24px; font-size: 30px; text-align: center; }
+.screen nav.icons span.gear { width: auto; margin-left: 12px; }
+.screen nav.icons i { display: block; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen nav.icons img { display: block; width: 132px; height: 132px; margin: 0 auto 20px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.screen nav.icons span.sel img { -webkit-transform: scale(1.06); transform: scale(1.06); }
+.screen nav.icons span.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
+.screen nav svg { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
+.screen nav.icons svg { width: 52px; height: 52px; margin-bottom: 4px; }
+
+main section { padding: 34px 0 36px; border-top: 1px solid var(--line); }
+main section:first-child { border-top: 0; padding-top: 18px; }
+h2 { font-size: 24px; font-weight: 400; letter-spacing: .005em; line-height: 1.25; }
+.lede { margin-top: 6px; color: var(--muted); font-size: 16px; max-width: 34em; }
+.note { margin-top: 10px; color: var(--muted); font-size: 15px; }
+.note.err { color: var(--warn); }
+
+.row { display: flex; align-items: center; justify-content: space-between; min-height: 56px; margin-top: 18px; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.row > label, .row > .label { -webkit-flex: 1 1 0%; flex: 1 1 0%; min-width: 0; margin-right: 20px; padding: 6px 0; }
+.row .sub { display: block; color: var(--muted); font-size: 15px; }
+
+.btn {
+  display: inline-block; height: 48px; padding: 0 22px; border-radius: 24px; cursor: pointer;
+  border: 1px solid var(--line-strong); background: transparent; line-height: 46px; white-space: nowrap;
+  transition: background-color .18s, border-color .18s;
+}
+.btn:hover { background: var(--wash); border-color: rgba(244, 241, 236, .5); }
+.btn.primary { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.btn.primary:hover { background: #fff; }
+.btn.danger { border-color: rgba(240, 165, 147, .55); color: var(--warn); }
+.btn.danger.primary { background: var(--warn); color: var(--ground); }
+.btn[disabled] { opacity: .45; cursor: default; }
+.btn + .btn { margin-left: 10px; }
+.actions { margin-top: 18px; }
+
+input[type=text], input[type=search], input[type=password], select {
+  height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-strong);
+  background: var(--wash); transition: border-color .18s, box-shadow .18s; min-width: 0;
+}
+input[type=text]:focus, input[type=search]:focus, input[type=password]:focus, select:focus {
+  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(244, 241, 236, .16);
+}
+::-webkit-input-placeholder { color: #8f887f; }
+select { padding-right: 38px; -webkit-appearance: none; appearance: none; cursor: pointer;
+  background: var(--wash) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23f4f1ec' stroke-width='1.4'/%3E%3C/svg%3E") right 14px center / 12px 8px no-repeat; }
+select option, select optgroup { background: var(--raised); color: var(--ink); }
+
+/* Two or three choices side by side: radios, so arrows and screen readers work as usual. */
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 24px; padding: 3px; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span { display: block; height: 40px; line-height: 40px; padding: 0 18px; border-radius: 20px; white-space: nowrap; transition: background-color .18s, color .18s; }
+.seg label:hover span { background: var(--wash); }
+.seg input:checked + span { background: var(--ink); color: var(--ground); }
+.seg input:focus + span { outline: 2px solid var(--ink); outline-offset: 2px; }
+.seg input:focus:not(:focus-visible) + span { outline: none; }
+
+.switch { -webkit-appearance: none; appearance: none; position: relative; width: 56px; height: 32px; border-radius: 16px;
+  background: rgba(244, 241, 236, .2); cursor: pointer; transition: background-color .2s; -webkit-flex-shrink: 0; flex-shrink: 0; }
+.switch::before { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); transition: -webkit-transform .2s, transform .2s, background-color .2s; }
+.switch:checked { background: var(--ink); }
+.switch:checked::before { -webkit-transform: translateX(24px); transform: translateX(24px); background: var(--ground); }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 36px; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--line-strong); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; margin-top: -11px; border-radius: 50%; background: var(--ink); box-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
+input[type=range]::-moz-range-track { height: 2px; background: var(--line-strong); }
+input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--ink); }
+.range { margin-top: 22px; }
+.range label { display: block; }
+.range .sub { display: block; margin-top: 2px; }
+.range .ends { display: flex; justify-content: space-between; color: var(--muted); font-size: 14px; }
+
+/* The tiles, in the order they appear. */
+.tiles { list-style: none; margin-top: 20px; border-top: 1px solid var(--line); }
+.tiles li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tiles .ic { width: 40px; height: 40px; border-radius: 9px; margin-right: 14px; -webkit-flex-shrink: 0; flex-shrink: 0; background: var(--wash); overflow: hidden; }
+.tiles .ic img { display: block; width: 40px; height: 40px; }
+.tiles .name { -webkit-flex: 1; flex: 1; min-width: 0; }
+.tiles .name input { width: 100%; height: 44px; border: 0; border-radius: 0; background: transparent; padding: 0 2px; box-shadow: inset 0 -1px 0 var(--line-strong); }
+.tiles .name input:hover { box-shadow: inset 0 -1px 0 rgba(244, 241, 236, .45); }
+.tiles .name input:focus { border: 0; box-shadow: inset 0 -2px 0 var(--ink); }
+.tiles .name .sub { display: block; padding-left: 0; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { width: 44px; height: 44px; border-radius: 22px; border: 0; background: transparent; cursor: pointer; margin-left: 4px; -webkit-flex-shrink: 0; flex-shrink: 0; }
+.icon-btn svg { display: block; width: 20px; height: 20px; margin: 0 auto; }
+.icon-btn:hover { background: var(--wash); }
+.icon-btn[disabled] { opacity: .25; cursor: default; background: transparent; }
+.empty { padding: 22px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
+.add { display: flex; margin-top: 18px; }
+.add select { -webkit-flex: 1; flex: 1; }
+
+/* The backgrounds the app carries, three to a row. */
+.bgs { display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 16px -6px 0; }
+.bgs button { width: calc(33.333% - 12px); margin: 6px; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; text-align: left; }
+.bgs img { display: block; width: 100%; height: auto; border-radius: 8px; background: #000; transition: opacity .18s; }
+.bgs button:hover img { opacity: .85; }
+.bgs button[aria-checked=true] img { outline: 2px solid var(--ink); outline-offset: 2px; }
+.bgs span { display: block; margin-top: 7px; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bgs button[aria-checked=true] span { color: var(--ink); }
+.credit { margin-top: 12px; font-size: 15px; color: var(--muted); }
+.credit a { color: var(--ink); }
+.file { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+.search { position: relative; margin-top: 18px; }
+.search input { width: 100%; }
+.results { list-style: none; margin-top: 8px; }
+.results button { display: block; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
+.results button:hover, .results button:focus { background: var(--wash); }
+.results small { color: var(--muted); font-size: 15px; margin-left: 8px; }
+
+.pinrow input { width: 160px; margin-right: 10px; letter-spacing: .2em; }
+.confirm { margin-top: 18px; padding: 18px 0 0; }
+footer { max-width: 1240px; margin: 0 auto; padding: 30px 24px 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+footer a { color: var(--muted); }
+
+/* The PIN, before anything else. */
+.lock { max-width: 420px; margin: 12vh auto 0; padding: 0 24px; }
+.lock h2 { font-size: 28px; font-weight: 300; }
+.lock form { display: flex; margin-top: 22px; }
+.lock input { -webkit-flex: 1; flex: 1; margin-right: 10px; letter-spacing: .3em; font-size: 22px; }
+.gone { max-width: 560px; margin: 14vh auto 0; padding: 0 24px; font-size: 22px; font-weight: 300; }
+
+@media (min-width: 1000px) {
+  .layout { display: flex; -webkit-align-items: flex-start; align-items: flex-start; }
+  .preview-col { width: 54%; margin-right: 64px; top: 24px; padding: 0; background: transparent; }
+  main { -webkit-flex: 1; flex: 1; min-width: 0; }
+  main section:first-child { padding-top: 0; }
+}
+@media (max-width: 520px) {
+  .top { padding-top: 18px; }
+  .top h1 { font-size: 26px; }
+  .layout { padding-top: 10px; }
+  .preview-col { margin: 0 -24px; padding: 6px 24px 12px; box-shadow: 0 10px 20px var(--ground); }
+  .caption [data-t] { display: none; }
+  .caption #status { margin-left: 0; }
+  .row > label, .row > .label { -webkit-flex-basis: 100%; flex-basis: 100%; margin-right: 0; }
+  .btn + .btn { margin-left: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="page" hidden>
+  <div class="top">
+    <h1>Lightkeeper<span data-t="title">Settings</span></h1>
+  </div>
+  <div class="layout">
+    <div class="preview-col">
+      <div class="preview" aria-hidden="true">
+        <div class="screen" id="screen">
+          <div class="veil" id="p-veil"></div>
+          <header><div class="ora" id="p-ora"></div><div class="meteo" id="p-meteo"></div></header>
+          <nav id="p-nav"></nav>
+        </div>
+      </div>
+      <p class="caption"><span data-t="caption">As it looks on the TV</span><span id="status" role="status" aria-live="polite"></span></p>
+    </div>
+    <main>
+      <section aria-labelledby="h-tiles">
+        <h2 id="h-tiles" data-t="tiles">Tiles</h2>
+        <p class="lede" data-t="tilesLede">The apps and inputs along the bottom of the Home, in this order.</p>
+        <ul class="tiles" id="tiles"></ul>
+        <div class="add">
+          <select id="add" aria-label="Add a tile"></select>
+        </div>
+        <p class="note" id="tiles-note" hidden></p>
+        <div class="row">
+          <span class="label" id="l-style" data-t="show">Show</span>
+          <div class="seg" role="radiogroup" aria-labelledby="l-style">
+            <label><input type="radio" name="tileStyle" value="text"><span data-t="names">Names</span></label>
+            <label><input type="radio" name="tileStyle" value="icon"><span data-t="icons">Icons and names</span></label>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="h-bg">
+        <h2 id="h-bg" data-t="background">Background</h2>
+        <div class="bgs" id="bgs" role="radiogroup" aria-labelledby="h-bg"></div>
+        <p class="credit" id="bg-credit"></p>
+        <div class="row">
+          <span class="label" id="l-size" data-t="size">Size</span>
+          <div class="seg" role="radiogroup" aria-labelledby="l-size">
+            <label><input type="radio" name="size" value="1920" checked><span>Full HD · 1920</span></label>
+            <label><input type="radio" name="size" value="3840"><span>4K · 3840</span></label>
+          </div>
+        </div>
+        <div class="actions">
+          <input class="file" type="file" id="file" accept="image/*">
+          <label class="btn primary" for="file" id="choose" tabindex="0" data-t="choose">Choose a picture</label><button class="btn" type="button" id="bg-default" data-t="useDefault">Remove my picture</button>
+        </div>
+        <p class="note" id="bg-note" data-t="sizeNote">The picture is cropped to 16:9 and resized on this device before it is sent.</p>
+        <div class="range">
+          <label for="veil" data-t="veil">Shade</label>
+          <span class="sub note" data-t="veilLede">How dark the picture is behind the time and the tiles.</span>
+          <input type="range" id="veil" min="0" max="100" step="5">
+          <div class="ends"><span data-t="light">Light</span><span data-t="dark">Dark</span></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="h-time">
+        <h2 id="h-time" data-t="clockWeather">Clock and weather</h2>
+        <div class="row">
+          <span class="label" id="l-clock" data-t="clock">Clock</span>
+          <div class="seg" role="radiogroup" aria-labelledby="l-clock">
+            <label><input type="radio" name="clock" value="24"><span data-t="c24">24-hour</span></label>
+            <label><input type="radio" name="clock" value="12"><span data-t="c12">12-hour</span></label>
+          </div>
+        </div>
+        <div class="search">
+          <label for="city" class="label" data-t="weatherFor">Weather for</label>
+          <input type="search" id="city" autocomplete="off" spellcheck="false" placeholder="Search for a city">
+          <ul class="results" id="results"></ul>
+          <p class="note" id="city-note" hidden></p>
+        </div>
+        <div class="row">
+          <span class="label" id="l-units" data-t="units">Units</span>
+          <div class="seg" role="radiogroup" aria-labelledby="l-units">
+            <label><input type="radio" name="units" value="c"><span>°C</span></label>
+            <label><input type="radio" name="units" value="f"><span>°F</span></label>
+          </div>
+        </div>
+        <div class="actions"><button class="btn" type="button" id="no-weather" data-t="noWeather">No weather</button></div>
+        <p class="note"><span data-t="weatherBy">Weather by</span> <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>
+      </section>
+
+      <section aria-labelledby="h-remote">
+        <h2 id="h-remote" data-t="remote">Remote and power</h2>
+        <div class="row">
+          <label for="key"><span data-t="key">Key that opens Lightkeeper</span><span class="sub" data-t="keyLede">Through GlassHouse. With Home, Back from the last app also comes here.</span></label>
+          <select id="key"></select>
+        </div>
+        <p class="note" id="key-note" aria-live="polite"></p>
+        <div class="row">
+          <label for="power"><span data-t="power">Open at power on</span><span class="sub" data-t="powerLede">When the TV comes on over an input or LG's Home.</span></label>
+          <input type="checkbox" class="switch" id="power" role="switch">
+        </div>
+      </section>
+
+      <section aria-labelledby="h-more">
+        <h2 id="h-more" data-t="more">Language and PIN</h2>
+        <div class="row">
+          <label for="language" data-t="language">Language</label>
+          <select id="language">
+            <option value="auto" data-t="auto">Same as the device</option>
+            <option value="en">English</option>
+            <option value="it">Italiano</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="label"><span data-t="pin">PIN for this page</span><span class="sub" id="pin-state"></span></div>
+          <div class="pinrow">
+            <input type="password" id="pin-new" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="new-password" aria-label="New PIN">
+            <button class="btn" type="button" id="pin-set" data-t="pinSet">Set</button>
+          </div>
+        </div>
+        <div class="actions" id="pin-clear-row" hidden><button class="btn" type="button" id="pin-clear" data-t="pinClear">Remove the PIN</button></div>
+        <p class="note" id="pin-note" hidden></p>
+      </section>
+
+      <section aria-labelledby="h-remove">
+        <h2 id="h-remove" data-t="removeTitle">Remove Lightkeeper</h2>
+        <p class="lede" data-t="removeLede">Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.</p>
+        <div class="actions"><button class="btn danger" type="button" id="remove" data-t="removeTitle">Remove Lightkeeper</button></div>
+        <div class="confirm" id="confirm" hidden>
+          <button class="btn danger primary" type="button" id="remove-yes" data-t="removeYes">Remove for good</button><button class="btn" type="button" id="remove-no" data-t="cancel">Cancel</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <footer><span id="version"></span> · <span data-t="licence">MIT licence, use at your own risk</span> · <a href="https://github.com/chiotas/lightkeeper" target="_blank" rel="noopener">github.com/chiotas/lightkeeper</a></footer>
+</div>
+
+<div class="lock" id="lock" hidden>
+  <h2 data-t="lockTitle">Enter the PIN</h2>
+  <form id="lock-form">
+    <input type="password" id="lock-pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="current-password" aria-label="PIN">
+    <button class="btn primary" type="submit" data-t="unlock">Unlock</button>
+  </form>
+  <p class="note err" id="lock-note" hidden></p>
+</div>
+<p class="gone" id="gone" hidden></p>
+
+<script>
+(function () {
+  var T = {
+    en: {
+      title: 'Settings', caption: 'As it looks on the TV', saving: 'Saving…', saved: 'Saved', offline: 'The TV does not answer',
+      notSaved: 'Not saved: ', tiles: 'Tiles', tilesLede: 'The apps and inputs along the bottom of the Home, in this order.',
+      add: 'Add a tile…', apps: 'Apps', inputs: 'Inputs', up: 'Move up', down: 'Move down', drop: 'Remove',
+      nameOnTv: 'Name on the TV', onTv: 'On the TV: ', empty: 'No tiles yet. Add the apps and inputs you use most.',
+      full: 'Twelve tiles at most.', show: 'Show', names: 'Names', icons: 'Icons and names', background: 'Background',
+      yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
+      cc0: 'public domain (CC0)', own: 'made for Lightkeeper', night: 'Night at sea', nightShort: 'Night', dawn: 'Dawn at sea',
+      dawnShort: 'Dawn', choose: 'Choose a picture', useDefault: 'Remove my picture', size: 'Size',
+      sizeNote: 'The picture is cropped to 16:9 and resized on this device before it is sent.',
+      sending: 'Sending the picture… ', notImage: 'This browser cannot open that file as a picture.',
+      veil: 'Shade', veilLede: 'How dark the picture is behind the time and the tiles.', light: 'Light', dark: 'Dark',
+      clockWeather: 'Clock and weather', clock: 'Clock', c24: '24-hour', c12: '12-hour', weatherFor: 'Weather for',
+      search: 'Search for a city', searching: 'Searching…', noCity: 'No city by that name.', searchFail: 'The search did not answer. Try again.',
+      units: 'Units', noWeather: 'No weather', weatherBy: 'Weather by', remote: 'Remote and power',
+      key: 'Key that opens Lightkeeper', keyLede: 'Through GlassHouse. With Home, Back from the last app also comes here.',
+      keyHome: 'Home', keyNone: 'None', active: 'Active.', pending: 'Active within a minute, once GlassHouse has restarted.',
+      noglasshouse: 'GlassHouse is not installed, so the key cannot be changed.', failed: 'The TV did not take the change. Try again.',
+      power: 'Open at power on', powerLede: 'When the TV comes on over an input or LG\'s Home.', more: 'Language and PIN',
+      language: 'Language', auto: 'Same as the device', pin: 'PIN for this page', pinOn: 'Asked before any change here.',
+      pinOff: 'Anyone on your network can change these settings.', pinSet: 'Set', pinClear: 'Remove the PIN',
+      pinBad: 'A PIN is 4 to 8 digits.', pinDone: 'PIN set. Keep it somewhere safe.', pinCleared: 'PIN removed.',
+      removeTitle: 'Remove Lightkeeper', removeLede: 'Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.',
+      removeYes: 'Remove for good', cancel: 'Cancel', removed: 'Lightkeeper has been removed from the TV. You can close this page.',
+      licence: 'MIT licence, use at your own risk', lockTitle: 'Enter the PIN', unlock: 'Unlock', wrong: 'Wrong PIN.',
+      locked: 'Too many tries. Wait a minute and try again.'
+    },
+    it: {
+      title: 'Impostazioni', caption: 'Come appare sulla TV', saving: 'Salvataggio…', saved: 'Salvato', offline: 'La TV non risponde',
+      notSaved: 'Non salvato: ', tiles: 'Voci', tilesLede: 'Le app e gli ingressi in fondo alla Home, in quest\'ordine.',
+      add: 'Aggiungi una voce…', apps: 'App', inputs: 'Ingressi', up: 'Sposta su', down: 'Sposta giù', drop: 'Togli',
+      nameOnTv: 'Nome sulla TV', onTv: 'Sulla TV: ', empty: 'Nessuna voce. Aggiungi le app e gli ingressi che usi di più.',
+      full: 'Al massimo dodici voci.', show: 'Mostra', names: 'Nomi', icons: 'Icone e nomi', background: 'Sfondo',
+      yours: 'La tua immagine', yoursBy: 'caricata da questa pagina', rights: 'tutti i diritti riservati', pd: 'pubblico dominio',
+      cc0: 'pubblico dominio (CC0)', own: 'fatta per Lightkeeper', night: 'Notte sul mare', nightShort: 'Notte', dawn: 'Alba sul mare',
+      dawnShort: 'Alba', monk: 'Il monaco in riva al mare', monkShort: 'Il monaco', choose: 'Scegli un\'immagine',
+      useDefault: 'Togli la mia immagine', size: 'Dimensione',
+      sizeNote: 'L\'immagine viene tagliata a 16:9 e ridimensionata qui, prima dell\'invio.',
+      sending: 'Invio dell\'immagine… ', notImage: 'Il browser non riesce ad aprire questo file come immagine.',
+      veil: 'Velo', veilLede: 'Quanto è scura l\'immagine dietro l\'ora e le voci.', light: 'Chiaro', dark: 'Scuro',
+      clockWeather: 'Ora e meteo', clock: 'Orologio', c24: '24 ore', c12: '12 ore', weatherFor: 'Meteo di',
+      search: 'Cerca una città', searching: 'Ricerca…', noCity: 'Nessuna città con questo nome.', searchFail: 'La ricerca non risponde. Riprova.',
+      units: 'Unità', noWeather: 'Niente meteo', weatherBy: 'Meteo di', remote: 'Telecomando e accensione',
+      key: 'Tasto che apre Lightkeeper', keyLede: 'Tramite GlassHouse. Con Home, anche Indietro dall\'ultima app torna qui.',
+      keyHome: 'Home', keyNone: 'Nessuno', active: 'Attivo.', pending: 'Attivo entro un minuto, quando GlassHouse si è riavviato.',
+      noglasshouse: 'GlassHouse non è installato, quindi il tasto non si può cambiare.', failed: 'La TV non ha accettato la modifica. Riprova.',
+      power: 'Apri all\'accensione', powerLede: 'Quando la TV si accende su un ingresso o sulla Home LG.', more: 'Lingua e PIN',
+      language: 'Lingua', auto: 'Come il dispositivo', pin: 'PIN di questa pagina', pinOn: 'Richiesto prima di ogni modifica.',
+      pinOff: 'Chiunque sulla tua rete può cambiare queste impostazioni.', pinSet: 'Imposta', pinClear: 'Togli il PIN',
+      pinBad: 'Il PIN ha da 4 a 8 cifre.', pinDone: 'PIN impostato. Tienilo in un posto sicuro.', pinCleared: 'PIN tolto.',
+      removeTitle: 'Rimuovi Lightkeeper', removeLede: 'Ridà il tasto Home a LG, smette di aprirsi all\'accensione e cancella queste impostazioni e l\'app.',
+      removeYes: 'Rimuovi definitivamente', cancel: 'Annulla', removed: 'Lightkeeper è stata rimossa dalla TV. Puoi chiudere questa pagina.',
+      licence: 'Licenza MIT, uso a proprio rischio', lockTitle: 'Inserisci il PIN', unlock: 'Sblocca', wrong: 'PIN sbagliato.',
+      locked: 'Troppi tentativi. Aspetta un minuto e riprova.'
+    }
+  };
+  var ICON = {
+    up: '<path d="M5 12.5l5-5 5 5"/>',
+    down: '<path d="M5 7.5l5 5 5-5"/>',
+    drop: '<path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/>'
+  };
+  var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>' +
+    '<circle cx="12" cy="12" r="6.6"/></svg>';
+
+  var cfg = null, tv = { apps: [], inputs: [], keys: [] }, pin = '', t = T.en;
+  function $(id) { return document.getElementById(id); }
+  try { pin = sessionStorage.getItem('pin') || ''; } catch (e) {}
+
+  function lang() {
+    var l = cfg && (cfg.language === 'en' || cfg.language === 'it') ? cfg.language : String(navigator.language || 'en').slice(0, 2);
+    return T[l] ? l : 'en';
+  }
+
+  function translate() {
+    var l = lang();
+    t = T[l];
+    document.documentElement.lang = l;
+    var els = document.querySelectorAll('[data-t]');
+    for (var i = 0; i < els.length; i++) if (t[els[i].getAttribute('data-t')]) els[i].textContent = t[els[i].getAttribute('data-t')];
+    $('city').placeholder = t.search;
+    document.title = 'Lightkeeper · ' + t.title;
+  }
+
+  /* ---------- talking to the TV ---------- */
+
+  function api(method, url, body, cb, type) {
+    var x = new XMLHttpRequest();
+    x.open(method, url);
+    if (pin) x.setRequestHeader('X-Lightkeeper-Pin', pin);
+    if (body !== null && body !== undefined) x.setRequestHeader('Content-Type', type || 'application/json');
+    x.timeout = type ? 120000 : 15000;
+    x.onload = function () {
+      var r = null;
+      try { r = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status === 401) return showLock(r && r.error === 'locked' ? t.locked : (pin ? t.wrong : ''));
+      cb(x.status >= 200 && x.status < 300 && r ? r : null, r, x.status);
+    };
+    x.onerror = x.ontimeout = function () { status(t.offline, true); cb(null, null, 0); };
+    if (type && x.upload) x.upload.onprogress = function (e) { if (e.lengthComputable) status(t.sending + Math.round(e.loaded * 100 / e.total) + '%'); };
+    x.send(body === null || body === undefined ? null : type ? body : JSON.stringify(body));
+  }
+
+  var statusTimer = null;
+  function status(text, err) {
+    var s = $('status');
+    s.textContent = text || '';
+    s.className = err ? 'err' : '';
+    s.style.opacity = 1;
+    clearTimeout(statusTimer);
+    if (text && !err && text !== t.saving && text.indexOf(t.sending) !== 0) statusTimer = setTimeout(function () { s.style.opacity = 0; }, 1800);
+  }
+
+  function save(change, done) {
+    status(t.saving);
+    api('POST', '/api/config', change, function (r, raw) {
+      if (!r) { status(t.notSaved + ((raw && raw.error) || t.offline), true); if (done) done(false); return; }
+      cfg = r.config;
+      if (r.keyStatus) keyNote(r.keyStatus);
+      status(t.saved);
+      if (has(change, 'language')) { translate(); render(); }
+      preview();
+      if (done) done(true);
+    });
+  }
+
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
+  /* ---------- the preview ---------- */
+
+  function scale() {
+    var box = document.querySelector('.preview');
+    var s = box.clientWidth / 1920;
+    $('screen').style.webkitTransform = $('screen').style.transform = 'scale(' + s + ')';
+  }
+
+  function clockText() {
+    var d = new Date(), h = d.getHours(), m = (d.getMinutes() < 10 ? ':0' : ':') + d.getMinutes();
+    return cfg.clock === '12' ? ((h + 11) % 12 + 1) + m + '<small>' + (h < 12 ? 'AM' : 'PM') + '</small>' : h + m;
+  }
+
+  function bgUrl() {
+    if (cfg.background && cfg.background.custom) return '/background.jpg?rev=' + (cfg.background.rev || 0);
+    return '/backgrounds/' + (/^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy') + '.jpg';
+  }
+
+  function preview() {
+    if (!cfg) return;
+    $('screen').style.backgroundImage = 'url(' + bgUrl() + ')';
+    $('p-veil').style.opacity = $('veil').value / 100;
+    $('p-ora').innerHTML = clockText();
+    meteo();
+    var nav = $('p-nav'), icons = cfg.tileStyle === 'icon';
+    nav.className = icons ? 'icons' : '';
+    nav.innerHTML = '';
+    (cfg.tiles || []).forEach(function (tile, i) {
+      var s = document.createElement('span');
+      if (i === 0) s.className = 'sel';
+      if (icons) {
+        var img = document.createElement('img');
+        img.src = '/icon?id=' + encodeURIComponent(tile.id);
+        img.alt = '';
+        img.onerror = function () { img.style.visibility = 'hidden'; };
+        s.appendChild(img);
+      }
+      var label = document.createElement('i');
+      label.textContent = tile.title;
+      s.appendChild(label);
+      nav.appendChild(s);
+    });
+    var g = document.createElement('span');
+    g.innerHTML = GEAR;
+    g.className = 'gear' + ((cfg.tiles || []).length ? '' : ' sel');
+    nav.appendChild(g);
+  }
+
+  // The weather line as the Home draws it, asked again only when the city or the units change.
+  var NUVOLA_ALTA = '<path d="M6.5 15h11a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 8.1 3.5 3.5 0 0 0 6.5 15z"/>';
+  var METEO_ICONE = {
+    sole: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+    luna: '<path d="M20 14.6A8.2 8.2 0 0 1 9.4 4 8.2 8.2 0 1 0 20 14.6z"/>',
+    nuvola: '<path d="M6.5 18h11a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 11.1 3.5 3.5 0 0 0 6.5 18z"/>',
+    nebbia: '<path d="M4 9h16M6 13h12M4 17h16"/>',
+    pioggia: NUVOLA_ALTA + '<path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/>',
+    neve: NUVOLA_ALTA + '<path d="M8 19.5h.01M12 19.5h.01M16 19.5h.01" stroke-width="2.4"/>',
+    temporale: NUVOLA_ALTA + '<path d="M12.5 16l-2 3h3l-2 3"/>'
+  };
+  function icona(codice, giorno) {
+    var nome = codice <= 1 ? (giorno ? 'sole' : 'luna') : codice <= 3 ? 'nuvola' : codice <= 48 ? 'nebbia' :
+      codice >= 95 ? 'temporale' : (codice >= 71 && codice <= 77) || codice === 85 || codice === 86 ? 'neve' : 'pioggia';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+      METEO_ICONE[nome] + '</svg>';
+  }
+  var meteoPer = null, meteoRiga = '';
+  function meteo() {
+    var w = cfg.weather, el = $('p-meteo'), per = w ? w.lat + ',' + w.lon + ',' + cfg.units : '';
+    if (per === meteoPer) { el.innerHTML = meteoRiga; return; }
+    meteoPer = per;
+    meteoRiga = '';
+    el.textContent = w ? w.name : '';
+    if (!w) return;
+    meteoRiga = el.innerHTML;
+    var x = new XMLHttpRequest();
+    x.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=' + w.lat + '&longitude=' + w.lon +
+      '&current=temperature_2m,weather_code,is_day&timezone=auto' + (cfg.units === 'f' ? '&temperature_unit=fahrenheit' : ''));
+    x.timeout = 8000;
+    x.onload = function () {
+      if (per !== meteoPer) return;
+      try {
+        var c = JSON.parse(x.responseText).current;
+        el.textContent = w.name + ' · ' + Math.round(c.temperature_2m) + '°';
+        el.insertAdjacentHTML('beforeend', icona(c.weather_code, c.is_day));
+        meteoRiga = el.innerHTML;
+      } catch (e) {}
+    };
+    x.send();
+  }
+
+  /* ---------- tiles ---------- */
+
+  function tvTitle(id) {
+    var all = tv.apps.concat(tv.inputs);
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i].title;
+    return '';
+  }
+
+  function svg(name) {
+    return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + ICON[name] + '</svg>';
+  }
+
+  function saveTiles() { save({ tiles: cfg.tiles }); renderTiles(); preview(); }
+
+  function renderTiles() {
+    var list = $('tiles'), tiles = cfg.tiles || [];
+    list.innerHTML = '';
+    if (!tiles.length) {
+      var e = document.createElement('li');
+      e.className = 'empty';
+      e.textContent = t.empty;
+      list.appendChild(e);
+    }
+    tiles.forEach(function (tile, i) {
+      var li = document.createElement('li');
+      var ic = document.createElement('div');
+      ic.className = 'ic';
+      var img = document.createElement('img');
+      img.src = '/icon?id=' + encodeURIComponent(tile.id);
+      img.alt = '';
+      img.onerror = function () { img.style.display = 'none'; };
+      ic.appendChild(img);
+      li.appendChild(ic);
+
+      var name = document.createElement('div');
+      name.className = 'name';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = 40;
+      input.value = tile.title;
+      input.setAttribute('aria-label', t.nameOnTv);
+      var timer = null;
+      var commit = function () {
+        clearTimeout(timer);
+        var v = input.value.replace(/^\s+|\s+$/g, '');
+        if (!v) { input.value = tile.title; return; }
+        if (v === tile.title) return;
+        tile.title = v;
+        save({ tiles: cfg.tiles });
+        preview();
+      };
+      input.oninput = function () { clearTimeout(timer); timer = setTimeout(commit, 700); };
+      input.onchange = commit;
+      input.onkeydown = function (ev) { if (ev.keyCode === 13) input.blur(); };
+      name.appendChild(input);
+      var orig = tvTitle(tile.id);
+      if (orig && orig !== tile.title) {
+        var sub = document.createElement('span');
+        sub.className = 'sub';
+        sub.textContent = t.onTv + orig;
+        name.appendChild(sub);
+      }
+      li.appendChild(name);
+
+      [['up', i - 1], ['down', i + 1], ['drop', -1]].forEach(function (a) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'icon-btn';
+        b.innerHTML = svg(a[0]);
+        b.setAttribute('aria-label', t[a[0]] + ': ' + tile.title);
+        b.title = t[a[0]];
+        if ((a[0] === 'up' && i === 0) || (a[0] === 'down' && i === tiles.length - 1)) b.disabled = true;
+        b.onclick = function () {
+          if (a[0] === 'drop') tiles.splice(i, 1);
+          else { var x = tiles[i]; tiles[i] = tiles[a[1]]; tiles[a[1]] = x; }
+          saveTiles();
+          var again = $('tiles').children[a[0] === 'drop' ? Math.min(i, tiles.length - 1) : a[1]];
+          var focus = again && again.querySelector(a[0] === 'drop' ? 'input' : '.icon-btn:not([disabled])');
+          if (focus) focus.focus();
+        };
+        li.appendChild(b);
+      });
+      list.appendChild(li);
+    });
+    renderAdd();
+  }
+
+  function renderAdd() {
+    var sel = $('add'), used = {};
+    (cfg.tiles || []).forEach(function (x) { used[x.id] = true; });
+    sel.innerHTML = '';
+    var first = document.createElement('option');
+    first.value = '';
+    first.textContent = t.add;
+    sel.appendChild(first);
+    [[t.apps, tv.apps], [t.inputs, tv.inputs]].forEach(function (g) {
+      var free = g[1].filter(function (x) { return !used[x.id]; });
+      if (!free.length) return;
+      var og = document.createElement('optgroup');
+      og.label = g[0];
+      free.forEach(function (x) {
+        var o = document.createElement('option');
+        o.value = x.id;
+        o.textContent = x.title;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    sel.setAttribute('aria-label', t.add);
+    var full = (cfg.tiles || []).length >= 12;
+    sel.disabled = full;
+    $('tiles-note').hidden = !full;
+    $('tiles-note').textContent = t.full;
+  }
+
+  $('add').onchange = function () {
+    var id = this.value;
+    if (!id) return;
+    cfg.tiles = (cfg.tiles || []).concat([{ id: id, title: tvTitle(id) || id }]);
+    saveTiles();
+    $('add').focus();
+  };
+
+  /* ---------- background ---------- */
+
+  var bgs = []; // the backgrounds the app carries, from backgrounds/index.json
+
+  function bgName(b, short) { return t[b.id + (short ? 'Short' : '')] || (short ? b.short : b.title); }
+
+  function renderBg() {
+    var custom = cfg.background && cfg.background.custom, box = $('bgs'), chosen = null;
+    box.innerHTML = '';
+    bgs.forEach(function (b) {
+      var on = !custom && cfg.preset === b.id, btn = document.createElement('button'), img = document.createElement('img');
+      if (on) chosen = b;
+      btn.type = 'button';
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', bgName(b));
+      img.src = '/backgrounds/thumbs/' + b.id + '.jpg';
+      img.alt = '';
+      img.width = 384;
+      img.height = 216;
+      var label = document.createElement('span');
+      label.textContent = bgName(b, true);
+      btn.appendChild(img);
+      btn.appendChild(label);
+      btn.onclick = function () {
+        cfg.preset = b.id;
+        if (cfg.background) cfg.background.custom = false;
+        renderBg();
+        preview();
+        save({ preset: b.id });
+      };
+      box.appendChild(btn);
+    });
+    var c = $('bg-credit');
+    c.innerHTML = '';
+    if (custom) c.textContent = t.yours + ' · ' + t.yoursBy;
+    else if (chosen) {
+      var name = document.createTextNode(bgName(chosen));
+      if (chosen.link) {
+        var a = document.createElement('a');
+        a.href = chosen.link;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.appendChild(name);
+        name = a;
+      }
+      c.appendChild(name);
+      c.appendChild(document.createTextNode(' · ' + chosen.by + ' · ' + t[chosen.licence]));
+    }
+    $('bg-default').hidden = !custom;
+  }
+
+  function toBlob(canvas, cb) {
+    if (canvas.toBlob) return canvas.toBlob(cb, 'image/jpeg', 0.88);
+    var d = atob(canvas.toDataURL('image/jpeg', 0.88).split(',')[1]), a = new Uint8Array(d.length);
+    for (var i = 0; i < d.length; i++) a[i] = d.charCodeAt(i);
+    cb(new Blob([a], { type: 'image/jpeg' }));
+  }
+
+  // Cropped to 16:9 around the middle and drawn at the size chosen: the TV gets a JPEG it can show as it is.
+  function resize(file, width, cb) {
+    var URLs = window.URL || window.webkitURL, url = URLs.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var h = Math.round(width * 9 / 16), sw = img.naturalWidth, sh = img.naturalHeight, sx = 0, sy = 0;
+      if (sw / sh > 16 / 9) { var nw = Math.round(sh * 16 / 9); sx = Math.round((sw - nw) / 2); sw = nw; }
+      else { var nh = Math.round(sw * 9 / 16); sy = Math.round((sh - nh) / 2); sh = nh; }
+      var c = document.createElement('canvas');
+      c.width = width; c.height = h;
+      var g = c.getContext('2d');
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(img, sx, sy, sw, sh, 0, 0, width, h);
+      URLs.revokeObjectURL(url);
+      toBlob(c, cb);
+    };
+    img.onerror = function () { URLs.revokeObjectURL(url); cb(null); };
+    img.src = url;
+  }
+
+  $('choose').onkeydown = function (e) { if (e.keyCode === 13 || e.keyCode === 32) { e.preventDefault(); $('file').click(); } };
+  $('file').onchange = function () {
+    var f = this.files && this.files[0];
+    this.value = '';
+    if (!f) return;
+    var size = +document.querySelector('input[name=size]:checked').value;
+    try { localStorage.setItem('size', String(size)); } catch (e) {}
+    status(t.sending);
+    resize(f, size, function (blob) {
+      if (!blob) return status(t.notImage, true);
+      api('POST', '/api/background', blob, function (r, raw) {
+        if (!r) return status(t.notSaved + ((raw && raw.error) || t.offline), true);
+        cfg = r.config;
+        status(t.saved);
+        renderBg();
+        preview();
+      }, 'image/jpeg');
+    });
+  };
+  $('bg-default').onclick = function () {
+    status(t.saving);
+    api('DELETE', '/api/background', null, function (r) {
+      if (!r) return status(t.notSaved + t.offline, true);
+      cfg = r.config;
+      status(t.saved);
+      renderBg();
+      preview();
+      $('choose').focus();
+    });
+  };
+  $('veil').oninput = preview;
+  $('veil').onchange = function () { save({ veil: +this.value }); };
+
+  /* ---------- weather ---------- */
+
+  var searchTimer = null, searchSeq = 0;
+  $('city').oninput = function () {
+    clearTimeout(searchTimer);
+    var q = this.value.replace(/^\s+|\s+$/g, '');
+    if (q.length < 2 || (cfg.weather && q === cfg.weather.name)) { $('results').innerHTML = ''; $('city-note').hidden = true; return; }
+    searchTimer = setTimeout(function () { search(q); }, 350);
+  };
+
+  function search(q) {
+    var seq = ++searchSeq, x = new XMLHttpRequest();
+    cityNote(t.searching);
+    x.open('GET', 'https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&language=' + lang() + '&name=' + encodeURIComponent(q));
+    x.timeout = 8000;
+    x.onload = function () {
+      if (seq !== searchSeq) return;
+      var list = [];
+      try { list = JSON.parse(x.responseText).results || []; } catch (e) {}
+      var ul = $('results');
+      ul.innerHTML = '';
+      cityNote(list.length ? '' : t.noCity);
+      list.forEach(function (c) {
+        var li = document.createElement('li'), b = document.createElement('button');
+        b.type = 'button';
+        b.appendChild(document.createTextNode(c.name));
+        var where = [c.admin2 !== c.name && c.admin2, c.admin1, c.country].filter(Boolean).join(', ');
+        if (where) { var s = document.createElement('small'); s.textContent = where; b.appendChild(s); }
+        b.onclick = function () {
+          $('city').value = c.name;
+          ul.innerHTML = '';
+          save({ weather: { name: c.name, lat: Math.round(c.latitude * 100) / 100, lon: Math.round(c.longitude * 100) / 100 } });
+        };
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+    };
+    x.onerror = x.ontimeout = function () { if (seq === searchSeq) cityNote(t.searchFail); };
+    x.send();
+  }
+
+  function cityNote(text) { $('city-note').textContent = text; $('city-note').hidden = !text; }
+
+  $('no-weather').onclick = function () {
+    $('city').value = '';
+    $('results').innerHTML = '';
+    cityNote('');
+    save({ weather: null });
+  };
+
+  /* ---------- remote, power, language, PIN ---------- */
+
+  function keyNote(state) {
+    var n = $('key-note');
+    n.textContent = cfg.key === 'none' ? '' : (t[state] || '');
+    n.className = 'note' + (state === 'failed' || state === 'noglasshouse' ? ' err' : '');
+  }
+
+  function renderKeys() {
+    var sel = $('key');
+    sel.innerHTML = '';
+    [{ key: 'home', title: t.keyHome }].concat(tv.keys, [{ key: 'none', title: t.keyNone }]).forEach(function (k) {
+      var o = document.createElement('option');
+      o.value = k.key;
+      o.textContent = k.title;
+      sel.appendChild(o);
+    });
+    sel.value = cfg.key;
+  }
+  $('key').onchange = function () { save({ key: this.value }); };
+  $('power').onchange = function () { save({ openAtPowerOn: this.checked }); };
+  $('language').onchange = function () { save({ language: this.value }); };
+
+  function radios(name, value, onPick) {
+    var els = document.querySelectorAll('input[name=' + name + ']');
+    for (var i = 0; i < els.length; i++) {
+      els[i].checked = els[i].value === value;
+      if (onPick) els[i].onchange = function () { onPick(this.value); };
+    }
+  }
+
+  function pinNote(text, err) { $('pin-note').textContent = text; $('pin-note').hidden = !text; $('pin-note').className = 'note' + (err ? ' err' : ''); }
+
+  function renderPin() {
+    $('pin-state').textContent = cfg.pinSet ? t.pinOn : t.pinOff;
+    $('pin-clear-row').hidden = !cfg.pinSet;
+  }
+
+  $('pin-set').onclick = function () {
+    var v = $('pin-new').value;
+    if (!/^\d{4,8}$/.test(v)) return pinNote(t.pinBad, true);
+    api('POST', '/api/pin', { pin: v }, function (r) {
+      if (!r) return pinNote(t.notSaved + t.offline, true);
+      pin = v;
+      try { sessionStorage.setItem('pin', v); } catch (e) {}
+      cfg = r.config;
+      $('pin-new').value = '';
+      pinNote(t.pinDone);
+      renderPin();
+    });
+  };
+  $('pin-clear').onclick = function () {
+    api('POST', '/api/pin', { pin: '' }, function (r) {
+      if (!r) return pinNote(t.notSaved + t.offline, true);
+      pin = '';
+      try { sessionStorage.removeItem('pin'); } catch (e) {}
+      cfg = r.config;
+      pinNote(t.pinCleared);
+      renderPin();
+    });
+  };
+
+  $('remove').onclick = function () { $('confirm').hidden = false; $('remove-no').focus(); };
+  $('remove-no').onclick = function () { $('confirm').hidden = true; $('remove').focus(); };
+  $('remove-yes').onclick = function () {
+    api('POST', '/api/uninstall', { confirm: true }, function (r) {
+      if (!r) return status(t.notSaved + t.offline, true);
+      $('page').hidden = true;
+      $('gone').textContent = t.removed;
+      $('gone').hidden = false;
+    });
+  };
+
+  /* ---------- start ---------- */
+
+  function render() {
+    renderTiles();
+    renderBg();
+    renderKeys();
+    keyNote(cfg.keyStatus || 'active');
+    radios('tileStyle', cfg.tileStyle, function (v) { save({ tileStyle: v }); });
+    radios('clock', cfg.clock, function (v) { save({ clock: v }); });
+    radios('units', cfg.units, function (v) { save({ units: v }); });
+    var size = '1920';
+    try { size = localStorage.getItem('size') || size; } catch (e) {}
+    radios('size', size, function (v) { try { localStorage.setItem('size', v); } catch (e) {} });
+    $('veil').value = cfg.veil;
+    $('power').checked = cfg.openAtPowerOn;
+    $('language').value = cfg.language;
+    $('city').value = cfg.weather ? cfg.weather.name : '';
+    $('version').textContent = 'Lightkeeper ' + cfg.version;
+    renderPin();
+    preview();
+  }
+
+  function showLock(note) {
+    $('page').hidden = true;
+    $('lock').hidden = false;
+    $('lock-note').textContent = note || '';
+    $('lock-note').hidden = !note;
+    $('lock-pin').value = '';
+    $('lock-pin').focus();
+  }
+
+  $('lock-form').onsubmit = function (e) {
+    e.preventDefault();
+    pin = $('lock-pin').value;
+    loadTv();
+  };
+
+  function loadTv() {
+    api('GET', '/api/tv', null, function (r) {
+      if (!r) return;
+      if (pin) { try { sessionStorage.setItem('pin', pin); } catch (e) {} }
+      tv = r;
+      cfg.keyStatus = r.keyStatus;
+      $('lock').hidden = true;
+      $('page').hidden = false;
+      render();
+      scale();
+    });
+  }
+
+  api('GET', '/backgrounds/index.json', null, function (r) {
+    bgs = r || [];
+    if (cfg && !$('page').hidden) renderBg();
+  });
+
+  api('GET', '/api/config', null, function (r) {
+    if (!r) { $('page').hidden = false; status(t.offline, true); return; }
+    cfg = r;
+    translate();
+    if (cfg.pinSet && !pin) return showLock('');
+    loadTv();
+  });
+
+  window.addEventListener('resize', scale);
+  setInterval(function () { if (cfg && !$('page').hidden) $('p-ora').innerHTML = clockText(); }, 10000);
+  translate();
+})();
+</script>
+</body>
+</html>
