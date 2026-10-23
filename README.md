@@ -4,7 +4,7 @@ A calm Home screen for LG TVs on older webOS, made to sit beside [GlassHouse](ht
 
 It shows the time, the weather for one city and a short row of your apps and HDMI inputs over a picture, and keeps LG's ads and suggestions out. The Home key opens it, it comes up when the TV switches on, and you set it up from your phone.
 
-![Lightkeeper on the TV](docs/screenshots/home.jpg)
+![Lightkeeper on the TV](docs/screenshots/home-icons.jpg)
 
 GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs before those, and it started on an LG C1 running webOS 6.5.3.
 
@@ -14,7 +14,7 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 
 | Logos and names | Settings on a phone |
 |---|---|
-| ![The Home with logos](docs/screenshots/home-icons.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
+| ![The Home with plain names](docs/screenshots/home.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
 
 ![The settings page on a computer, with a live preview of the TV](docs/screenshots/settings.png)
 
