@@ -118,6 +118,14 @@ node test/check.js        # the server's checks
 
 A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy in `app/backgrounds/thumbs/`, and an entry in `app/backgrounds/index.json`.
 
+## Contributing
+
+Ideas, reports and pull requests are welcome.
+
+- **Missing a service or a console?** [Open an issue](https://github.com/chiotas/lightkeeper/issues/new/choose) with its name and, if you know it, a link to the official logo. I'll add the name and a white logo.
+- **Tried it on another TV?** The *Report from your TV* form takes two minutes and fills in the compatibility table.
+- **Pull requests:** keep the code plain ES5, as the older TVs need, and run `node test/check.js` before you send it.
+
 ## Credits
 
 - Default background: *Godrevy Lighthouse*, a photograph by [Francesco Gola](https://francescogola.net). © Francesco Gola, all rights reserved; it may be used only as part of Lightkeeper, see [PHOTO-LICENSE.md](PHOTO-LICENSE.md).
@@ -176,5 +184,7 @@ Sul telecomando: **← →** per scegliere, **OK** per aprire, **Indietro** per 
 **Compatibilità.** Provata solo su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Dovrebbe funzionare sui webOS da 4.x a 8.x con GlassHouse, ma non è provata. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse. Sul webOS 11 non può prendere il tasto Home. I webOS 1, 2 e 3 non sono supportati. La tabella completa è nella sezione *Compatibility*. Se la provate su un'altra TV, aprite una [segnalazione](https://github.com/chiotas/lightkeeper/issues) con modello, versione e com'è andata.
 
 **Problemi.** Se il tasto Home apre ancora la Home LG, nelle impostazioni la sezione *Remote and power* dice cosa sta facendo: «Active within a minute» vuol dire aspettare un minuto. Se la pagina non si apre: stessa rete della TV, indirizzo con `http://` e `:8090`, poi aprite Lightkeeper una volta dalla TV. Se accendendo la TV si accende anche la console, è il SIMPLINK della TV: Impostazioni → Generali → Dispositivi → Impostazioni HDMI → SIMPLINK → *Sincronizzazione accensione automatica*. Il registro è in `/tmp/lightkeeper.log` sulla TV.
+
+**Contribuire.** Suggerimenti, segnalazioni e pull request sono benvenuti. Manca un servizio o una console? [Aprite una segnalazione](https://github.com/chiotas/lightkeeper/issues/new/choose) col nome e, se c'è, il link al logo ufficiale: aggiungo nome e logo bianco. Se la provate su un'altra TV, il modulo *Report from your TV* richiede due minuti.
 
 **Licenza.** Il codice è MIT, © 2026 Francesco Gola. La foto dello sfondo predefinito, *Godrevy Lighthouse* di [Francesco Gola](https://francescogola.net), ha una licenza sua ([PHOTO-LICENSE.md](PHOTO-LICENSE.md)): tutti i diritti riservati, si usa solo dentro Lightkeeper e senza modifiche. Gli altri sfondi e i loro crediti sono nella sezione *Credits*. I loghi appartengono ai rispettivi proprietari e sono usati solo per identificare app e apparecchi; i disegni vengono da Simple Icons (CC0) e da Wikimedia Commons (pubblico dominio). **Uso a proprio rischio**: Lightkeeper gira come root su una TV modificata e non ha alcuna garanzia. Non è affiliata né approvata da LG Electronics.
