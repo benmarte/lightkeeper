@@ -22,31 +22,28 @@ Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon 
 
 ## What you need
 
-- An LG TV with the **Homebrew Channel** installed: see [webosbrew](https://github.com/webosbrew/webos-homebrew-channel) and its guides.
-- **GlassHouse** installed and running on the TV: see the [GlassHouse documentation](https://rorygallagher2024.github.io/glasshouse/). Lightkeeper uses its remote-key filter to take over the Home key.
-- A phone or computer on the same network as the TV.
-
-This project does not explain how to get the Homebrew Channel onto a TV. Follow those projects' own guides.
+- **An LG webOS TV with root and the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel).** This project does not explain how to root a TV: follow the Homebrew Channel's own guides.
+- **[GlassHouse](https://github.com/rorygallagher2024/glasshouse) installed and running** (its dashboard answers on port 8080). Lightkeeper hands the Home key to itself through GlassHouse's remote-key filter. Tested with GlassHouse 0.118.0; see its [documentation](https://rorygallagher2024.github.io/glasshouse/) to install it.
+- **A phone or computer on the same network as the TV**, for the settings page.
+- An internet connection on the TV for the weather. Everything else works offline.
 
 ## Install
 
-**From the package.** Download `io.github.chiotas.lightkeeper_1.0.0_all.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest) and install it as you install any `.ipk`:
+1. **Download** `io.github.chiotas.lightkeeper_1.0.0_all.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
+2. **Install it on the TV**, in one of these ways:
+   - GlassHouse dashboard → **Apps** tab → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)). You can also paste the release's link to the `.ipk` there.
+   - [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), or `ares-install` from LG's webOS CLI.
+3. **Open Lightkeeper once** from the TV's app list. On its first start it asks the Homebrew Channel to set up its settings server and its start-up hook. This takes about ten seconds, and nothing asks you anything.
+4. **Press Home.** From now on the Home key opens Lightkeeper, and so does switching the TV on. You can turn off either in the settings.
+5. **Set it up** from your phone: on the TV, move to the gear at the end of the row and the address to type appears beside it, something like `http://192.168.1.50:8090`.
 
-- GlassHouse: **Apps** tab, *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)), or
-- [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), or
-- `ares-install` from LG's webOS CLI.
-
-Then open **Lightkeeper** once from the TV's app list. On its first start it asks the Homebrew Channel to set up its small settings server and its start-up hook, and from then on it runs by itself.
-
-**Over SSH,** from a computer with this repository and SSH access to the TV as root:
+**Over SSH instead,** from a computer with this repository and root SSH access to the TV:
 
 ```sh
 ./lightkeeper.sh install 192.168.1.50
 ```
 
-If your TV needs a particular key, set `LIGHTKEEPER_SSH="ssh -i ~/.ssh/your_tv_key"` first.
-
-Out of the box, Lightkeeper takes the Home key and opens when the TV comes on. You can turn off both in the settings.
+If your TV needs a particular key, set `LIGHTKEEPER_SSH="ssh -i ~/.ssh/your_tv_key"` first. To update later, install the new `.ipk` over the old one, or run the same command: your settings stay.
 
 ## Set it up
 
@@ -83,14 +80,33 @@ All three give the Home key back to LG's Home, remove the start-up hook and dele
 
 ## Compatibility
 
-| TV | Status |
-|---|---|
-| LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0 | Tested |
-| Other webOS 4, 5 and 6 TVs | Not tested. Written for them: ES5, node 0.12 and up, Chromium 53 and up |
-| webOS 9 and 10 | Not tested. GlassHouse has its own Home there, and Lightkeeper on the Home key would take its place |
-| webOS 11 | Not tested. GlassHouse changes keys there in another way, so Lightkeeper cannot take the Home key; the rest should work |
+Lightkeeper has been tested on one TV. It is written for the older ones (plain ES5 for the Chromium and node versions they ship, and the services GlassHouse already uses on them), but please treat everything below the first row as a reasoned guess.
 
-If you try it on another TV, open an issue and say how it went.
+| | TVs | What to expect |
+|---|---|---|
+| **Tested** | LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0 | Everything in this README. |
+| **Should work** | webOS 4.x to 8.x (LG's 2018–2023 models, up to "webOS 23"), with GlassHouse running | Not tried. These TVs use the same JavaScript key filter GlassHouse uses on the C1, and web and node engines at least as new as webOS 4's (Chromium 53, node 0.12). If GlassHouse's Apps tab offers to change your remote's keys, Lightkeeper can take the Home key. |
+| **Should work, with care** | webOS 9 and 10 ("webOS 24" and "25") | Not tried. GlassHouse has its own Home there; turn it off first, as both would claim the Home key. |
+| **Partly** | webOS 11 ("webOS 26") | Not tried. GlassHouse changes keys there with LG's own settings, which leave the Home key out, so Lightkeeper cannot take it. The app, the settings and opening at power on should still work. |
+| **Not supported** | webOS 1, 2 and 3; any TV without root, the Homebrew Channel and GlassHouse | Older web engines and services Lightkeeper was not written for. |
+
+If you try it on another TV, please [open an issue](https://github.com/chiotas/lightkeeper/issues) with the model, the webOS version (Settings → General → About this TV) and how it went, good or bad.
+
+## Troubleshooting
+
+**The Home key still opens LG's Home.** In the settings, *Remote and power* says what the key is doing. "Active within a minute" means GlassHouse is restarting to put its key filter in place: wait a minute. "GlassHouse is not installed" means Lightkeeper cannot find GlassHouse on the TV: install it first. A GlassHouse update can also reset the keys; changing the key in Lightkeeper's settings sets it again.
+
+**The settings page does not open.** Make sure your phone is on the same network as the TV, and type the address with `http://` and `:8090`. If it still does not answer, open Lightkeeper once from the TV's app list: it starts its server again if needed. Over SSH, `./lightkeeper.sh install <address>` puts everything back in place and keeps your settings.
+
+**Lightkeeper does not come up when the TV switches on.** Check *Open at power on* in the settings. Lightkeeper opens only over an input or LG's Home, so switching on with the Netflix button keeps you on Netflix. After a full restart of the TV, the Homebrew Channel starts Lightkeeper about 40 seconds in.
+
+**Switching on the TV also switches on a console or a streaming box.** That is the TV's own HDMI-CEC, not Lightkeeper: Settings → General → Devices → HDMI Settings → SIMPLINK (HDMI-CEC) → *Auto Power Sync*. Turned off, the console's own button still switches on the TV.
+
+**The screen saver gets in the way while you try things.** *Remote and power* → *Pause for an hour*. It also closes a screen saver already on.
+
+**A tile shows a coloured icon among white logos.** Lightkeeper has no logo for that app, and it could not make the TV's icon white. Choose *Names* or *App icons* instead, or open an issue with the app's name.
+
+**Something else.** The log is in `/tmp/lightkeeper.log` on the TV. Please attach it, with what you did, to an [issue](https://github.com/chiotas/lightkeeper/issues).
 
 ## Develop
 
@@ -133,7 +149,13 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 
 **Cosa serve.** Una TV LG con il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati. Questo progetto non spiega come installarli: seguite le loro guide.
 
-**Installazione.** Scaricate il `.ipk` dall'[ultima release](https://github.com/chiotas/lightkeeper/releases/latest). Installatelo dalla scheda *Apps* di GlassHouse (*Install app from a URL or file*), con webOS Dev Manager o con `ares-install`. Poi aprite Lightkeeper una volta dall'elenco delle app: al primo avvio chiede al Homebrew Channel di preparare il suo server e l'avvio automatico. Da un computer, via SSH come root: `./lightkeeper.sh install 192.168.1.50`. Appena installata, prende il tasto Home e si apre all'accensione; si può spegnere tutto dalle impostazioni.
+**Installazione.**
+1. Scaricate il `.ipk` dall'[ultima release](https://github.com/chiotas/lightkeeper/releases/latest).
+2. Installatelo dalla scheda *Apps* di GlassHouse (*Install app from a URL or file*), con webOS Dev Manager o con `ares-install`.
+3. Aprite Lightkeeper una volta dall'elenco delle app. Al primo avvio chiede al Homebrew Channel di preparare il suo server e l'avvio automatico: una decina di secondi, senza domande.
+4. Premete Home. Da qui in poi il tasto Home e l'accensione aprono Lightkeeper; si possono spegnere entrambi dalle impostazioni.
+
+In alternativa, da un computer via SSH come root: `./lightkeeper.sh install 192.168.1.50`.
 
 **Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
 
@@ -151,6 +173,8 @@ Sul telecomando: **← →** per scegliere, **OK** per aprire, **Indietro** per 
 
 **Disinstallazione.** Dalla pagina (*Remove Lightkeeper*), con `./lightkeeper.sh uninstall 192.168.1.50`, o cancellando l'app dalla TV, che se ne accorge entro due minuti se resta accesa. Il tasto Home torna alla Home di LG, l'avvio automatico sparisce e le impostazioni vengono cancellate.
 
-**Compatibilità.** Provata su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Le altre versioni non sono provate.
+**Compatibilità.** Provata solo su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Dovrebbe funzionare sui webOS da 4.x a 8.x con GlassHouse, ma non è provata. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse. Sul webOS 11 non può prendere il tasto Home. I webOS 1, 2 e 3 non sono supportati. La tabella completa è nella sezione *Compatibility*. Se la provate su un'altra TV, aprite una [segnalazione](https://github.com/chiotas/lightkeeper/issues) con modello, versione e com'è andata.
+
+**Problemi.** Se il tasto Home apre ancora la Home LG, nelle impostazioni la sezione *Remote and power* dice cosa sta facendo: «Active within a minute» vuol dire aspettare un minuto. Se la pagina non si apre: stessa rete della TV, indirizzo con `http://` e `:8090`, poi aprite Lightkeeper una volta dalla TV. Se accendendo la TV si accende anche la console, è il SIMPLINK della TV: Impostazioni → Generali → Dispositivi → Impostazioni HDMI → SIMPLINK → *Sincronizzazione accensione automatica*. Il registro è in `/tmp/lightkeeper.log` sulla TV.
 
 **Licenza.** Il codice è MIT, © 2026 Francesco Gola. La foto dello sfondo predefinito, *Godrevy Lighthouse* di [Francesco Gola](https://francescogola.net), ha una licenza sua ([PHOTO-LICENSE.md](PHOTO-LICENSE.md)): tutti i diritti riservati, si usa solo dentro Lightkeeper e senza modifiche. Gli altri sfondi e i loro crediti sono nella sezione *Credits*. I loghi appartengono ai rispettivi proprietari e sono usati solo per identificare app e apparecchi; i disegni vengono da Simple Icons (CC0) e da Wikimedia Commons (pubblico dominio). **Uso a proprio rischio**: Lightkeeper gira come root su una TV modificata e non ha alcuna garanzia. Non è affiliata né approvata da LG Electronics.
