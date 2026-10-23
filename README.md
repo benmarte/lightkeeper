@@ -87,17 +87,18 @@ All three give the Home key back to LG's Home, remove the start-up hook and dele
 
 ## Compatibility
 
-Lightkeeper has been tested on one TV. It is written for the older ones (plain ES5 for the Chromium and node versions they ship, and the services GlassHouse already uses on them), but please treat everything below the first row as a reasoned guess.
+Lightkeeper has been tested on one TV. It is written for the older ones (plain ES5 for the Chromium and node versions they ship, and the services GlassHouse already uses on them). The second row comes from people who run it; the rest is a reasoned guess.
 
 | | TVs | What to expect |
 |---|---|---|
 | **Tested** | LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0 | Everything in this README. |
-| **Should work** | webOS 4.x to 8.x (LG's 2018–2023 models, up to "webOS 23"), with GlassHouse running | Not tried. These TVs use the same JavaScript key filter GlassHouse uses on the C1, and web and node engines at least as new as webOS 4's (Chromium 53, node 0.12). If GlassHouse's Apps tab offers to change your remote's keys, Lightkeeper can take the Home key. |
+| **Reported working** | webOS 2.x (community reports) | Not tried here. People on Reddit run it on webOS 2; a report with the model and what works fills in this row. |
+| **Should work** | webOS 3.x to 8.x (LG's 2016–2023 models, up to "webOS 23"), with GlassHouse running | Not tried. The code checks no webOS version and needs nothing newer than the web and node engines of these TVs (node 0.12 on webOS 3 and 4). If GlassHouse's Apps tab offers to change your remote's keys, Lightkeeper can take the Home key. |
 | **Should work, with care** | webOS 9 and 10 ("webOS 24" and "25") | Not tried. GlassHouse has its own Home there; turn it off first, as both would claim the Home key. |
 | **Partly** | webOS 11 ("webOS 26") | Not tried. GlassHouse changes keys there with LG's own settings, which leave the Home key out, so Lightkeeper cannot take it. The app, the settings and opening at power on should still work. |
-| **Not supported** | webOS 1, 2 and 3; any TV without root, the Homebrew Channel and GlassHouse | Older web engines and services Lightkeeper was not written for. |
+| **Not supported** | webOS 1; any TV without root, the Homebrew Channel and GlassHouse | Lightkeeper needs all three, and no one has reported it working on webOS 1. |
 
-If you try it on another TV, please [open an issue](https://github.com/chiotas/lightkeeper/issues) with the model, the webOS version (Settings → General → About this TV) and how it went, good or bad.
+**Tried it on another TV?** Please fill in the [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) form: the model, the webOS version (Settings → General → About this TV) and how it went, good or bad. Reports move TVs up this table.
 
 ## Troubleshooting
 
@@ -198,7 +199,7 @@ Sul telecomando: **← →** per scegliere, **OK** per aprire, **Indietro** per 
 
 **Disinstallazione.** Dalla pagina (*Remove Lightkeeper*), con `./lightkeeper.sh uninstall 192.168.1.50`, o cancellando l'app dalla TV, che se ne accorge entro due minuti se resta accesa. Il tasto Home torna alla Home di LG, l'avvio automatico sparisce e le impostazioni vengono cancellate.
 
-**Compatibilità.** Provata solo su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Dovrebbe funzionare sui webOS da 4.x a 8.x con GlassHouse, ma non è provata. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse. Sul webOS 11 non può prendere il tasto Home. I webOS 1, 2 e 3 non sono supportati. La tabella completa è nella sezione *Compatibility*. Se la provate su un'altra TV, aprite una [segnalazione](https://github.com/chiotas/lightkeeper/issues) con modello, versione e com'è andata.
+**Compatibilità.** Provata solo su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Su Reddit c'è chi la usa su webOS 2.x. Dovrebbe funzionare sui webOS da 3.x a 8.x con GlassHouse, ma lì non è provata. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse. Sul webOS 11 non può prendere il tasto Home. Non sono supportati il webOS 1 e le TV senza root, Homebrew Channel e GlassHouse. La tabella completa è nella sezione *Compatibility*. Se la provate su un'altra TV, compilate il modulo [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) con modello, versione e com'è andata.
 
 **Problemi.** Se il tasto Home apre ancora la Home LG, nelle impostazioni la sezione *Remote and power* dice cosa sta facendo: «Active within a minute» vuol dire aspettare un minuto. Se la pagina non si apre: stessa rete della TV, indirizzo con `http://` e `:8090`, poi aprite Lightkeeper una volta dalla TV. Se accendendo la TV si accende anche la console, è il SIMPLINK della TV: Impostazioni → Generali → Dispositivi → Impostazioni HDMI → SIMPLINK → *Sincronizzazione accensione automatica*. Il registro è in `/tmp/lightkeeper.log` sulla TV.
 
