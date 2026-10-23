@@ -1,6 +1,7 @@
 /*
  * The logos of apps and devices, in white, for the Home and the settings page.
- * Drawn shapes come from Simple Icons (simpleicons.org, CC0); the others are the
+ * Drawn shapes come from Simple Icons (simpleicons.org, CC0), and for what has no
+ * logo from Phosphor Icons and Material Symbols (licences in logos/); the others are the
  * brands' own logos from Wikimedia Commons (public domain as simple text and
  * shapes), made white by docs/art/logos-commons-render.py, as pictures in
  * logos/. The trademarks belong to their owners and are shown only to name the
@@ -45,26 +46,21 @@ var IMMAGINI = {"chromecast": [1981, 240], "discoveryplus": [1185, 221], "disney
 // Where those pictures are, from the page that shows them.
 var LOGHI_BASE = 'logos/';
 
-// Pictures drawn for Lightkeeper (MIT), on the same 24 × 24 grid, holes by even-odd.
-var GENERICI = {
-  console: 'M7 6h10a5 5 0 0 1 4.9 4l1 5.4a3 3 0 0 1-5.2 2.5L15.5 15h-7l-2.2 2.9a3 3 0 0 1-5.2-2.5l1-5.4A5 5 0 0 1 7 6z' +
-    'M7 9.2h1.6v1.6h1.6v1.6H8.6V14H7v-1.6H5.4v-1.6H7z' +
-    'M16.5 9.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM18.7 11.4a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z',
-  hdmi: 'M2 8h20v4.6L19 16H5l-3-3.4z M3.8 9.8v2.1L5.8 14.2h12.4l2-2.3V9.8z',
-  box: 'M5 7h14a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-4a3 3 0 0 1 3-3z M11 13.4h2v1.2h-2z'
+// Icons for what has no logo: LG's own apps, a game console, plain HDMI, from
+// Phosphor Icons (fill, MIT) and, for HDMI, Google's Material Symbols (Apache 2.0);
+// their licences are in logos/.
+var ICONE = {
+  browser: 'M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm78.36,64H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM216,128a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM128,43a115.27,115.27,0,0,1,26,45H102A115.11,115.11,0,0,1,128,43ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48Zm50.35,61.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z',
+  gallery: 'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM156,88a12,12,0,1,1-12,12A12,12,0,0,1,156,88Zm60,112H40V160.69l46.34-46.35a8,8,0,0,1,11.32,0h0L165,181.66a8,8,0,0,0,11.32-11.32l-17.66-17.65L173,138.34a8,8,0,0,1,11.31,0L216,170.07V200Z',
+  apps: 'M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z',
+  media: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm40.55,110.58-52,36A8,8,0,0,1,104,164V92a8,8,0,0,1,12.55-6.58l52,36a8,8,0,0,1,0,13.16Z',
+  home: 'M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z',
+  sport: 'M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z',
+  tv: 'M216,64H147.31l34.35-34.34a8,8,0,1,0-11.32-11.32L128,60.69,85.66,18.34A8,8,0,0,0,74.34,29.66L108.69,64H40A16,16,0,0,0,24,80V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm0,136H40V80H216V200ZM200,100v80a4,4,0,0,1-4,4H60a4,4,0,0,1-4-4V100a4,4,0,0,1,4-4H196A4,4,0,0,1,200,100Z',
+  console: 'M247.44,173.75a.68.68,0,0,0,0-.14L231.05,89.44c0-.06,0-.12,0-.18A60.08,60.08,0,0,0,172,40H83.89a59.88,59.88,0,0,0-59,49.52L8.58,173.61a.68.68,0,0,0,0,.14,36,36,0,0,0,60.9,31.71l.35-.37L109.52,160h37l39.71,45.09c.11.13.23.25.35.37A36.08,36.08,0,0,0,212,216a36,36,0,0,0,35.43-42.25ZM104,112H96v8a8,8,0,0,1-16,0v-8H72a8,8,0,0,1,0-16h8V88a8,8,0,0,1,16,0v8h8a8,8,0,0,1,0,16Zm40-8a8,8,0,0,1,8-8h24a8,8,0,0,1,0,16H152A8,8,0,0,1,144,104Zm84.37,87.47a19.84,19.84,0,0,1-12.9,8.23A20.09,20.09,0,0,1,198,194.31L167.8,160H172a60,60,0,0,0,51-28.38l8.74,45A19.82,19.82,0,0,1,228.37,191.47Z',
+  hdmi: 'M380-80q-25 0-42.5-17.5T320-140v-60L206-426q-3-6-4.5-13t-1.5-14v-167q0-18 11.5-33.5T240-676v-144q0-23 18.5-41.5T300-880h360q23 0 41.5 18.5T720-820v144q17 7 28.5 22.5T760-620v167q0 7-1.5 14t-4.5 13L640-200v60q0 25-17.5 42.5T580-80H380Zm-80-600h98v-65q0-7 5-12t12-5q7 0 12 5t5 12v65h96v-65q0-7 5-12t12-5q7 0 12 5t5 12v65h98v-140H300v140Z'
 };
-
-// LG's own apps, drawn as line pictures for Lightkeeper (MIT): white like the logos.
-var TRATTI = {
-  browser: 'M12 3a9 9 0 1 0 0.01 0zM3 12h18M12 3c2.6 2.4 3.9 5.4 3.9 9s-1.3 6.6-3.9 9c-2.6-2.4-3.9-5.4-3.9-9s1.3-6.6 3.9-9zM4.6 7.5h14.8M4.6 16.5h14.8',
-  gallery: 'M3.5 5.5h17v13h-17zM3.5 15.5l5-5 4 4 3-3 5 5M15.5 8.4a1.3 1.3 0 1 0 0.01 0z',
-  apps: 'M4.5 4.5h5.5v5.5H4.5zM14 4.5h5.5v5.5H14zM4.5 14h5.5v5.5H4.5zM14 14h5.5v5.5H14z',
-  media: 'M12 3a9 9 0 1 0 0.01 0zM10 8.5l5.5 3.5-5.5 3.5z',
-  home: 'M3.5 11L12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5.5h4V20',
-  sport: 'M7 4h10v4.5a5 5 0 0 1-10 0zM7 6H4.5a2.6 2.6 0 0 0 2.9 4M17 6h2.5a2.6 2.6 0 0 1-2.9 4M12 13.5v3.5M9 20h6M10 17h4v3h-4z',
-  tv: 'M3.5 6.5h17v11h-17zM8 20.5h8M9 3l3 3 3-3'
-};
-var TRATTI_APP = { 'com.webos.app.browser': 'browser', 'com.webos.app.igallery': 'gallery', 'com.webos.app.discovery': 'apps',
+var ICONE_APP = { 'com.webos.app.browser': 'browser', 'com.webos.app.igallery': 'gallery', 'com.webos.app.discovery': 'apps',
   'com.webos.app.mediadiscovery': 'media', 'com.webos.app.homeconnect': 'home', 'com.webos.app.sportsteamsettings': 'sport' };
 
 // What can be plugged into an HDMI input, and the picture for each.
@@ -128,9 +124,9 @@ function logoDi(tile, modo, titoloTv) {
     return 'hdmi';
   }
   if (modo !== 'logo') return '';
-  if (TRATTI_APP[tile.id]) return TRATTI_APP[tile.id];
+  if (ICONE_APP[tile.id]) return ICONE_APP[tile.id];
   var nome = LOGHI_APP[tile.id] || LOGHI_TITOLI[String(tile.title).toLowerCase().replace(/[^a-z0-9]/g, '')] || '';
-  return SIMPLE_ICONS[nome] || IMMAGINI[nome] || TRATTI[nome] ? nome : '';
+  return SIMPLE_ICONS[nome] || IMMAGINI[nome] || ICONE[nome] ? nome : '';
 }
 
 /*
@@ -160,19 +156,11 @@ function disegnaLogo(nome, alto, maxW, maxH, dove) {
     img.style.height = img.height + 'px';
     return img;
   }
-  var NS = 'http://www.w3.org/2000/svg', d = SIMPLE_ICONS[nome] || GENERICI[nome] || TRATTI[nome] || GENERICI.hdmi;
+  var NS = 'http://www.w3.org/2000/svg', d = SIMPLE_ICONS[nome] || ICONE[nome] || ICONE.hdmi;
   var svg = document.createElementNS(NS, 'svg'), path = document.createElementNS(NS, 'path');
   path.setAttribute('d', d);
-  path.setAttribute('fill-rule', GENERICI[nome] ? 'evenodd' : 'nonzero');
   svg.appendChild(path);
   svg.setAttribute('fill', 'currentColor');
-  if (TRATTI[nome]) {
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '1.7');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-  }
   svg.setAttribute('aria-hidden', 'true');
   var b = misure[nome];
   if (!b) {
@@ -181,9 +169,7 @@ function disegnaLogo(nome, alto, maxW, maxH, dove) {
     svg.style.visibility = 'hidden';
     (dove || document.body).appendChild(svg);
     var r = path.getBBox();
-    // A line picture's stroke reaches past its path by half its width.
-    var m = TRATTI[nome] ? 0.9 : 0;
-    b = misure[nome] = { x: r.x - m, y: r.y - m, w: (r.width || 24) + 2 * m, h: (r.height || 24) + 2 * m };
+    b = misure[nome] = { x: r.x, y: r.y, w: r.width || 24, h: r.height || 24 };
     svg.parentNode.removeChild(svg);
     svg.style.position = svg.style.visibility = '';
   }
