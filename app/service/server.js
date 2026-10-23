@@ -536,7 +536,8 @@ function handle(req, res) {
   }
   if (m === 'GET' && /^\/jost(-[235]00)?\.woff2$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/backgrounds\/((thumbs\/)?[a-z0-9-]+\.jpg|index\.json)$/.test(p)) {
-    return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
+    // The list changes with an update of the app; the pictures under a name never do.
+    return sendFile(res, path.join(APP_DIR, p.slice(1)), /\.json$/.test(p) ? 'no-cache' : 'max-age=86400');
   }
   // The background in use: the picture uploaded, or the one chosen among those the app carries.
   if (m === 'GET' && p === '/background.jpg') {
