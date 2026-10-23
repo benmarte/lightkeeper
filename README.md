@@ -47,6 +47,11 @@ Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon 
 
 If your TV needs a particular key, set `LIGHTKEEPER_SSH="ssh -i ~/.ssh/your_tv_key"` first. To update later, install the new `.ipk` over the old one, or run the same command: your settings stay.
 
+## Always the latest version
+
+- **In the Homebrew Channel.** Add Lightkeeper's repository once: Homebrew Channel → the gear at the top → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper then appears in the channel's list, among the other apps. Open it there to install it, and later to update it: the page shows the new version and *Update*. Your settings stay.
+- **A link that does not change.** `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` always leads to the newest release. Paste it in GlassHouse (*Apps* → *Install app from a URL or file*) or in webOS Dev Manager.
+
 ## Set it up
 
 Open **http://&lt;your-tv's-address&gt;:8090** on a phone or computer. On the TV, choose the gear at the end of the row; it opens the same page in the TV's browser and shows the address to type on your phone.
@@ -118,6 +123,12 @@ node test/check.js        # the server's checks
 ./lightkeeper.sh build      # dist/*.ipk
 ```
 
+A release carries four files from `dist/`: the package, `io.github.chiotas.lightkeeper_<version>_all.ipk`; the same file as `lightkeeper.ipk`, for the link that leads to the newest release; and the Homebrew Channel's catalog, `apps.json` and `lightkeeper.manifest.json`. The page the channel shows is [docs/homebrew-channel.html](docs/homebrew-channel.html), read from `main`.
+
+```sh
+gh release create v1.0.2 dist/io.github.chiotas.lightkeeper_1.0.2_all.ipk dist/lightkeeper.ipk dist/apps.json dist/lightkeeper.manifest.json
+```
+
 A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy in `app/backgrounds/thumbs/`, and an entry in `app/backgrounds/index.json`.
 
 ## Contributing
@@ -166,6 +177,10 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 4. Premete Home. Da qui in poi il tasto Home e l'accensione aprono Lightkeeper; si possono spegnere entrambi dalle impostazioni.
 
 In alternativa, da un computer via SSH come root: `./lightkeeper.sh install 192.168.1.50`.
+
+**Sempre l'ultima versione.**
+- Nel Homebrew Channel aggiungete una volta il repository di Lightkeeper: ingranaggio in alto → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper compare nella lista del canale insieme alle altre app: da lì si installa e, quando esce una versione nuova, si aggiorna con *Update*. Le impostazioni restano.
+- L'indirizzo `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` porta sempre all'ultima release: incollatelo in GlassHouse (*Apps* → *Install app from a URL or file*) o in webOS Dev Manager.
 
 **Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
 

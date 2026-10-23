@@ -1,7 +1,8 @@
 #!/bin/sh
 # Lightkeeper from a computer on the TV's network. Usage:
 #
-#   ./lightkeeper.sh build                 the package, dist/<id>_<version>_all.ipk, and its catalog entry
+#   ./lightkeeper.sh build                 the package, dist/<id>_<version>_all.ipk, the same as
+#                                        dist/lightkeeper.ipk, and its catalog entry
 #   ./lightkeeper.sh install <tv-address>  build, install over SSH and set it up
 #   ./lightkeeper.sh uninstall <tv-address>
 #                                        remote keys back to LG, hook, settings and app removed
@@ -93,12 +94,15 @@ manifest = {'id': app_id, 'version': version, 'type': 'web', 'title': 'Lightkeep
             'ipkUrl': release + os.path.basename(ipk), 'ipkHash': {'sha256': sha}, 'ipkSize': len(blob)}
 catalog = {'paging': {'page': 1, 'count': 1, 'maxPage': 1, 'itemsTotal': 1}, 'packages': [
     {'id': app_id, 'title': 'Lightkeeper', 'iconUri': manifest['iconUri'], 'shortDescription': manifest['appDescription'],
-     'manifestUrl': release + 'lightkeeper.manifest.json', 'manifest': manifest, 'pool': 'main'}]}
+     'manifestUrl': release + 'lightkeeper.manifest.json', 'manifest': manifest, 'pool': 'main',
+     'fullDescriptionUrl': 'https://raw.githubusercontent.com/chiotas/lightkeeper/main/docs/homebrew-channel.html'}]}
 d = os.path.dirname(ipk)
 json.dump(manifest, open(os.path.join(d, 'lightkeeper.manifest.json'), 'w'), indent=2)
 json.dump(catalog, open(os.path.join(d, 'apps.json'), 'w'), indent=2)
 print('%s  %d bytes  sha256 %s' % (ipk, len(blob), sha))
 EOF
+  # .../releases/latest/download/lightkeeper.ipk always leads to the newest release.
+  cp "$IPK" "$DIR/dist/lightkeeper.ipk"
 }
 
 tv() {
@@ -127,5 +131,5 @@ case "$1" in
       rm -f /var/lib/webosbrew/init.d/60-lightkeeper; true"
     echo "Lightkeeper is gone. The Home key goes back to LG's Home." ;;
   preview) exec sh "$DIR/test/fake-tv/serve.sh" ;;
-  *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+  *) sed -n '2,/^[^#]/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 2 ;;
 esac
