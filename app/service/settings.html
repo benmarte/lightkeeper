@@ -79,6 +79,10 @@ button, input, select { font: inherit; color: inherit; }
 .screen nav.icons i { display: block; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .screen nav.icons img { display: block; width: 132px; height: 132px; margin: 0 auto 20px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
 .screen nav.icons span.sel img { -webkit-transform: scale(1.06); transform: scale(1.06); }
+.screen nav.icons .logo { display: flex; align-items: center; justify-content: center; height: 132px; margin-bottom: 20px;
+  -webkit-filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); }
+.screen nav.icons .logo svg { display: block; }
+.screen nav.icons span.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 .screen nav.icons span.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
 .screen nav svg { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
 .screen nav.icons svg { width: 52px; height: 52px; margin-bottom: 4px; }
@@ -152,6 +156,8 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bord
 .tiles li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .tiles .ic { width: 40px; height: 40px; border-radius: 9px; margin-right: 14px; -webkit-flex-shrink: 0; flex-shrink: 0; background: var(--wash); overflow: hidden; }
 .tiles .ic img { display: block; width: 40px; height: 40px; }
+.tiles .ic.dev { display: flex; align-items: center; justify-content: center; color: var(--ink); }
+.tiles .dev-sel { display: block; height: 34px; margin-top: 6px; padding: 0 30px 0 10px; font-size: 14px; border-radius: 10px; background-position: right 10px center; max-width: 100%; }
 .tiles .name { -webkit-flex: 1; flex: 1; min-width: 0; }
 .tiles .name input { width: 100%; height: 44px; border: 0; border-radius: 0; background: transparent; padding: 0 2px; box-shadow: inset 0 -1px 0 var(--line-strong); }
 .tiles .name input:hover { box-shadow: inset 0 -1px 0 rgba(244, 241, 236, .45); }
@@ -244,9 +250,11 @@ footer a { color: var(--muted); }
           <span class="label" id="l-style" data-t="show">Show</span>
           <div class="seg" role="radiogroup" aria-labelledby="l-style">
             <label><input type="radio" name="tileStyle" value="text"><span data-t="names">Names</span></label>
-            <label><input type="radio" name="tileStyle" value="icon"><span data-t="icons">Icons and names</span></label>
+            <label><input type="radio" name="tileStyle" value="logo"><span data-t="logos">Logos</span></label>
+            <label><input type="radio" name="tileStyle" value="icon"><span data-t="icons">App icons</span></label>
           </div>
         </div>
+        <p class="note" data-t="showLede">Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.</p>
       </section>
 
       <section aria-labelledby="h-bg">
@@ -356,6 +364,7 @@ footer a { color: var(--muted); }
 </div>
 <p class="gone" id="gone" hidden></p>
 
+<script src="/logos.js"></script>
 <script>
 (function () {
   var T = {
@@ -364,7 +373,9 @@ footer a { color: var(--muted); }
       notSaved: 'Not saved: ', tiles: 'Tiles', tilesLede: 'The apps and inputs along the bottom of the Home, in this order.',
       add: 'Add a tile…', apps: 'Apps', inputs: 'Inputs', up: 'Move up', down: 'Move down', drop: 'Remove',
       nameOnTv: 'Name on the TV', onTv: 'On the TV: ', empty: 'No tiles yet. Add the apps and inputs you use most.',
-      full: 'Twelve tiles at most.', show: 'Show', names: 'Names', icons: 'Icons and names', background: 'Background',
+      full: 'Twelve tiles at most.', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
+      device: 'Device', dev_console: 'Game console', dev_hdmi: 'HDMI',
+      showLede: 'Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.',
       yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
       cc0: 'public domain (CC0)', own: 'made for Lightkeeper', night: 'Night at sea', nightShort: 'Night', dawn: 'Dawn at sea',
       dawnShort: 'Dawn', choose: 'Choose a picture', useDefault: 'Remove my picture', size: 'Size',
@@ -391,7 +402,9 @@ footer a { color: var(--muted); }
       notSaved: 'Non salvato: ', tiles: 'Voci', tilesLede: 'Le app e gli ingressi in fondo alla Home, in quest\'ordine.',
       add: 'Aggiungi una voce…', apps: 'App', inputs: 'Ingressi', up: 'Sposta su', down: 'Sposta giù', drop: 'Togli',
       nameOnTv: 'Nome sulla TV', onTv: 'Sulla TV: ', empty: 'Nessuna voce. Aggiungi le app e gli ingressi che usi di più.',
-      full: 'Al massimo dodici voci.', show: 'Mostra', names: 'Nomi', icons: 'Icone e nomi', background: 'Sfondo',
+      full: 'Al massimo dodici voci.', show: 'Mostra', names: 'Nomi', logos: 'Loghi', icons: 'Icone delle app', background: 'Sfondo',
+      device: 'Apparecchio', dev_console: 'Console giochi', dev_hdmi: 'HDMI',
+      showLede: 'I loghi sono bianchi; un\'app senza logo mostra la sua icona della TV. Gli ingressi mostrano l\'apparecchio che scegli.',
       yours: 'La tua immagine', yoursBy: 'caricata da questa pagina', rights: 'tutti i diritti riservati', pd: 'pubblico dominio',
       cc0: 'pubblico dominio (CC0)', own: 'fatta per Lightkeeper', night: 'Notte sul mare', nightShort: 'Notte', dawn: 'Alba sul mare',
       dawnShort: 'Alba', monk: 'Il monaco in riva al mare', monkShort: 'Il monaco', choose: 'Scegli un\'immagine',
@@ -511,13 +524,19 @@ footer a { color: var(--muted); }
     $('p-veil').style.opacity = $('veil').value / 100;
     $('p-ora').innerHTML = clockText();
     meteo();
-    var nav = $('p-nav'), icons = cfg.tileStyle === 'icon';
-    nav.className = icons ? 'icons' : '';
+    var nav = $('p-nav'), modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
+    nav.className = modo === 'text' ? '' : 'icons';
     nav.innerHTML = '';
     (cfg.tiles || []).forEach(function (tile, i) {
       var s = document.createElement('span');
       if (i === 0) s.className = 'sel';
-      if (icons) {
+      var logo = modo === 'text' ? '' : logoDi(tile, modo);
+      if (logo) {
+        var box = document.createElement('div');
+        box.className = 'logo';
+        box.appendChild(svgLogo(logo, 6400, 176, 96));
+        s.appendChild(box);
+      } else if (modo !== 'text') {
         var img = document.createElement('img');
         img.src = '/icon?id=' + encodeURIComponent(tile.id);
         img.alt = '';
@@ -604,11 +623,18 @@ footer a { color: var(--muted); }
       var li = document.createElement('li');
       var ic = document.createElement('div');
       ic.className = 'ic';
-      var img = document.createElement('img');
-      img.src = '/icon?id=' + encodeURIComponent(tile.id);
-      img.alt = '';
-      img.onerror = function () { img.style.display = 'none'; };
-      ic.appendChild(img);
+      // The logo where there is one, white on the tile; else the app's own icon from the TV.
+      var logo = logoDi(tile, 'logo');
+      if (logo) {
+        ic.className = 'ic dev';
+        ic.appendChild(svgLogo(logo, 900, 34, 24));
+      } else {
+        var img = document.createElement('img');
+        img.src = '/icon?id=' + encodeURIComponent(tile.id);
+        img.alt = '';
+        img.onerror = function () { img.style.display = 'none'; };
+        ic.appendChild(img);
+      }
       li.appendChild(ic);
 
       var name = document.createElement('div');
@@ -638,6 +664,20 @@ footer a { color: var(--muted); }
         sub.className = 'sub';
         sub.textContent = t.onTv + orig;
         name.appendChild(sub);
+      }
+      if (eIngresso(tile.id)) {
+        var dev = document.createElement('select');
+        dev.className = 'dev-sel';
+        dev.setAttribute('aria-label', t.device + ': ' + tile.title);
+        APPARECCHI.forEach(function (a) {
+          var o = document.createElement('option');
+          o.value = a.id;
+          o.textContent = t['dev_' + a.id] || a.nome;
+          dev.appendChild(o);
+        });
+        dev.value = tile.device || indovinaApparecchio(orig || tile.title);
+        dev.onchange = function () { tile.device = dev.value; saveTiles(); };
+        name.appendChild(dev);
       }
       li.appendChild(name);
 
@@ -695,7 +735,9 @@ footer a { color: var(--muted); }
   $('add').onchange = function () {
     var id = this.value;
     if (!id) return;
-    cfg.tiles = (cfg.tiles || []).concat([{ id: id, title: tvTitle(id) || id }]);
+    var tile = { id: id, title: tvTitle(id) || id };
+    if (eIngresso(id)) tile.device = indovinaApparecchio(tile.title);
+    cfg.tiles = (cfg.tiles || []).concat([tile]);
     saveTiles();
     $('add').focus();
   };

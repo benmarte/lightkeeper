@@ -174,6 +174,8 @@ function publicConfig() {
 }
 
 var ID_RE = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
+// The devices an HDMI input can be set to, as in logos.js.
+var DEVICES = ['ps5', 'ps4', 'xboxseries', 'xbox', 'switch', 'steamdeck', 'appletv', 'shield', 'googletv', 'firetv', 'console', 'hdmi'];
 
 function str(v, max) {
   return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').replace(/^\s+|\s+$/g, '').slice(0, max) : '';
@@ -194,7 +196,7 @@ function validate(body, keyNames) {
     if (k === 'language') { if (['auto', 'en', 'it'].indexOf(v) === -1) return 'language'; out[k] = v; }
     else if (k === 'clock') { if (v !== '24' && v !== '12') return 'clock'; out[k] = v; }
     else if (k === 'units') { if (v !== 'c' && v !== 'f') return 'units'; out[k] = v; }
-    else if (k === 'tileStyle') { if (v !== 'text' && v !== 'icon') return 'tileStyle'; out[k] = v; }
+    else if (k === 'tileStyle') { if (['text', 'logo', 'icon'].indexOf(v) === -1) return 'tileStyle'; out[k] = v; }
     else if (k === 'veil') { if (!num(v, 0, 100)) return 'veil'; out[k] = Math.round(v); }
     else if (k === 'openAtPowerOn') { if (typeof v !== 'boolean') return 'openAtPowerOn'; out[k] = v; }
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }
@@ -212,7 +214,12 @@ function validate(body, keyNames) {
         var t = v[j];
         if (!t || typeof t !== 'object' || typeof t.id !== 'string' || !ID_RE.test(t.id) || seen[t.id] || !str(t.title, 40)) return 'tiles';
         seen[t.id] = true;
-        tiles.push({ id: t.id, title: str(t.title, 40) });
+        var tile = { id: t.id, title: str(t.title, 40) };
+        if (t.device !== undefined) {
+          if (!isInput(t.id) || DEVICES.indexOf(t.device) === -1) return 'tiles';
+          tile.device = t.device;
+        }
+        tiles.push(tile);
       }
       out[k] = tiles;
     } else {
@@ -429,7 +436,7 @@ function watchApp() {
 /* ---------- HTTP ---------- */
 
 var TYPES = { '.html': 'text/html; charset=utf-8', '.woff2': 'font/woff2', '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.json': 'application/json' };
+  '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.json': 'application/json', '.js': 'text/javascript; charset=utf-8' };
 
 function send(res, status, body, headers) {
   var h = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
@@ -534,6 +541,7 @@ function handle(req, res) {
       'X-Frame-Options': 'DENY'
     });
   }
+  if (m === 'GET' && p === '/logos.js') return sendFile(res, path.join(APP_DIR, 'logos.js'), 'no-cache');
   if (m === 'GET' && /^\/jost(-[235]00)?\.woff2$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/backgrounds\/((thumbs\/)?[a-z0-9-]+\.jpg|index\.json)$/.test(p)) {
     // The list changes with an update of the app; the pictures under a name never do.

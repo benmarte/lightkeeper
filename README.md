@@ -12,13 +12,13 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 
 ## Screenshots
 
-| Icons and names | Settings on a phone |
+| Logos and names | Settings on a phone |
 |---|---|
-| ![The Home with app icons](docs/screenshots/home-icons.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
+| ![The Home with logos](docs/screenshots/home-icons.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
 
 ![The settings page on a computer, with a live preview of the TV](docs/screenshots/settings.png)
 
-The icons in these pictures are stand-ins. On your TV, Lightkeeper shows each app's own icon.
+Logos are drawn in white from [Simple Icons](https://simpleicons.org/). An app without a logo there shows its own icon from the TV, and an HDMI input shows the device you pick for it.
 
 ## What you need
 
@@ -55,7 +55,7 @@ Open **http://&lt;your-tv's-address&gt;:8090** on a phone or computer. On the TV
 The preview at the top is the Home as the TV draws it, and it changes as you go. Lightkeeper saves each change at once, and the TV shows it within a few seconds.
 
 - **Tiles.** Choose apps and HDMI inputs, which keep the names you gave them on the TV. Put them in order and rename them if you like. Up to twelve.
-- **Icons or names.** Show each app's icon above its name, or the names alone.
+- **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. For each HDMI input you pick the device plugged into it (PlayStation 5, Xbox, Nintendo Switch, Apple TV and more): Lightkeeper guesses it from the name the input has on the TV.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
 - **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
 - **Language.** English or Italian, or the same as the device.
@@ -113,6 +113,7 @@ A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy
   - James McNeill Whistler, *Nocturne in Black and Gold: Entrance to Southampton Water*, c. 1875–1876. Freer Gallery of Art, Smithsonian, CC0 ([si.edu](https://asia-archive.si.edu/object/F1897.21a-b/)).
   - James Horsburgh, *China Sea, Sheet I*, 1806. Library of Congress, public domain ([loc.gov](https://www.loc.gov/item/84696453/)); shown here in negative.
   - *Night at sea* and *Dawn at sea*: gradients made for Lightkeeper, under its MIT licence.
+- Logos: [Simple Icons](https://simpleicons.org/) 16.35.0, CC0. The logos and names belong to their owners and are used only to identify apps and devices. Brands Simple Icons does not carry, such as Xbox, Nintendo Switch, Prime Video, Disney+ and Fire TV, get a generic picture or the app's own icon from the TV.
 - Typeface: [Jost](https://github.com/indestructible-type/Jost), SIL Open Font License 1.1 (`app/OFL.txt`). The fixed 200, 300 and 500 weights, for engines without variable fonts, are instances of the same file.
 - Weather data by [Open-Meteo.com](https://open-meteo.com/), CC BY 4.0.
 - [GlassHouse](https://github.com/rorygallagher2024/glasshouse), whose key filter and set-up through the Homebrew Channel Lightkeeper builds on.
@@ -136,7 +137,7 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 **Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
 
 - le voci, cioè app e ingressi HDMI coi loro nomi, in ordine e rinominabili;
-- icone o solo nomi;
+- solo nomi, loghi bianchi o icone delle app; per ogni ingresso HDMI l'apparecchio collegato, che Lightkeeper indovina dal nome dell'ingresso;
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
 - l'orologio a 24 o 12 ore;
 - la città del meteo, cercata su Open-Meteo, in °C o °F;
@@ -151,4 +152,4 @@ Sul telecomando: **← →** per scegliere, **OK** per aprire, **Indietro** per 
 
 **Compatibilità.** Provata su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Le altre versioni non sono provate.
 
-**Licenza.** Il codice è MIT, © 2026 Francesco Gola. La foto dello sfondo predefinito, *Godrevy Lighthouse* di [Francesco Gola](https://francescogola.net), ha una licenza sua ([PHOTO-LICENSE.md](PHOTO-LICENSE.md)): tutti i diritti riservati, si usa solo dentro Lightkeeper e senza modifiche. Gli altri sfondi e i loro crediti sono nella sezione *Credits*. **Uso a proprio rischio**: Lightkeeper gira come root su una TV modificata e non ha alcuna garanzia. Non è affiliata né approvata da LG Electronics.
+**Licenza.** Il codice è MIT, © 2026 Francesco Gola. La foto dello sfondo predefinito, *Godrevy Lighthouse* di [Francesco Gola](https://francescogola.net), ha una licenza sua ([PHOTO-LICENSE.md](PHOTO-LICENSE.md)): tutti i diritti riservati, si usa solo dentro Lightkeeper e senza modifiche. Gli altri sfondi e i loro crediti sono nella sezione *Credits*. I loghi appartengono ai rispettivi proprietari e sono usati solo per identificare app e apparecchi; i disegni vengono da Simple Icons (CC0). **Uso a proprio rischio**: Lightkeeper gira come root su una TV modificata e non ha alcuna garanzia. Non è affiliata né approvata da LG Electronics.

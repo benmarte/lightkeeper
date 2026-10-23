@@ -50,6 +50,14 @@ nav.icons img {
   box-shadow: 0 10px 30px rgba(0, 0, 0, .45); transition: transform .2s;
 }
 nav.icons a.sel img { -webkit-transform: scale(1.06); transform: scale(1.06); }
+/* A logo, white like the words: no frame, as the brands ask, a shadow to read over the picture. */
+nav.icons .logo {
+  display: flex; align-items: center; justify-content: center; height: 132px; margin-bottom: 20px;
+  -webkit-filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5));
+  transition: transform .2s;
+}
+nav.icons .logo svg { display: block; }
+nav.icons a.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 nav.icons a.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
 /* The gear after the tiles opens the settings. */
 nav a.gear { margin-right: 0; }
@@ -67,6 +75,7 @@ nav.icons a.gear svg { width: 52px; height: 52px; margin-bottom: 4px; }
 <header><div id="ora"></div><div id="meteo"></div></header>
 <nav></nav>
 <div id="hint"></div>
+<script src="logos.js"></script>
 <script>
 var APP_VERSION = '1.0.0';
 var SERVER = 'http://127.0.0.1:8090';
@@ -156,8 +165,9 @@ var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
   '<circle cx="12" cy="12" r="6.6"/></svg>';
 
 function disegna() {
-  var icone = cfg.tileStyle === 'icon';
-  nav.className = icone ? 'icons' : '';
+  // Names only; logos, or the TV's icon where an app has none; the TV's icons. Inputs show their device.
+  var modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
+  nav.className = modo === 'text' ? '' : 'icons';
   nav.innerHTML = '';
   spostamento = 0;
   voci = (cfg.tiles || []).slice();
@@ -167,7 +177,13 @@ function disegna() {
     if (v.gear) {
       a.innerHTML = GEAR;
     } else {
-      if (icone) {
+      var logo = modo === 'text' ? '' : logoDi(v, modo);
+      if (logo) {
+        var box = document.createElement('div');
+        box.className = 'logo';
+        box.appendChild(svgLogo(logo, 6400, 176, 96));
+        a.appendChild(box);
+      } else if (modo !== 'text') {
         var img = document.createElement('img');
         img.src = SERVER + '/icon?id=' + encodeURIComponent(v.id);
         img.onerror = function () { img.style.visibility = 'hidden'; };
