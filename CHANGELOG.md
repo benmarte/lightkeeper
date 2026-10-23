@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 (not released yet)
+## 1.0.1 (23 October 2026)
 
 - **Icons only.** With logos or app icons, the names can now show under every tile, under the selected one only (smaller), or not at all. A line still marks the selected tile, and the names stay for screen readers and in the settings.
 - **Up to fifty tiles**, from twelve. The Home draws the tiles' pictures as they come into view, so a long row stays quick on older TVs, and slides with the arrows. In the settings, tiles can be dragged by a handle on phones and computers; the arrows still work everywhere.
