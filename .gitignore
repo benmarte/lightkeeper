@@ -11,3 +11,4 @@ DESIGN.md
 test/fake-tv/tvweb/remotekeys.json
 docs/screenshots/candidati/
 __pycache__/
+test/fake-tv/port

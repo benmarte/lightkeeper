@@ -357,6 +357,18 @@ footer a { color: var(--muted); }
         <p class="note" id="pin-note" hidden></p>
       </section>
 
+      <section aria-labelledby="h-port">
+        <h2 id="h-port" data-t="portTitle">Address</h2>
+        <div class="row">
+          <div class="label"><span data-t="port">Port of this page</span><span class="sub" id="port-state"></span></div>
+          <div class="pinrow">
+            <input type="text" id="port-new" inputmode="numeric" pattern="[0-9]*" maxlength="5" aria-label="Port">
+            <button class="btn" type="button" id="port-set" data-t="portSet">Change</button>
+          </div>
+        </div>
+        <p class="note" id="port-note" hidden></p>
+      </section>
+
       <section aria-labelledby="h-remove">
         <h2 id="h-remove" data-t="removeTitle">Remove Lightkeeper</h2>
         <p class="lede" data-t="removeLede">Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.</p>
@@ -404,12 +416,17 @@ footer a { color: var(--muted); }
       key: 'Key that opens Lightkeeper', keyLede: 'Through GlassHouse. With Home, Back from the last app also comes here.',
       keyHome: 'Home', keyNone: 'None', active: 'Active.', pending: 'Active within a minute, once GlassHouse has restarted.',
       noglasshouse: 'GlassHouse is not installed, so the key cannot be changed.', failed: 'The TV did not take the change. Try again.',
+      unsupported: 'This TV has no key filters for GlassHouse to use, as on webOS 3, so the key stays LG\'s. Lightkeeper still opens at power on; the README has another way to map a button.',
       power: 'Open at power on', powerLede: 'When the TV comes on over an input or LG\'s Home.', more: 'PIN',
       saver: 'Screen saver', saverPause: 'Pause for an hour', saverResume: 'Resume now', saverOn: 'On, as LG set it.',
       saverUntil: 'Paused until ', saverLede: 'LG\'s screen saver keeps still pictures from marking an OLED screen. Pause it while you try things out; it comes back by itself.',
       pin: 'PIN for this page', pinOn: 'Asked before any change here.',
       pinOff: 'Anyone on your network can change these settings.', pinSet: 'Set', pinClear: 'Remove the PIN',
       pinBad: 'A PIN is 4 to 8 digits.', pinDone: 'PIN set. Keep it somewhere safe.', pinCleared: 'PIN removed.',
+      portTitle: 'Address', port: 'Port of this page', portSet: 'Change',
+      portLede: 'The Home and this page use it. Change it if another program on the TV needs this one.',
+      portTaken: ' is in use by another program on the TV, so this page is on ', portBad: 'A port is a number from 1024 to 65535.',
+      portMoving: 'Moving to the new address…',
       removeTitle: 'Remove Lightkeeper', removeLede: 'Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.',
       removeYes: 'Remove for good', cancel: 'Cancel', removed: 'Lightkeeper has been removed from the TV. You can close this page.',
       licence: 'MIT licence, use at your own risk', lockTitle: 'Enter the PIN', unlock: 'Unlock', wrong: 'Wrong PIN.',
@@ -1053,6 +1070,28 @@ footer a { color: var(--muted); }
     });
   };
 
+  function portNote(text, err) { $('port-note').textContent = text; $('port-note').hidden = !text; $('port-note').className = 'note' + (err ? ' err' : ''); }
+
+  function renderPort() {
+    $('port-new').value = cfg.port;
+    $('port-state').textContent = cfg.portTaken ? 'Port ' + cfg.portTaken + t.portTaken + cfg.port + '.' : t.portLede;
+  }
+
+  $('port-set').onclick = function () {
+    var v = +$('port-new').value;
+    if (!/^\d+$/.test($('port-new').value) || v < 1024 || v > 65535) return portNote(t.portBad, true);
+    if (v === cfg.port && !cfg.portTaken) return portNote('');
+    api('POST', '/api/config', { port: v }, function (r, raw) {
+      if (!r) return portNote(t.notSaved + ((raw && raw.error) || t.offline), true);
+      cfg = r.config;
+      renderPort();
+      if (cfg.port === +location.port) return portNote('');
+      // The old port stays open a minute: time enough to move over.
+      portNote(t.portMoving);
+      setTimeout(function () { location.href = location.protocol + '//' + location.hostname + ':' + cfg.port + '/'; }, 1200);
+    });
+  };
+
   $('remove').onclick = function () { $('confirm').hidden = false; $('remove-no').focus(); };
   $('remove-no').onclick = function () { $('confirm').hidden = true; $('remove').focus(); };
   $('remove-yes').onclick = function () {
@@ -1084,6 +1123,7 @@ footer a { color: var(--muted); }
     $('city').value = cfg.weather ? cfg.weather.name : '';
     $('version').textContent = 'Lightkeeper ' + cfg.version;
     renderPin();
+    renderPort();
     preview();
   }
 

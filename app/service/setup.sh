@@ -3,6 +3,8 @@
 # an update. Run as root: by the app itself through the Homebrew Channel's exec
 # service when its server does not answer with the app's version, or by
 # lightkeeper.sh over SSH. Safe to run any number of times. Prints one JSON line.
+#
+#   sh setup.sh --port 8091   the same, with the settings on another port
 HERE=$(cd "$(dirname "$0")" && pwd)
 HOOKDIR=/var/lib/webosbrew/init.d
 fail() { printf '{"ok":false,"error":"%s"}\n' "$1"; exit 0; }
@@ -15,6 +17,9 @@ fail() { printf '{"ok":false,"error":"%s"}\n' "$1"; exit 0; }
 chmod -R go-w "$(dirname "$HERE")" 2>/dev/null
 chmod 755 "$HERE/lightkeeper-init" "$HERE/setup.sh"
 mkdir -p /var/lib/lightkeeper && chmod 700 /var/lib/lightkeeper
+if [ "$1" = "--port" ]; then
+  /usr/bin/node "$HERE/server.js" --port "$2" || fail "a port is a number from 1024 to 65535"
+fi
 # A link into the app rather than a copy: once the app is gone, nothing runs at boot.
 ln -sf "$HERE/lightkeeper-init" "$HOOKDIR/60-lightkeeper"
 cd /

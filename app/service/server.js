@@ -1,14 +1,16 @@
 /*
  * Lightkeeper settings server.
  *
- * Serves the settings page and the config the Home reads, on port 8090, to the
- * TV itself and its local network only. Started and kept running by the boot
+ * Serves the settings page and the config the Home reads, on port 8090 or the
+ * one chosen in the settings, to the TV itself and its local network only. Started and kept running by the boot
  * hook (lightkeeper-init). It runs no command it is sent: the only programs it
  * starts are luna-send, with calls written here, and GlassHouse's tvwebctl.
  *
  *   node server.js              serve
  *   node server.js --uninstall  put the remote keys back, remove the hook,
  *                               the settings and the app
+ *   node server.js --port 8091  the port from the next start, for when the
+ *                               settings page cannot be opened
  *
  * Strict ES5: it runs on the TV's own node, which is 0.12 on webOS 4.
  */
@@ -22,9 +24,8 @@ var crypto = require('crypto');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.1';
+var VERSION = '1.0.2';
 var APP_ID = 'io.github.chiotas.lightkeeper';
-var PORT = +process.env.LIGHTKEEPER_PORT || 8090;
 var HERE = __dirname;
 var APP_DIR = path.dirname(HERE);
 // Each path can be moved by an environment variable, which only the tests set.
@@ -33,6 +34,9 @@ var TVWEB = process.env.LIGHTKEEPER_TVWEB || '/var/lib/tvweb';
 var HOOK = process.env.LIGHTKEEPER_HOOK || '/var/lib/webosbrew/init.d/60-lightkeeper';
 var LUNA_SEND = process.env.LIGHTKEEPER_LUNA_SEND || '/usr/bin/luna-send';
 var KEY_FILTERS = process.env.LIGHTKEEPER_KEY_FILTERS || '/usr/lib/qt5/qml/KeyFilters';
+// The port in use, for the Home to find when it is not where it was.
+var PORT_FILE = process.env.LIGHTKEEPER_PORT_FILE || '/tmp/lightkeeper.port';
+var DEFAULT_PORT = +process.env.LIGHTKEEPER_PORT || 8090;
 var CONFIG = path.join(DATA, 'config.json');
 var BACKGROUND = path.join(DATA, 'background.jpg');
 // The backgrounds the app carries, by id, from backgrounds/index.json.
@@ -89,6 +93,7 @@ var DEFAULTS = {
   veil: 80,
   key: 'home',
   openAtPowerOn: true,
+  port: DEFAULT_PORT,
   pin: null
 };
 
@@ -157,6 +162,7 @@ function loadConfig() {
     var saved = JSON.parse(fs.readFileSync(CONFIG, 'utf8'));
     Object.keys(DEFAULTS).forEach(function (k) { if (has(saved, k)) c[k] = saved[k]; });
   } catch (e) {}
+  if (typeof validate({ port: c.port }, []) === 'string') c.port = DEFAULT_PORT; // edited by hand
   return c;
 }
 
@@ -174,6 +180,7 @@ function publicConfig() {
   c.version = VERSION;
   c.address = lanAddress();
   c.port = PORT;
+  c.portTaken = portTaken;
   c.saverPausedUntil = saverUntil > Date.now() ? saverUntil : 0;
   c.started = STARTED;
   return c;
@@ -249,6 +256,7 @@ function validate(body, keyNames) {
     else if (k === 'labels') { if (['all', 'selected', 'none'].indexOf(v) === -1) return 'labels'; out[k] = v; }
     else if (k === 'veil') { if (!num(v, 0, 100)) return 'veil'; out[k] = Math.round(v); }
     else if (k === 'openAtPowerOn') { if (typeof v !== 'boolean') return 'openAtPowerOn'; out[k] = v; }
+    else if (k === 'port') { if (typeof v !== 'number' || v % 1 || v < 1024 || v > 65535) return 'port'; out[k] = v; }
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }
     else if (k === 'key') {
       if (v !== 'none' && v !== 'home' && keyNames.indexOf(v) === -1) return 'key';
@@ -401,10 +409,12 @@ function readRemoteKeys() {
  * writes it; the configd value is what its filter reads, so a change applies at
  * once where the filter is in the compositor's chain. Where it is not yet (no
  * key ever set in GlassHouse), GlassHouse is restarted, and puts it there a
- * minute later. cb(state): 'off', 'active', 'pending', 'noglasshouse' or 'failed'.
+ * minute later. cb(state): 'off', 'active', 'pending', 'noglasshouse', 'unsupported' or 'failed'.
  */
 function applyKey(key, cb) {
   if (!fs.existsSync(path.join(TVWEB, 'tvweb.js'))) return cb(key === 'none' ? 'off' : 'noglasshouse');
+  // No LG key filters, as on webOS 3: nothing would read the key map (issue #3).
+  if (key !== 'none' && !fs.existsSync(KEY_FILTERS)) return cb('unsupported');
   var j = readRemoteKeys();
   var keys = j.keys && typeof j.keys === 'object' ? j.keys : {};
   var before = JSON.stringify([keys, j.home || '']);
@@ -648,17 +658,20 @@ function handle(req, res) {
     return readJson(req, res, function (body) {
       var change = validate(body, keyNames());
       if (typeof change === 'string') return send(res, 400, { ok: false, error: 'invalid: ' + change });
-      Object.keys(change).forEach(function (k) { config[k] = change[k]; });
-      // Choosing one of the app's backgrounds puts an uploaded picture away.
-      if (has(change, 'preset') && config.background.custom) {
-        try { fs.unlinkSync(BACKGROUND); } catch (e) {}
-        config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
-      }
-      try { saveConfig(); } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
-      if (!has(change, 'key')) return send(res, 200, { ok: true, config: publicConfig(), keyStatus: keyStatus });
-      applyKey(config.key, function (state) {
-        keyStatus = state;
-        send(res, 200, { ok: true, config: publicConfig(), keyStatus: keyStatus });
+      movePort(change.port, function (err) {
+        if (err) return send(res, 409, { ok: false, error: err });
+        Object.keys(change).forEach(function (k) { config[k] = change[k]; });
+        // Choosing one of the app's backgrounds puts an uploaded picture away.
+        if (has(change, 'preset') && config.background.custom) {
+          try { fs.unlinkSync(BACKGROUND); } catch (e) {}
+          config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
+        }
+        try { saveConfig(); } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
+        if (!has(change, 'key')) return send(res, 200, { ok: true, config: publicConfig(), keyStatus: keyStatus });
+        applyKey(config.key, function (state) {
+          keyStatus = state;
+          send(res, 200, { ok: true, config: publicConfig(), keyStatus: keyStatus });
+        });
       });
     });
   }
@@ -714,16 +727,78 @@ function handle(req, res) {
   send(res, 404, { ok: false, error: 'not found' });
 }
 
+/* ---------- the port ---------- */
+
+var PORT = 0;       // in use
+var portTaken = 0;  // the port in the config, while another program has it
+var listening = null;
+
+function serveSafely(req, res) {
+  try { handle(req, res); } catch (e) {
+    log('error: ' + (e && e.stack || e));
+    try { send(res, 500, { ok: false, error: 'server error' }); } catch (e2) {}
+  }
+}
+
+// cb(error, server, port) on the first free port from `port` to `last`.
+function listen(port, last, cb) {
+  var server = http.createServer(serveSafely);
+  var busy = function (e) {
+    if (e.code !== 'EADDRINUSE' || port >= last) return cb(e);
+    log('port ' + port + ' is in use by another program');
+    listen(port + 1, last, cb);
+  };
+  server.once('error', busy);
+  server.listen(port, '0.0.0.0', function () {
+    server.removeListener('error', busy);
+    server.on('error', function (e) { log('server: ' + e.message); });
+    cb(null, server, port);
+  });
+}
+
+function serving(server, port) {
+  listening = server;
+  PORT = port;
+  portTaken = port === config.port ? 0 : config.port;
+  try { fs.writeFileSync(PORT_FILE, port + '\n'); } catch (e) { log('port file: ' + e.message); }
+}
+
+// A port chosen in the settings: open before it is saved, and the old one kept
+// a minute for the Home and the page to move over. cb(error text) or cb().
+var leaving = null; // that old one: { server, port, timer }
+function movePort(port, cb) {
+  if (port === undefined) return cb();
+  if (port === PORT) { portTaken = 0; return cb(); }
+  var moved = function (server) {
+    var old = listening, was = PORT, going = { server: old, port: was };
+    serving(server, port);
+    portTaken = 0;
+    going.timer = setTimeout(function () { old.close(); if (leaving === going) leaving = null; }, 60000);
+    leaving = going;
+    log('now on port ' + port + '; port ' + was + ' closes in a minute');
+    cb();
+  };
+  // Back to the port just left: it is still this server's.
+  if (leaving && leaving.port === port) { clearTimeout(leaving.timer); return moved(leaving.server); }
+  listen(port, port, function (e, server) {
+    if (e) return cb(e.code === 'EADDRINUSE' ? 'port ' + port + ' is in use by another program' : e.message);
+    moved(server);
+  });
+}
+
 function start() {
   config = loadConfig();
-  var server = http.createServer(function (req, res) {
-    try { handle(req, res); } catch (e) {
-      log('error: ' + (e && e.stack || e));
-      try { send(res, 500, { ok: false, error: 'server error' }); } catch (e2) {}
+  // While another program has the port, the next free one of the ten after it.
+  listen(config.port, Math.min(config.port + 10, 65535), function (e, server, port) {
+    if (e) {
+      log('server: ' + e.message + (e.code === 'EADDRINUSE' ? ': ports ' + config.port + ' to ' + Math.min(config.port + 10, 65535) +
+        ' are all in use. Choose another one with: sh ' + HERE + '/setup.sh --port <port>' : ''));
+      process.exit(1);
     }
+    serving(server, port);
+    log('Lightkeeper ' + VERSION + ' on port ' + port + (portTaken ? ', as another program has port ' + portTaken +
+      '. Choose a port in the settings, or with: sh ' + HERE + '/setup.sh --port <port>' : ''));
   });
-  server.on('error', function (e) { log('server: ' + e.message); process.exit(1); });
-  server.listen(PORT, '0.0.0.0', function () { log('Lightkeeper ' + VERSION + ' on port ' + PORT); });
 
   // The key is put back as set at each start: GlassHouse may have been
   // reinstalled, or configd reset. Luna can be slow to come up after a boot.
@@ -756,6 +831,13 @@ module.exports = { validate: validate, jpegSize: jpegSize, isLocal: isLocal, hos
 if (require.main === module) {
   if (process.argv[2] === '--uninstall') {
     uninstall(true, function () { process.exit(0); });
+  } else if (process.argv[2] === '--port') {
+    config = loadConfig();
+    var change = validate({ port: +process.argv[3] }, []);
+    if (typeof change === 'string') { console.error('A port is a number from 1024 to 65535.'); process.exit(2); }
+    config.port = change.port;
+    saveConfig();
+    console.error('Lightkeeper takes port ' + config.port + ' from its next start.');
   } else {
     start();
   }

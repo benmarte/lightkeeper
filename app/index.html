@@ -84,11 +84,14 @@ nav.icons a.gear svg { width: 52px; height: 52px; margin-bottom: 4px; }
 <div id="hint"></div>
 <script src="logos.js"></script>
 <script>
-var APP_VERSION = '1.0.1';
-var SERVER = 'http://127.0.0.1:8090';
+var APP_VERSION = '1.0.2';
 var LG_HOME = 'com.webos.app.home';
 var BROWSER = 'com.webos.app.browser';
 var EXEC = 'luna://org.webosbrew.hbchannel.service/exec';
+// The settings server's port: 8090 unless chosen otherwise, kept from its last answer.
+var porta = 8090;
+try { porta = +localStorage.getItem('port') || 8090; } catch (e) {}
+function server() { return 'http://127.0.0.1:' + porta; }
 // This page's own directory, which holds the server under service/.
 var APP_DIR = decodeURIComponent(location.pathname.replace(/\/[^\/]*$/, ''));
 
@@ -146,7 +149,7 @@ function seleziona(i, colPuntatore) {
   var t = TEXT;
   if (voci[sel] && voci[sel].gear) {
     hint.textContent = (voci.length === 1 ? t.empty : t.settings) +
-      (cfg.address ? ' · ' + t.phone + cfg.address + ':' + (cfg.port || 8090) : '');
+      (cfg.address ? ' · ' + t.phone + cfg.address + ':' + (cfg.port || porta) : '');
     hint.className = 'on';
   } else {
     hint.className = '';
@@ -154,7 +157,7 @@ function seleziona(i, colPuntatore) {
 }
 
 function lancia(i) {
-  if (voci[i].gear) return apri(BROWSER, { target: SERVER + '/' });
+  if (voci[i].gear) return apri(BROWSER, { target: server() + '/' });
   try { localStorage.setItem('ultima', String(i)); } catch (e) {}
   apri(voci[i].id);
 }
@@ -175,7 +178,7 @@ function riempi(box, v, modo) {
   return function () {
     var logo = logoDi(v, modo);
     if (logo) return box.appendChild(disegnaLogo(logo, 80, 176, 96));
-    var url = SERVER + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
+    var url = server() + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
     if (modo !== 'logo') return box.parentNode.replaceChild(iconaTv(url), box);
     iconaBianca(url, function (w) {
       if (w) box.appendChild(misuraBianca(w, 80, 176, 96));
@@ -237,7 +240,7 @@ function disegna() {
   // An uploaded picture comes from the server; the app's own backgrounds are beside this page.
   // With the server's start in the address: a picture that failed while it was down is asked again.
   var mio = cfg.background && cfg.background.custom ?
-    'url(' + SERVER + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) + '), ' : '';
+    'url(' + server() + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) + '), ' : '';
   var preset = /^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy';
   document.body.style.backgroundImage = mio + 'url(backgrounds/' + preset + '.jpg)';
   seleziona(Math.min(ultima(), voci.length - 1));
@@ -254,9 +257,9 @@ document.addEventListener('keydown', function (e) {
   e.preventDefault();
 });
 
-// The weather icons, from Open-Meteo's WMO codes.
+// The weather icons, from Open-Meteo's WMO codes. Not ICONE, which is logos.js's.
 var NUVOLA_ALTA = '<path d="M6.5 15h11a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 8.1 3.5 3.5 0 0 0 6.5 15z"/>';
-var ICONE = {
+var METEO = {
   sole: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
   luna: '<path d="M20 14.6A8.2 8.2 0 0 1 9.4 4 8.2 8.2 0 1 0 20 14.6z"/>',
   nuvola: '<path d="M6.5 18h11a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 11.1 3.5 3.5 0 0 0 6.5 18z"/>',
@@ -270,7 +273,7 @@ function icona(codice, giorno) {
   var nome = codice <= 1 ? (giorno ? 'sole' : 'luna') : codice <= 3 ? 'nuvola' : codice <= 48 ? 'nebbia' :
     codice >= 95 ? 'temporale' : (codice >= 71 && codice <= 77) || codice === 85 || codice === 86 ? 'neve' : 'pioggia';
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
-    ICONE[nome] + '</svg>';
+    METEO[nome] + '</svg>';
 }
 
 function meteo() {
@@ -307,12 +310,16 @@ function aggiorna() {
  */
 function leggi(cb) {
   var x = new XMLHttpRequest();
-  x.open('GET', SERVER + '/api/config');
+  x.open('GET', server() + '/api/config');
   x.timeout = 3000;
   x.onload = function () {
     var c = null;
     try { c = JSON.parse(x.responseText); } catch (e) {}
     if (!c || !c.version) return cb && cb(null);
+    if (c.port && c.port !== porta) {
+      porta = c.port;
+      try { localStorage.setItem('port', String(porta)); } catch (e) {}
+    }
     var j = JSON.stringify(c);
     if (j !== shown) {
       shown = j;
@@ -341,8 +348,27 @@ function setup() {
 function controlla(prove) {
   leggi(function (c) {
     if (c && c.version === APP_VERSION) return;
-    if (c || prove <= 1) return setup();
-    setTimeout(function () { controlla(prove - 1); }, 1500);
+    if (c) return setup();
+    if (prove > 1) return setTimeout(function () { controlla(prove - 1); }, 1500);
+    trovaPorta(function (nuova) { if (nuova) controlla(2); else setup(); });
+  });
+}
+
+/*
+ * The port the server wrote it is on, asked of the Homebrew Channel when the
+ * server does not answer where it was: moved while the Home was hidden, or on
+ * another port at start because a different program had this one. cb(moved).
+ */
+var cercata = 0;
+function trovaPorta(cb) {
+  if (!window.PalmServiceBridge || Date.now() - cercata < 30000) return cb(false);
+  cercata = Date.now();
+  luna(EXEC, { command: 'cat /tmp/lightkeeper.port' }, function (r) {
+    var p = parseInt(r && r.stdoutString, 10);
+    if (!(p > 0) || p === porta) return cb(false);
+    porta = p;
+    try { localStorage.setItem('port', String(p)); } catch (e) {}
+    cb(true);
   });
 }
 
@@ -362,7 +388,14 @@ disegna();
 controlla(5);
 setInterval(aggiorna, 5000);
 // Changes made on a phone show within seconds; nothing is asked while hidden.
-setInterval(function () { if (!document.hidden) leggi(); }, 4000);
+var mancate = 0;
+setInterval(function () {
+  if (document.hidden) return;
+  leggi(function (c) {
+    mancate = c ? 0 : mancate + 1;
+    if (mancate >= 3) trovaPorta(function (nuova) { if (nuova) leggi(); });
+  });
+}, 4000);
 </script>
 </body>
 </html>

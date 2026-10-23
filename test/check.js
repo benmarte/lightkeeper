@@ -18,7 +18,8 @@ var env = {
   LIGHTKEEPER_HOOK: path.join(tmp, 'hook'),
   LIGHTKEEPER_LUNA_SEND: path.join(FAKE, 'luna-send'),
   LIGHTKEEPER_KEY_FILTERS: path.join(FAKE, 'KeyFilters'),
-  LIGHTKEEPER_PORT: '18090'
+  LIGHTKEEPER_PORT: '18090',
+  LIGHTKEEPER_PORT_FILE: path.join(tmp, 'port')
 };
 fs.mkdirSync(env.LIGHTKEEPER_TVWEB);
 fs.writeFileSync(path.join(env.LIGHTKEEPER_TVWEB, 'tvweb.js'), '');
@@ -38,6 +39,26 @@ assert.equal(s.validate({ tiles: [{ id: '../etc', title: 'x' }] }, keys), 'tiles
 assert.equal(s.validate({ tiles: [{ id: 'a', title: 'x' }, { id: 'a', title: 'y' }] }, keys), 'tiles');
 assert.equal(s.validate({ veil: 101 }, keys), 'veil');
 assert.equal(s.validate({ key: 'power' }, keys), 'key');
+assert.deepEqual(s.validate({ port: 8091 }, keys), { port: 8091 });
+
+// The Home loads logos.js and then its own script into one global scope: a name
+// declared in both overwrites the first (issue #2, the Home's weather icons were ICONE).
+function globals(file) {
+  var names = {}, re = /^(?:var|function) ([A-Za-z_$][\w$]*)/gm, m, text = fs.readFileSync(path.join(__dirname, '..', 'app', file), 'utf8');
+  while ((m = re.exec(text))) names[m[1]] = true;
+  return names;
+}
+var logosGlobals = globals('logos.js'), homeGlobals = globals('index.html');
+assert.deepEqual(Object.keys(homeGlobals).filter(function (n) { return logosGlobals[n]; }), [], 'names declared by both logos.js and the Home');
+
+// A TV without LG's key filters, as webOS 3 (issue #3): the key is reported as
+// unsupported rather than "within a minute", and GlassHouse's map is left alone.
+var noFilters = require('child_process').execFileSync(process.execPath, ['-e',
+  'require(' + JSON.stringify(require.resolve('../app/service/server.js')) + ").applyKey('home', function (s) { console.log(s); })"],
+  { env: Object.assign({}, process.env, { LIGHTKEEPER_KEY_FILTERS: path.join(tmp, 'no-key-filters') }) }).toString().trim();
+assert.equal(noFilters, 'unsupported');
+assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json')));
+[80, 70000, 8091.5, '8091', null].forEach(function (v) { assert.equal(s.validate({ port: v }, keys), 'port'); });
 assert.deepEqual(s.validate({ key: 'red' }, keys), { key: 'red' });
 assert.equal(s.validate({ weather: { name: 'X', lat: 91, lon: 0 } }, keys), 'weather');
 assert.equal(s.validate({ pin: '1234' }, keys), 'pin');
@@ -116,9 +137,10 @@ s.applyKey('home', function (state) {
 
 function req(method, p, opts, cb) {
   opts = opts || {};
-  var headers = { Host: opts.host || '127.0.0.1:18090' };
+  var port = opts.port || 18090;
+  var headers = { Host: opts.host || '127.0.0.1:' + port };
   Object.keys(opts.headers || {}).forEach(function (k) { headers[k] = opts.headers[k]; });
-  var r = http.request({ host: '127.0.0.1', port: 18090, method: method, path: p, headers: headers }, function (res) {
+  var r = http.request({ host: '127.0.0.1', port: port, method: method, path: p, headers: headers }, function (res) {
     var b = '';
     res.on('data', function (d) { b += d; });
     res.on('end', function () { var j = null; try { j = JSON.parse(b); } catch (e) {} cb(res.statusCode, j, res.headers); });
@@ -182,12 +204,66 @@ function httpChecks() {
   ];
   function run(i) {
     if (i === steps.length) {
+      child.removeAllListeners('exit');
       child.kill();
-      console.log('check: all good');
-      return;
+      return portChecks(function () { console.log('check: all good'); });
     }
     steps[i](function () { run(i + 1); });
   }
   child.on('exit', function (code) { if (code) { console.error('server exited ' + code); process.exit(1); } });
   setTimeout(function () { run(0); }, 700); // a moment to start listening
+}
+
+// Another program on the port: the server takes the next one and says so, moves
+// when asked, refuses a port in use, and --port sets the next start's.
+function portChecks(done) {
+  var server = path.join(__dirname, '..', 'app', 'service', 'server.js');
+  var penv = {};
+  Object.keys(process.env).forEach(function (k) { penv[k] = process.env[k]; });
+  penv.LIGHTKEEPER_PORT = '18190';
+  penv.LIGHTKEEPER_DATA = path.join(tmp, 'data-port');
+  penv.LIGHTKEEPER_PORT_FILE = path.join(tmp, 'port-2');
+  var blocker = http.createServer().listen(18190, '0.0.0.0', function () {
+    var out = '';
+    var child = spawn(process.execPath, [server], { env: penv });
+    child.stdout.on('data', function (d) { out += d; });
+    child.on('exit', function (code) { if (code) { console.error('server exited ' + code + '\n' + out); process.exit(1); } });
+    (function wait(n) {
+      if (!fs.existsSync(penv.LIGHTKEEPER_PORT_FILE) && n) return setTimeout(function () { wait(n - 1); }, 100);
+      assert.equal(fs.readFileSync(penv.LIGHTKEEPER_PORT_FILE, 'utf8').trim(), '18191');
+      assert.ok(out.indexOf('on port 18191, as another program has port 18190') !== -1, out);
+      req('GET', '/api/config', { port: 18191 }, function (st, j) {
+        assert.equal(st, 200); assert.equal(j.port, 18191); assert.equal(j.portTaken, 18190);
+        req('POST', '/api/config', { port: 18191, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ port: 18190 }) }, function (st2, j2) {
+          assert.equal(st2, 409); assert.ok(/in use/.test(j2.error));
+          req('POST', '/api/config', { port: 18191, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ port: 18195 }) }, function (st3, j3) {
+            assert.equal(st3, 200); assert.equal(j3.config.port, 18195); assert.equal(j3.config.portTaken, 0);
+            assert.equal(fs.readFileSync(penv.LIGHTKEEPER_PORT_FILE, 'utf8').trim(), '18195');
+            assert.equal(JSON.parse(fs.readFileSync(path.join(penv.LIGHTKEEPER_DATA, 'config.json'), 'utf8')).port, 18195);
+            req('GET', '/api/config', { port: 18195 }, function (st4) {
+              assert.equal(st4, 200);
+              req('GET', '/api/config', { port: 18191 }, function (st5) {
+                assert.equal(st5, 200); // the old port, for a minute
+                req('POST', '/api/config', { port: 18195, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ port: 18191 }) }, function (st6, j6) {
+                assert.equal(st6, 200, 'back to the port just left'); assert.equal(j6.config.port, 18191);
+                child.removeAllListeners('exit');
+                child.kill();
+                blocker.close();
+                var bad = spawn(process.execPath, [server, '--port', '80'], { env: penv });
+                bad.on('exit', function (code) {
+                  assert.equal(code, 2);
+                  spawn(process.execPath, [server, '--port', '18196'], { env: penv }).on('exit', function (code2) {
+                    assert.equal(code2, 0);
+                    assert.equal(JSON.parse(fs.readFileSync(path.join(penv.LIGHTKEEPER_DATA, 'config.json'), 'utf8')).port, 18196);
+                    done();
+                  });
+                });
+                });
+              });
+            });
+          });
+        });
+      });
+    })(40);
+  });
 }

@@ -124,7 +124,7 @@ case "$1" in
       rm -f /tmp/$ID.ipk
       sh $APPDIR/service/setup.sh
       luna-send -n 1 -w 5000 luna://com.webos.applicationManager/launch '{\"id\":\"$ID\"}' </dev/null >/dev/null 2>&1"
-    echo "Lightkeeper is on the TV. Settings: http://$TV:8090/" ;;
+    echo "Lightkeeper is on the TV. Settings: http://$TV:$(tv 'sleep 3; cat /tmp/lightkeeper.port 2>/dev/null || echo 8090')/" ;;
   uninstall)
     tv "if [ -f $APPDIR/service/server.js ]; then node $APPDIR/service/server.js --uninstall; fi
       p=\$(cat /tmp/lightkeeper.pid 2>/dev/null); [ -n \"\$p\" ] && grep -q lightkeeper /proc/\$p/cmdline 2>/dev/null && kill \$p
