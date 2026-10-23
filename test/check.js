@@ -43,6 +43,14 @@ assert.equal(s.validate({ weather: { name: 'X', lat: 91, lon: 0 } }, keys), 'wea
 assert.equal(s.validate({ pin: '1234' }, keys), 'pin');
 assert.equal(s.validate({ language: 'fr' }, keys), 'language');
 assert.deepEqual(s.validate({ preset: 'night' }, keys), { preset: 'night' });
+// Up to fifty tiles, and the names under logos and icons.
+var many = [];
+for (var n = 0; n < 51; n++) many.push({ id: 'app' + n, title: 'App ' + n });
+assert.equal(s.validate({ tiles: many.slice(0, 50) }, keys).tiles.length, 50);
+assert.equal(s.validate({ tiles: many }, keys), 'tiles');
+assert.deepEqual(s.validate({ tileStyle: 'logo', labels: 'none' }, keys), { tileStyle: 'logo', labels: 'none' });
+assert.deepEqual(s.validate({ labels: 'selected' }, keys), { labels: 'selected' });
+assert.equal(s.validate({ labels: 'some' }, keys), 'labels');
 assert.deepEqual(s.validate({ tileStyle: 'logo', tiles: [{ id: 'com.webos.app.hdmi3', title: 'PS5', device: 'ps5' }] }, keys),
   { tileStyle: 'logo', tiles: [{ id: 'com.webos.app.hdmi3', title: 'PS5', device: 'ps5' }] });
 assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'Netflix', device: 'ps5' }] }, keys), 'tiles'); // apps have no device

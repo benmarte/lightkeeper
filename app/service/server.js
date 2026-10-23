@@ -45,7 +45,8 @@ var MAX_JSON = 64 * 1024;
 // When this server started: the Home asks again for what failed while it was down.
 var STARTED = Date.now();
 var MAX_IMAGE = 12 * 1024 * 1024;
-var MAX_TILES = 12;
+// A ceiling against absurd configs; the Home loads icons only as they come into view.
+var MAX_TILES = 50;
 
 // GlassHouse's key filter (lib/remotekeys.js): what each key opens is the
 // configd value glasshouse.remoteKeys, kept in remotekeys.json beside it.
@@ -82,6 +83,7 @@ var DEFAULTS = {
   weather: null,
   tiles: null,
   tileStyle: 'text',
+  labels: 'all',
   preset: 'godrevy',
   background: { custom: false, rev: 0 },
   veil: 80,
@@ -243,6 +245,8 @@ function validate(body, keyNames) {
     if (k === 'clock') { if (v !== '24' && v !== '12') return 'clock'; out[k] = v; }
     else if (k === 'units') { if (v !== 'c' && v !== 'f') return 'units'; out[k] = v; }
     else if (k === 'tileStyle') { if (['text', 'logo', 'icon'].indexOf(v) === -1) return 'tileStyle'; out[k] = v; }
+    // Names under logos and icons: all of them, the selected one's only, or none.
+    else if (k === 'labels') { if (['all', 'selected', 'none'].indexOf(v) === -1) return 'labels'; out[k] = v; }
     else if (k === 'veil') { if (!num(v, 0, 100)) return 'veil'; out[k] = Math.round(v); }
     else if (k === 'openAtPowerOn') { if (typeof v !== 'boolean') return 'openAtPowerOn'; out[k] = v; }
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }

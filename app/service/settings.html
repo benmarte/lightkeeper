@@ -85,6 +85,11 @@ button, input, select { font: inherit; color: inherit; }
 .screen nav.icons .logo img, .screen nav.icons span.sel .logo img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 .screen nav.icons span.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 .screen nav.icons span.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
+.screen nav.icons.only-sel i { visibility: hidden; font-size: 26px; }
+.screen nav.icons.only-sel span.sel i { visibility: visible; }
+.screen nav.icons.bare i { display: none; }
+.screen nav.icons.bare .logo, .screen nav.icons.bare img { margin-bottom: 0; }
+.screen nav.icons.bare span.gear { -webkit-align-self: center; align-self: center; }
 .screen nav svg { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
 .screen nav.icons svg { width: 52px; height: 52px; margin-bottom: 4px; }
 
@@ -154,7 +159,12 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bord
 
 /* The tiles, in the order they appear. */
 .tiles { list-style: none; margin-top: 20px; border-top: 1px solid var(--line); }
-.tiles li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tiles li { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); background: var(--ground); }
+/* Dragging, where the browser has pointer events: phones and computers. The TV's browser keeps the arrows. */
+.grip { width: 28px; height: 44px; margin: 0 6px 0 -6px; cursor: grab; touch-action: none; color: var(--muted); -webkit-flex-shrink: 0; flex-shrink: 0; }
+.grip svg { display: block; width: 14px; height: 20px; margin: 12px auto 0; }
+.tiles li.moving { position: relative; z-index: 3; box-shadow: 0 8px 24px rgba(0, 0, 0, .55); }
+.tiles li.moving .grip { cursor: grabbing; color: var(--ink); }
 .tiles .ic { width: 40px; height: 40px; border-radius: 9px; margin-right: 14px; -webkit-flex-shrink: 0; flex-shrink: 0; background: var(--wash); overflow: hidden; }
 .tiles .ic img { display: block; width: 40px; height: 40px; }
 .tiles .ic.dev { display: flex; align-items: center; justify-content: center; color: var(--ink); }
@@ -256,6 +266,14 @@ footer a { color: var(--muted); }
           </div>
         </div>
         <p class="note" data-t="showLede">Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.</p>
+        <div class="row" id="labels-row">
+          <span class="label" id="l-labels" data-t="labels">Names under them</span>
+          <div class="seg" role="radiogroup" aria-labelledby="l-labels">
+            <label><input type="radio" name="labels" value="all"><span data-t="labelsAll">All</span></label>
+            <label><input type="radio" name="labels" value="selected"><span data-t="labelsSel">Selected</span></label>
+            <label><input type="radio" name="labels" value="none"><span data-t="labelsNone">None</span></label>
+          </div>
+        </div>
       </section>
 
       <section aria-labelledby="h-bg">
@@ -371,7 +389,7 @@ footer a { color: var(--muted); }
       notSaved: 'Not saved: ', tiles: 'Tiles', tilesLede: 'The apps and inputs along the bottom of the Home, in this order.',
       add: 'Add a tile…', apps: 'Apps', inputs: 'Inputs', up: 'Move up', down: 'Move down', drop: 'Remove',
       nameOnTv: 'Name on the TV', onTv: 'On the TV: ', empty: 'No tiles yet. Add the apps and inputs you use most.',
-      full: 'Twelve tiles at most.', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
+      full: 'Fifty tiles at most.', drag: 'Drag to move', labels: 'Names under them', labelsAll: 'All', labelsSel: 'Selected', labelsNone: 'None', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
       device: 'Device', dev_console: 'Game console', dev_hdmi: 'HDMI',
       showLede: 'Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.',
       yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
@@ -487,7 +505,8 @@ footer a { color: var(--muted); }
     $('p-ora').innerHTML = clockText();
     meteo();
     var nav = $('p-nav'), modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
-    nav.className = modo === 'text' ? '' : 'icons';
+    nav.className = modo === 'text' ? '' : 'icons' + (cfg.labels === 'none' ? ' bare' : cfg.labels === 'selected' ? ' only-sel' : '');
+    $('labels-row').hidden = modo === 'text';
     nav.innerHTML = '';
     (cfg.tiles || []).forEach(function (tile, i) {
       var s = document.createElement('span');
@@ -590,6 +609,62 @@ footer a { color: var(--muted); }
 
   function saveTiles() { save({ tiles: cfg.tiles }); renderTiles(); preview(); }
 
+  // Drag a row by its handle; the order is saved when it is let go.
+  function maniglia(li) {
+    var h = document.createElement('div');
+    h.className = 'grip';
+    h.title = t.drag;
+    h.setAttribute('aria-hidden', 'true');
+    h.innerHTML = '<svg viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/>' +
+      '<circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg>';
+    h.onpointerdown = function (e) {
+      if (e.button > 0) return;
+      e.preventDefault();
+      var list = $('tiles'), giro = null, y = e.clientY;
+      li.className = 'moving';
+      try { h.setPointerCapture(e.pointerId); } catch (err) {}
+      // Near the edges the page scrolls; on a phone the top edge is under the preview.
+      var bordi = function () {
+        var alto = document.querySelector('.preview-col').getBoundingClientRect().bottom;
+        var su = Math.max(60, alto + 40);
+        if (y < su) window.scrollBy(0, -14);
+        else if (y > window.innerHeight - 60) window.scrollBy(0, 14);
+        else return;
+        sposta();
+      };
+      var sposta = function () {
+        var righe = list.children, k;
+        for (k = 0; k < righe.length; k++) {
+          var r = righe[k].getBoundingClientRect();
+          if (y < r.top + r.height / 2) break;
+        }
+        var prima = righe[k] || null;
+        if (prima !== li && prima !== li.nextSibling) list.insertBefore(li, prima);
+      };
+      var muovi = function (ev) { y = ev.clientY; sposta(); };
+      var fine = function () {
+        clearInterval(giro);
+        h.removeEventListener('pointermove', muovi);
+        h.removeEventListener('pointerup', fine);
+        h.removeEventListener('pointercancel', fine);
+        li.className = '';
+        var per = {}, ordine = [];
+        cfg.tiles.forEach(function (x) { per[x.id] = x; });
+        for (var n = 0; n < list.children.length; n++) {
+          var id = list.children[n].getAttribute('data-id');
+          if (per[id]) ordine.push(per[id]);
+        }
+        cfg.tiles = ordine;
+        saveTiles();
+      };
+      giro = setInterval(bordi, 30);
+      h.addEventListener('pointermove', muovi);
+      h.addEventListener('pointerup', fine);
+      h.addEventListener('pointercancel', fine);
+    };
+    return h;
+  }
+
   function tileNow(id) {
     for (var n = 0; n < (cfg.tiles || []).length; n++) if (cfg.tiles[n].id === id) return cfg.tiles[n];
     return null;
@@ -606,6 +681,8 @@ footer a { color: var(--muted); }
     }
     tiles.forEach(function (tile, i) {
       var li = document.createElement('li');
+      li.setAttribute('data-id', tile.id);
+      if (window.PointerEvent) li.appendChild(maniglia(li));
       var ic = document.createElement('div');
       ic.className = 'ic';
       // The logo where there is one, white on the tile; else the app's own icon from the TV.
@@ -722,7 +799,7 @@ footer a { color: var(--muted); }
       sel.appendChild(og);
     });
     sel.setAttribute('aria-label', t.add);
-    var full = (cfg.tiles || []).length >= 12;
+    var full = (cfg.tiles || []).length >= 50;
     sel.disabled = full;
     $('tiles-note').hidden = !full;
     $('tiles-note').textContent = t.full;
@@ -995,6 +1072,7 @@ footer a { color: var(--muted); }
     renderKeys();
     keyNote(cfg.keyStatus || 'active');
     radios('tileStyle', cfg.tileStyle, function (v) { save({ tileStyle: v }); });
+    radios('labels', cfg.labels || 'all', function (v) { save({ labels: v }); });
     radios('clock', cfg.clock, function (v) { save({ clock: v }); });
     radios('units', cfg.units, function (v) { save({ units: v }); });
     var size = '1920';

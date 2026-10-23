@@ -60,6 +60,12 @@ nav.icons .logo svg, nav.icons .logo img { display: block; }
 nav.icons .logo img, nav.icons a.sel .logo img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 nav.icons a.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 nav.icons a.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
+/* Names under logos and icons: only the selected one's, smaller; or none, the line under the icon alone. */
+nav.icons.only-sel i { visibility: hidden; font-size: 26px; }
+nav.icons.only-sel a.sel i { visibility: visible; }
+nav.icons.bare i { display: none; }
+nav.icons.bare .logo, nav.icons.bare img { margin-bottom: 0; }
+nav.icons.bare a.gear { -webkit-align-self: center; align-self: center; }
 /* The gear after the tiles opens the settings. */
 nav a.gear { margin-right: 0; }
 nav a.gear svg { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
@@ -135,6 +141,7 @@ function seleziona(i, colPuntatore) {
     if (el.offsetLeft + el.offsetWidth > spostamento + largo) spostamento = el.offsetLeft + el.offsetWidth - largo;
     if (el.offsetLeft < spostamento) spostamento = el.offsetLeft;
     nav.style.webkitTransform = nav.style.transform = 'translateX(' + -spostamento + 'px)';
+    caricaVisibili();
   }
   var t = TEXT;
   if (voci[sel] && voci[sel].gear) {
@@ -159,16 +166,36 @@ function iconaTv(url) {
   return img;
 }
 
-// The app's icon made white in a logo's place; the TV's own icon where it cannot be.
-// Asked for only once, with CORS: a copy loaded plainly first would taint the canvas.
-function bianca(a, url) {
-  var box = document.createElement('div');
-  box.className = 'logo';
-  a.insertBefore(box, a.firstChild);
-  iconaBianca(url, function (w) {
-    if (w) box.appendChild(misuraBianca(w, 80, 176, 96));
-    else if (box.parentNode) a.replaceChild(iconaTv(url), box);
-  });
+/*
+ * What fills a tile's place for its picture: its logo; else, with logos chosen, the
+ * app's icon made white; else the TV's own icon. The icon is asked for only once,
+ * with CORS: a copy loaded plainly first would taint the canvas.
+ */
+function riempi(box, v, modo) {
+  return function () {
+    var logo = logoDi(v, modo);
+    if (logo) return box.appendChild(disegnaLogo(logo, 80, 176, 96));
+    var url = SERVER + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
+    if (modo !== 'logo') return box.parentNode.replaceChild(iconaTv(url), box);
+    iconaBianca(url, function (w) {
+      if (w) box.appendChild(misuraBianca(w, 80, 176, 96));
+      else if (box.parentNode) box.parentNode.replaceChild(iconaTv(url), box);
+    });
+  };
+}
+
+// Up to fifty tiles: pictures are drawn as they come within a screen of view, not all at once.
+var caricatori = [];
+function caricaVisibili() {
+  var da = spostamento - 1920, fino = spostamento + 2 * 1920;
+  for (var k = 0; k < caricatori.length; k++) {
+    var el = caricatori[k] && nav.children[k];
+    if (el && el.offsetLeft + el.offsetWidth >= da && el.offsetLeft <= fino) {
+      var f = caricatori[k];
+      caricatori[k] = null;
+      f();
+    }
+  }
 }
 
 var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' +
@@ -178,27 +205,26 @@ var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 function disegna() {
   // Names only; logos, or the TV's icon where an app has none; the TV's icons. Inputs show their device.
   var modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
-  nav.className = modo === 'text' ? '' : 'icons';
+  nav.className = modo === 'text' ? '' : 'icons' + (cfg.labels === 'none' ? ' bare' : cfg.labels === 'selected' ? ' only-sel' : '');
   nav.innerHTML = '';
   spostamento = 0;
+  caricatori = [];
   voci = (cfg.tiles || []).slice();
   voci.push({ gear: true });
   voci.forEach(function (v, i) {
     var a = document.createElement('a');
     if (v.gear) {
       a.innerHTML = GEAR;
+      a.setAttribute('aria-label', TEXT.settings);
     } else {
-      var logo = modo === 'text' ? '' : logoDi(v, modo);
-      if (logo) {
+      if (modo !== 'text') {
         var box = document.createElement('div');
         box.className = 'logo';
-        box.appendChild(disegnaLogo(logo, 80, 176, 96));
         a.appendChild(box);
-      } else if (modo !== 'text') {
-        var icona = SERVER + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
-        if (modo === 'logo') bianca(a, icona);
-        else a.appendChild(iconaTv(icona));
+        caricatori[i] = riempi(box, v, modo);
       }
+      // The name stays for screen readers when it is not shown.
+      a.setAttribute('aria-label', v.title);
       var label = document.createElement('i');
       label.textContent = v.title;
       a.appendChild(label);

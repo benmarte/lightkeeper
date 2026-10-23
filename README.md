@@ -16,6 +16,8 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 |---|---|
 | ![The Home with plain names](docs/screenshots/home.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
 
+![The Home with icons only: logos without names, a line under the selected one](docs/screenshots/home-icons-only.jpg)
+
 ![The settings page on a computer, with a live preview of the TV](docs/screenshots/settings.png)
 
 Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon from the TV, and an HDMI input shows the device you pick for it.
@@ -51,8 +53,8 @@ Open **http://&lt;your-tv's-address&gt;:8090** on a phone or computer. On the TV
 
 The preview at the top is the Home as the TV draws it, and it changes as you go. Lightkeeper saves each change at once, and the TV shows it within a few seconds.
 
-- **Tiles.** Choose apps and HDMI inputs, which keep the names you gave them on the TV. Put them in order and rename them if you like. Up to twelve.
-- **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. For each HDMI input you pick the device plugged into it (PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more): Lightkeeper guesses it from the name the input has on the TV.
+- **Tiles.** Choose apps and HDMI inputs, which keep the names you gave them on the TV. Put them in order, by dragging them by their handle on a phone or computer or with the arrows, and rename them if you like. Up to fifty: the row slides as you move along it.
+- **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. For each HDMI input you pick the device plugged into it (PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more): Lightkeeper guesses it from the name the input has on the TV. With logos or icons, the names can show under every tile, under the selected one only, or not at all, which leaves the icons alone with a short line under the selected one.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
 - **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
 - **Screen saver.** Pause LG's screen saver for an hour while you try things out. It comes back by itself, as an OLED should not show a still picture for long.
@@ -167,8 +169,8 @@ In alternativa, da un computer via SSH come root: `./lightkeeper.sh install 192.
 
 **Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
 
-- le voci, cioè app e ingressi HDMI coi loro nomi, in ordine e rinominabili;
-- solo nomi, loghi bianchi o icone delle app; per ogni ingresso HDMI l'apparecchio collegato, che Lightkeeper indovina dal nome dell'ingresso;
+- le voci, cioè app e ingressi HDMI coi loro nomi, fino a cinquanta, da riordinare trascinandole o con le frecce e da rinominare;
+- solo nomi, loghi bianchi o icone delle app; con loghi e icone, i nomi sotto tutte le voci, solo sotto quella scelta o da nessuna parte (solo icone); per ogni ingresso HDMI l'apparecchio collegato, che Lightkeeper indovina dal nome dell'ingresso;
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
 - l'orologio a 24 o 12 ore;
 - la città del meteo, cercata su Open-Meteo, in °C o °F;
