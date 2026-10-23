@@ -12,7 +12,7 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 
 ## Screenshots
 
-| Logos and names | Settings on a phone |
+| Plain names | Settings on a phone |
 |---|---|
 | ![The Home with plain names](docs/screenshots/home.jpg) | ![The settings page on a phone](docs/screenshots/settings-phone.png) |
 
