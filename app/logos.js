@@ -1,9 +1,10 @@
 /*
- * The logos of apps and devices, drawn in one colour, for the Home and the
- * settings page. Brand logos come from Simple Icons (simpleicons.org, CC0); the
- * trademarks belong to their owners and are shown only to name the app or the
- * device. Brands Simple Icons does not carry get a generic picture, or the
- * app's own icon from the TV.
+ * The logos of apps and devices, in white, for the Home and the settings page.
+ * Drawn shapes come from Simple Icons (simpleicons.org, CC0); the others are the
+ * brands' own logos from Wikimedia Commons (public domain as simple text and
+ * shapes), made white by docs/art/logos-commons-render.py, as pictures in
+ * logos/. The trademarks belong to their owners and are shown only to name the
+ * app or the device. An app with no logo here shows its own icon from the TV.
  *
  * Strict ES5: the Home runs on Chromium 53 on webOS 4.
  */
@@ -34,6 +35,14 @@ var SIMPLE_ICONS = {
 };
 // LOGHI:END
 
+// The brands' logos as white pictures in logos/, by name: their width and height.
+var IMMAGINI = {"chromecast": [1981, 240], "discoveryplus": [1185, 221], "disneyplus": [439, 240], "firetv": [421, 240],
+  "hbomax": [1513, 240], "mediasetinfinity": [526, 240], "nintendoswitch": [240, 240], "nintendoswitch2": [269, 240],
+  "now": [777, 240], "plutotv": [322, 240], "primevideo": [760, 239], "raiplay": [564, 240], "rakutentv": [1066, 240],
+  "skygo": [438, 234], "timvision": [972, 169], "xbox": [302, 240]};
+// Where those pictures are, from the page that shows them.
+var LOGHI_BASE = 'logos/';
+
 // Pictures drawn for Lightkeeper (MIT), on the same 24 × 24 grid, holes by even-odd.
 var GENERICI = {
   console: 'M7 6h10a5 5 0 0 1 4.9 4l1 5.4a3 3 0 0 1-5.2 2.5L15.5 15h-7l-2.2 2.9a3 3 0 0 1-5.2-2.5l1-5.4A5 5 0 0 1 7 6z' +
@@ -47,14 +56,16 @@ var GENERICI = {
 var APPARECCHI = [
   { id: 'ps5', nome: 'PlayStation 5', logo: 'playstation5' },
   { id: 'ps4', nome: 'PlayStation 4', logo: 'playstation4' },
-  { id: 'xboxseries', nome: 'Xbox Series X|S', logo: 'console' },
-  { id: 'xbox', nome: 'Xbox', logo: 'console' },
-  { id: 'switch', nome: 'Nintendo Switch', logo: 'console' },
+  { id: 'xboxseries', nome: 'Xbox Series X|S', logo: 'xbox' },
+  { id: 'xbox', nome: 'Xbox', logo: 'xbox' },
+  { id: 'switch2', nome: 'Nintendo Switch 2', logo: 'nintendoswitch2' },
+  { id: 'switch', nome: 'Nintendo Switch', logo: 'nintendoswitch' },
   { id: 'steamdeck', nome: 'Steam Deck', logo: 'steamdeck' },
   { id: 'appletv', nome: 'Apple TV', logo: 'appletv' },
   { id: 'shield', nome: 'NVIDIA Shield', logo: 'nvidia' },
-  { id: 'googletv', nome: 'Chromecast / Google TV', logo: 'googletv' },
-  { id: 'firetv', nome: 'Fire TV', logo: 'box' },
+  { id: 'chromecast', nome: 'Chromecast', logo: 'chromecast' },
+  { id: 'googletv', nome: 'Google TV', logo: 'googletv' },
+  { id: 'firetv', nome: 'Fire TV', logo: 'firetv' },
   { id: 'console', nome: 'Game console', logo: 'console' },
   { id: 'hdmi', nome: 'HDMI', logo: 'hdmi' }
 ];
@@ -63,8 +74,8 @@ var APPARECCHI = [
 var INDIZI = [
   [/ps ?5|playstation ?5/i, 'ps5'], [/ps ?4|playstation ?4/i, 'ps4'],
   [/xbox.*series|series ?[xs]\b|xsx|xss/i, 'xboxseries'], [/xbox/i, 'xbox'],
-  [/switch|nintendo/i, 'switch'], [/steam ?deck/i, 'steamdeck'], [/apple ?tv/i, 'appletv'],
-  [/shield|nvidia/i, 'shield'], [/chromecast|google ?tv/i, 'googletv'], [/fire ?(tv|stick)/i, 'firetv'],
+  [/switch ?2/i, 'switch2'], [/switch|nintendo/i, 'switch'], [/steam ?deck/i, 'steamdeck'], [/apple ?tv/i, 'appletv'],
+  [/shield|nvidia/i, 'shield'], [/chromecast/i, 'chromecast'], [/google ?tv/i, 'googletv'], [/fire ?(tv|stick)/i, 'firetv'],
   [/console|game|giochi|gioco|playstation|jeux|spiel|consola/i, 'console']
 ];
 
@@ -75,10 +86,14 @@ function indovinaApparecchio(etichetta) {
 
 // Apps by their id on webOS, then by their title, letters and digits only.
 var LOGHI_APP = { 'netflix': 'netflix', 'youtube.leanback.v4': 'youtube', 'cdp-30': 'plex', 'spotify-beehive': 'spotify',
-  'com.apple.appletv': 'appletv' };
+  'com.apple.appletv': 'appletv', 'amazon': 'primevideo', 'com.disney.disneyplus-prod': 'disneyplus' };
 var LOGHI_TITOLI = { netflix: 'netflix', youtube: 'youtube', plex: 'plex', spotify: 'spotify', twitch: 'twitch',
   appletv: 'appletv', dazn: 'dazn', crunchyroll: 'crunchyroll', paramount: 'paramountplus', paramountplus: 'paramountplus',
-  mubi: 'mubi', tidal: 'tidal', applemusic: 'applemusic', jellyfin: 'jellyfin', kodi: 'kodi', emby: 'emby', vimeo: 'vimeo' };
+  mubi: 'mubi', tidal: 'tidal', applemusic: 'applemusic', jellyfin: 'jellyfin', kodi: 'kodi', emby: 'emby', vimeo: 'vimeo',
+  primevideo: 'primevideo', amazonprimevideo: 'primevideo', disney: 'disneyplus', disneyplus: 'disneyplus',
+  raiplay: 'raiplay', mediasetinfinity: 'mediasetinfinity', discovery: 'discoveryplus', discoveryplus: 'discoveryplus',
+  plutotv: 'plutotv', rakutentv: 'rakutentv', timvision: 'timvision', hbomax: 'hbomax', max: 'hbomax', now: 'now',
+  nowtv: 'now', skygo: 'skygo' };
 
 function eIngresso(id) { return /^com\.webos\.app\.(hdmi|livetv$)/.test(id); }
 
@@ -95,16 +110,36 @@ function logoDi(tile, modo, titoloTv) {
   }
   if (modo !== 'logo') return '';
   var nome = LOGHI_APP[tile.id] || LOGHI_TITOLI[String(tile.title).toLowerCase().replace(/[^a-z0-9]/g, '')] || '';
-  return SIMPLE_ICONS[nome] ? nome : '';
+  return SIMPLE_ICONS[nome] || IMMAGINI[nome] ? nome : '';
 }
 
 /*
- * The logo as an <svg>, cropped to its drawing and sized by its area, so a tall
- * symbol and a long word look the same weight: area in px², and at most
- * maxW × maxH. The drawing is measured once in the page, hence `dove`.
+ * How tall a logo of this width-to-height ratio is drawn, for a square one alto
+ * pixels tall: a long word gets less height than a symbol but more width, so the
+ * two look the same weight. At most maxW × maxH.
+ */
+function scala(w, h, alto, maxW, maxH) {
+  var hh = alto * Math.pow(w / h, -0.4);
+  return Math.min(hh / h, maxW / w, maxH / h);
+}
+
+/*
+ * The logo: a white picture for the brands' own logos; an <svg> cropped to its
+ * drawing for the others, measured once in the page, hence `dove`.
  */
 var misure = {};
-function svgLogo(nome, area, maxW, maxH, dove) {
+function disegnaLogo(nome, alto, maxW, maxH, dove) {
+  var dim = IMMAGINI[nome];
+  if (dim) {
+    var img = document.createElement('img'), k = scala(dim[0], dim[1], alto, maxW, maxH);
+    img.src = LOGHI_BASE + nome + '.png';
+    img.alt = '';
+    img.width = Math.round(dim[0] * k);
+    img.height = Math.round(dim[1] * k);
+    img.style.width = img.width + 'px'; // over any rule the page has for app icons
+    img.style.height = img.height + 'px';
+    return img;
+  }
   var NS = 'http://www.w3.org/2000/svg', d = SIMPLE_ICONS[nome] || GENERICI[nome] || GENERICI.hdmi;
   var svg = document.createElementNS(NS, 'svg'), path = document.createElementNS(NS, 'path');
   path.setAttribute('d', d);
@@ -123,7 +158,7 @@ function svgLogo(nome, area, maxW, maxH, dove) {
     svg.parentNode.removeChild(svg);
     svg.style.position = svg.style.visibility = '';
   }
-  var s = Math.min(Math.sqrt(area / (b.w * b.h)), maxW / b.w, maxH / b.h);
+  var s = scala(b.w, b.h, alto, maxW, maxH);
   svg.setAttribute('viewBox', b.x + ' ' + b.y + ' ' + b.w + ' ' + b.h);
   svg.setAttribute('width', Math.round(b.w * s));
   svg.setAttribute('height', Math.round(b.h * s));

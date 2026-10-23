@@ -56,7 +56,8 @@ nav.icons .logo {
   -webkit-filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5));
   transition: transform .2s;
 }
-nav.icons .logo svg { display: block; }
+nav.icons .logo svg, nav.icons .logo img { display: block; }
+nav.icons .logo img, nav.icons a.sel .logo img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 nav.icons a.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 nav.icons a.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
 /* The gear after the tiles opens the settings. */
@@ -181,7 +182,7 @@ function disegna() {
       if (logo) {
         var box = document.createElement('div');
         box.className = 'logo';
-        box.appendChild(svgLogo(logo, 6400, 176, 96));
+        box.appendChild(disegnaLogo(logo, 80, 176, 96));
         a.appendChild(box);
       } else if (modo !== 'text') {
         var img = document.createElement('img');

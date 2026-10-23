@@ -175,7 +175,7 @@ function publicConfig() {
 
 var ID_RE = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
 // The devices an HDMI input can be set to, as in logos.js.
-var DEVICES = ['ps5', 'ps4', 'xboxseries', 'xbox', 'switch', 'steamdeck', 'appletv', 'shield', 'googletv', 'firetv', 'console', 'hdmi'];
+var DEVICES = ['ps5', 'ps4', 'xboxseries', 'xbox', 'switch2', 'switch', 'steamdeck', 'appletv', 'shield', 'chromecast', 'googletv', 'firetv', 'console', 'hdmi'];
 
 function str(v, max) {
   return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').replace(/^\s+|\s+$/g, '').slice(0, max) : '';
@@ -542,6 +542,7 @@ function handle(req, res) {
     });
   }
   if (m === 'GET' && p === '/logos.js') return sendFile(res, path.join(APP_DIR, 'logos.js'), 'no-cache');
+  if (m === 'GET' && /^\/logos\/[a-z0-9]+\.png$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/jost(-[235]00)?\.woff2$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/backgrounds\/((thumbs\/)?[a-z0-9-]+\.jpg|index\.json)$/.test(p)) {
     // The list changes with an update of the app; the pictures under a name never do.

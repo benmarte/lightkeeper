@@ -81,7 +81,8 @@ button, input, select { font: inherit; color: inherit; }
 .screen nav.icons span.sel img { -webkit-transform: scale(1.06); transform: scale(1.06); }
 .screen nav.icons .logo { display: flex; align-items: center; justify-content: center; height: 132px; margin-bottom: 20px;
   -webkit-filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); filter: drop-shadow(0 2px 14px rgba(0, 0, 0, .5)); }
-.screen nav.icons .logo svg { display: block; }
+.screen nav.icons .logo svg, .screen nav.icons .logo img { display: block; }
+.screen nav.icons .logo img, .screen nav.icons span.sel .logo img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 .screen nav.icons span.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
 .screen nav.icons span.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
 .screen nav svg { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
@@ -438,6 +439,7 @@ footer a { color: var(--muted); }
     '<circle cx="12" cy="12" r="6.6"/></svg>';
 
   var cfg = null, tv = { apps: [], inputs: [], keys: [] }, pin = '', t = T.en;
+  LOGHI_BASE = '/logos/'; // logos.js's pictures, as the server serves them
   function $(id) { return document.getElementById(id); }
   try { pin = sessionStorage.getItem('pin') || ''; } catch (e) {}
 
@@ -534,7 +536,7 @@ footer a { color: var(--muted); }
       if (logo) {
         var box = document.createElement('div');
         box.className = 'logo';
-        box.appendChild(svgLogo(logo, 6400, 176, 96));
+        box.appendChild(disegnaLogo(logo, 80, 176, 96));
         s.appendChild(box);
       } else if (modo !== 'text') {
         var img = document.createElement('img');
@@ -627,7 +629,7 @@ footer a { color: var(--muted); }
       var logo = logoDi(tile, 'logo');
       if (logo) {
         ic.className = 'ic dev';
-        ic.appendChild(svgLogo(logo, 900, 34, 24));
+        ic.appendChild(disegnaLogo(logo, 22, 34, 26));
       } else {
         var img = document.createElement('img');
         img.src = '/icon?id=' + encodeURIComponent(tile.id);
