@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.2 (not released yet)
+## 1.0.2 (24 October 2026)
 
 - **Another port.** The settings can move to another port, under *Address*, or with `setup.sh --port` over SSH. When another program already has 8090, Lightkeeper takes the next free port, says so in its log and in the settings, and the gear on the TV shows the right address.
 - **webOS 2 and 3** ([#1](https://github.com/chiotas/lightkeeper/issues/1), [#3](https://github.com/chiotas/lightkeeper/issues/3)). These TVs have no key filters for GlassHouse to use, so the Home key stays LG's. The settings now say so, instead of "Active within a minute" for good, and the README shows how to map a button with lginputhook.
