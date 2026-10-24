@@ -1,10 +1,10 @@
 # Changelog
 
-## 1.0.5 (not released yet)
+## 1.0.5 (24 October 2026)
 
-- **91 more streaming services have a white logo** in *Logos*, found by the app's title on the TV: arte, Hulu, Peacock, ESPN, ITVX, Channel 4, ZDF, ARD Mediathek, Joyn, RTL+, Canal+, france.tv, La7, RTVE Play, atresplayer, SkyShowtime, Viaplay, NRK TV, Yle Areena, NPO Start, Eurosport and others. 23 come from Simple Icons, 68 from Wikimedia Commons, all public domain or CC0 there; `docs/art/logos-commons.tsv` lists each file and its licence.
+- **91 more streaming services have a white logo** in *Logos*, found by the app's title on the TV: arte, Hulu, Peacock, ESPN, ITVX, Channel 4, ZDF, ARD Mediathek, Joyn, RTL+, Canal+, france.tv, La7, RTVE Play, atresplayer, SkyShowtime, Viaplay, NRK TV, Yle Areena, NPO Start, Eurosport and others. 23 come from Simple Icons (CC0) and 68 from Wikimedia Commons, all public domain there; `docs/art/logos-commons.tsv` lists each file and its licence.
 - **GlassHouse's dashboard** shows GlassHouse's own mark, from its repository (MIT).
-- **Cleaner white icons** for apps without a logo of their own. Lightkeeper now takes the 192 px icon an app lists (`extraLargeIcon`) before the 130 px one, which LG's own apps have at 96 px. Made white from the 192 px icon, AccuWeather's showed 45% fewer blurred edge pixels at the size the Home draws it.
+- **Cleaner white icons** for apps without a logo of their own. Lightkeeper now takes the 192 px icon an app lists (`extraLargeIcon`) before the 130 px one, which LG's own apps have at 96 px. On AccuWeather's icon, made white at the size the Home draws it, that leaves 45% fewer blurred edge pixels.
 
 ## 1.0.4 (24 October 2026)
 
