@@ -78,6 +78,8 @@ var APPARECCHI = [
   { id: 'googletv', nome: 'Google TV', logo: 'googletv' },
   { id: 'firetv', nome: 'Fire TV', logo: 'firetv' },
   { id: 'console', nome: 'Game console', logo: 'console' },
+  { id: 'player', nome: 'Media player', logo: 'media' },
+  { id: 'tv', nome: 'TV', logo: 'tv' },
   { id: 'hdmi', nome: 'HDMI', logo: 'hdmi' }
 ];
 
@@ -87,12 +89,18 @@ var INDIZI = [
   [/xbox.*series|series ?[xs]\b|xsx|xss/i, 'xboxseries'], [/xbox/i, 'xbox'],
   [/switch ?2/i, 'switch2'], [/switch|nintendo/i, 'switch'], [/steam ?deck/i, 'steamdeck'], [/apple ?tv/i, 'appletv'],
   [/shield|nvidia/i, 'shield'], [/chromecast/i, 'chromecast'], [/google ?tv/i, 'googletv'], [/fire ?(tv|stick)/i, 'firetv'],
-  [/console|game|giochi|gioco|playstation|jeux|spiel|consola/i, 'console']
+  [/console|game|giochi|gioco|playstation|jeux|spiel|consola/i, 'console'],
+  [/decoder|set.?top|blu.?ray|dvd|player|lettore/i, 'player']
 ];
 
 function indovinaApparecchio(etichetta) {
   for (var i = 0; i < INDIZI.length; i++) if (INDIZI[i][0].test(etichetta || '')) return INDIZI[i][1];
   return 'hdmi';
+}
+
+// The device an input shows when none is picked: the TV for Live TV, else a guess from its name.
+function apparecchioAuto(tile, titoloTv) {
+  return tile.id === 'com.webos.app.livetv' ? 'tv' : indovinaApparecchio(titoloTv || tile.title);
 }
 
 // Apps by their id on webOS, then by their title, letters and digits only.
@@ -117,9 +125,8 @@ function eIngresso(id) { return /^com\.webos\.app\.(hdmi|livetv$)/.test(id); }
  * titoloTv is the name the TV gives the input, when known.
  */
 function logoDi(tile, modo, titoloTv) {
-  if (tile.id === 'com.webos.app.livetv' && !tile.device) return 'tv';
   if (eIngresso(tile.id)) {
-    var tipo = tile.device || indovinaApparecchio(titoloTv || tile.title);
+    var tipo = tile.device || apparecchioAuto(tile, titoloTv);
     for (var i = 0; i < APPARECCHI.length; i++) if (APPARECCHI[i].id === tipo) return APPARECCHI[i].logo;
     return 'hdmi';
   }

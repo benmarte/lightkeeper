@@ -95,6 +95,21 @@ assert.equal(logos.logoDi({ id: 'com.webos.app.livetv', title: 'Canali TV' }, 't
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi3', title: 'PlayStation 5' }, 'icon'), 'playstation5');
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi1', title: 'Box', device: 'firetv' }, 'logo'), 'firetv');
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi2', title: 'Xbox Series X' }, 'logo'), 'xbox');
+// Live TV shows the TV unless a device is picked; every device, TV and media player
+// included (issue #4), can be picked, has a picture, and is one the server accepts.
+assert.equal(logos.logoDi({ id: 'com.webos.app.livetv', title: 'Live TV', device: 'hdmi' }, 'logo'), 'hdmi');
+assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi1', title: 'Antenna', device: 'tv' }, 'logo'), 'tv');
+assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi1', title: 'Decoder Sky' }, 'logo'), 'media');
+assert.equal(logos.apparecchioAuto({ id: 'com.webos.app.livetv', title: 'Live TV' }), 'tv');
+assert.equal(logos.apparecchioAuto({ id: 'com.webos.app.hdmi2', title: 'HDMI 2' }), 'hdmi');
+assert.equal(logos.indovinaApparecchio('Xbox One'), 'xbox'); // not a "box"
+logos.APPARECCHI.forEach(function (a) {
+  assert.ok(logos.SIMPLE_ICONS[a.logo] || logos.IMMAGINI[a.logo] || logos.ICONE[a.logo], 'a picture for ' + a.id);
+});
+assert.deepEqual(s.DEVICES.slice().sort(), logos.APPARECCHI.map(function (a) { return a.id; }).sort());
+assert.deepEqual(s.validate({ tiles: [{ id: 'com.webos.app.livetv', title: 'Live TV', device: 'tv' }] }, keys),
+  { tiles: [{ id: 'com.webos.app.livetv', title: 'Live TV', device: 'tv' }] });
+assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'Netflix', device: 'tv' }] }, keys), 'tiles');
 
 // Guards.
 assert.ok(s.isLocal('192.168.0.20') && s.isLocal('::ffff:10.1.2.3') && s.isLocal('127.0.0.1') && s.isLocal('fe80::1'));

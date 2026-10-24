@@ -24,7 +24,7 @@ var crypto = require('crypto');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.2';
+var VERSION = '1.0.3';
 var APP_ID = 'io.github.chiotas.lightkeeper';
 var HERE = __dirname;
 var APP_DIR = path.dirname(HERE);
@@ -231,7 +231,7 @@ function pauseSaver(ms) {
 
 var ID_RE = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
 // The devices an HDMI input can be set to, as in logos.js.
-var DEVICES = ['ps5', 'ps4', 'xboxseries', 'xbox', 'switch2', 'switch', 'steamdeck', 'appletv', 'shield', 'chromecast', 'googletv', 'firetv', 'console', 'hdmi'];
+var DEVICES = ['ps5', 'ps4', 'xboxseries', 'xbox', 'switch2', 'switch', 'steamdeck', 'appletv', 'shield', 'chromecast', 'googletv', 'firetv', 'console', 'player', 'tv', 'hdmi'];
 
 function str(v, max) {
   return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').replace(/^\s+|\s+$/g, '').slice(0, max) : '';
@@ -824,7 +824,7 @@ function start() {
   process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
-module.exports = { validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
+module.exports = { DEVICES: DEVICES, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
   applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 

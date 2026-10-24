@@ -402,7 +402,7 @@ footer a { color: var(--muted); }
       add: 'Add a tile…', apps: 'Apps', inputs: 'Inputs', up: 'Move up', down: 'Move down', drop: 'Remove',
       nameOnTv: 'Name on the TV', onTv: 'On the TV: ', empty: 'No tiles yet. Add the apps and inputs you use most.',
       full: 'Fifty tiles at most.', drag: 'Drag to move', labels: 'Names under them', labelsAll: 'All', labelsSel: 'Selected', labelsNone: 'None', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
-      device: 'Device', dev_console: 'Game console', dev_hdmi: 'HDMI',
+      device: 'Device', dev_console: 'Game console', dev_hdmi: 'HDMI', dev_player: 'Media player', dev_tv: 'TV', devAuto: 'Automatic: ',
       showLede: 'Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.',
       yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
       cc0: 'public domain (CC0)', own: 'made for Lightkeeper', night: 'Night at sea', nightShort: 'Night', dawn: 'Dawn at sea',
@@ -682,6 +682,11 @@ footer a { color: var(--muted); }
     return h;
   }
 
+  function devName(id) {
+    for (var i = 0; i < APPARECCHI.length; i++) if (APPARECCHI[i].id === id) return t['dev_' + id] || APPARECCHI[i].nome;
+    return id;
+  }
+
   function tileNow(id) {
     for (var n = 0; n < (cfg.tiles || []).length; n++) if (cfg.tiles[n].id === id) return cfg.tiles[n];
     return null;
@@ -747,16 +752,19 @@ footer a { color: var(--muted); }
         var dev = document.createElement('select');
         dev.className = 'dev-sel';
         dev.setAttribute('aria-label', t.device + ': ' + tile.title);
-        APPARECCHI.forEach(function (a) {
+        // First, none picked: the TV for Live TV, else what the tile's name suggests, as on the Home.
+        var auto = apparecchioAuto(tile);
+        [{ id: '', auto: auto }].concat(APPARECCHI).forEach(function (a) {
           var o = document.createElement('option');
           o.value = a.id;
-          o.textContent = t['dev_' + a.id] || a.nome;
+          o.textContent = a.auto ? t.devAuto + devName(a.auto) : devName(a.id);
           dev.appendChild(o);
         });
-        dev.value = tile.device || indovinaApparecchio(orig || tile.title);
+        dev.value = tile.device || '';
         dev.onchange = function () {
           var ora = tileNow(tile.id);
-          if (ora) ora.device = dev.value;
+          if (ora && dev.value) ora.device = dev.value;
+          else if (ora) delete ora.device;
           saveTiles();
         };
         name.appendChild(dev);
@@ -826,7 +834,6 @@ footer a { color: var(--muted); }
     var id = this.value;
     if (!id) return;
     var tile = { id: id, title: tvTitle(id) || id };
-    if (eIngresso(id)) tile.device = indovinaApparecchio(tile.title);
     cfg.tiles = (cfg.tiles || []).concat([tile]);
     saveTiles();
     $('add').focus();
