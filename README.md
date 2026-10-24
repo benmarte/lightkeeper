@@ -31,7 +31,7 @@ Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon 
 
 ## Install
 
-1. **Download** `io.github.chiotas.lightkeeper_1.0.1_all.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
+1. **Download** `lightkeeper.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
 2. **Install it on the TV**, in one of these ways:
    - GlassHouse dashboard → **Apps** tab → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)). You can also paste the release's link to the `.ipk` there.
    - [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), or `ares-install` from LG's webOS CLI.
@@ -145,7 +145,8 @@ node test/check.js        # the server's checks
 A release carries four files from `dist/`: the package, `io.github.chiotas.lightkeeper_<version>_all.ipk`; the same file as `lightkeeper.ipk`, for the link that leads to the newest release; and the Homebrew Channel's catalog, `apps.json` and `lightkeeper.manifest.json`. The page the channel shows is [docs/homebrew-channel.html](docs/homebrew-channel.html), read from `main`.
 
 ```sh
-gh release create v1.0.2 dist/io.github.chiotas.lightkeeper_1.0.2_all.ipk dist/lightkeeper.ipk dist/apps.json dist/lightkeeper.manifest.json
+V=1.0.4  # the version in app/appinfo.json
+gh release create v$V dist/io.github.chiotas.lightkeeper_${V}_all.ipk dist/lightkeeper.ipk dist/apps.json dist/lightkeeper.manifest.json
 ```
 
 A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy in `app/backgrounds/thumbs/`, and an entry in `app/backgrounds/index.json`.
@@ -190,7 +191,7 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 **Cosa serve.** Una TV LG con il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati. Questo progetto non spiega come installarli: seguite le loro guide.
 
 **Installazione.**
-1. Scaricate il `.ipk` dall'[ultima release](https://github.com/chiotas/lightkeeper/releases/latest).
+1. Scaricate `lightkeeper.ipk` dall'[ultima release](https://github.com/chiotas/lightkeeper/releases/latest).
 2. Installatelo dalla scheda *Apps* di GlassHouse (*Install app from a URL or file*), con webOS Dev Manager o con `ares-install`.
 3. Aprite Lightkeeper una volta dall'elenco delle app. Al primo avvio chiede al Homebrew Channel di preparare il suo server e l'avvio automatico: una decina di secondi, senza domande.
 4. Premete Home. Da qui in poi il tasto Home e l'accensione aprono Lightkeeper; si possono spegnere entrambi dalle impostazioni.
