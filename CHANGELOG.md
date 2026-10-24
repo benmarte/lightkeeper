@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 (not released yet)
+
+- **Over the app left open at power on.** When the TV switches on, Lightkeeper now also opens over the app that was in front when it went off, which webOS puts back. Before, a Homebrew Channel left open stayed in front. An app that comes up with the TV still stays in front, such as Netflix from its button, a cast from a phone or an alarm. An update while you use an app does not cover it.
+
 ## 1.0.3 (24 October 2026)
 
 - **TV and media player icons for inputs** ([#4](https://github.com/chiotas/lightkeeper/issues/4)). Each input's device list now has a TV and a media player besides the game console and HDMI, so Live TV can go back to its TV icon and any input can use it.

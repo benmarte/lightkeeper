@@ -10,6 +10,24 @@
 APP=io.github.chiotas.lightkeeper
 HOOK=/var/lib/webosbrew/init.d/60-lightkeeper
 CONFIG=/var/lib/lightkeeper/config.json
+# The last full-screen app, kept across a cold start: what was in front when the TV went off.
+FRONT=/var/lib/lightkeeper/front
+
+# At power on, Lightkeeper opens over an input, LG's Home or nothing, and over the
+# app that was in front when the TV went off, which webOS puts back (issue: the
+# Homebrew Channel left open stayed in front). Not over an app that came up with
+# the TV: its own button, a cast from a phone, an alarm. $1 in front, $2 the app
+# in front at power off: open, cover, stay or self.
+scelta() {
+  case "$1" in
+    "$APP") echo self ;;
+    ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.inputcommon|com.webos.app.hdmi*) echo open ;;
+    *) if [ "$1" = "$2" ]; then echo cover; else echo stay; fi ;;
+  esac
+}
+# For the tests: lightkeeper-init --decide <in front> <in front at power off>
+[ "$1" = --decide ] && { scelta "$2" "$3"; exit 0; }
+
 LOG=/tmp/lightkeeper.log
 LS=/usr/bin/luna-send
 HERE=$(dirname "$(readlink -f "$0")")
@@ -55,14 +73,13 @@ vecchio=$(cat /tmp/lightkeeper.pid 2>/dev/null)
   done
 ) </dev/null >/dev/null 2>&1 &
 
-# Only over an input or LG's Home: whoever switches on with the Netflix button stays on Netflix.
+# $1: the app in front when the TV went off. Whoever switches on with the Netflix button stays on Netflix.
 apri() {
   sleep 1
   fg=$(davanti)
-  case "$fg" in
-    ""|com.webos.app.home|com.webos.app.livetv|com.webos.app.inputcommon|com.webos.app.hdmi*)
-      diario "opening Lightkeeper (in front: ${fg:-nothing})"
-      lancia "$APP" ;;
+  case $(scelta "$fg" "$1") in
+    open) diario "opening Lightkeeper (in front: ${fg:-nothing})"; lancia "$APP" ;;
+    cover) diario "opening Lightkeeper over $fg, in front when the TV went off"; lancia "$APP" ;;
     *) diario "not opening: $fg is in front" ;;
   esac
 }
@@ -84,6 +101,11 @@ via_account() {
 }
 
 # Switching on, from standby (Quick Start+) or a cold start.
+# Within five minutes of booting this is a cold start, and the app in front before
+# it is the one kept in $FRONT; later, an update has started this script again,
+# and the app in front is the one in use.
+ultima=
+[ "$(cut -d. -f1 /proc/uptime)" -lt 300 ] && ultima=$(cat "$FRONT" 2>/dev/null)
 (
   # This script starts about 40 s into a cold start: the first "Active" is the start.
   spento=1
@@ -94,10 +116,11 @@ via_account() {
       stato=$(echo "$riga" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
       [ -n "$stato" ] || continue
       case "$stato" in
-        Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri; via_account & }; spento=0 ;;
+        Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri "$ultima"; via_account & }; spento=0 ;;
         "Screen Saver"|"Screen Off") spento=0 ;;
         Prepared) ;;
-        *) spento=1 ;;
+        # Going off: the app in front now is the one webOS will put back.
+        *) [ "$spento" = 0 ] && ultima=$(cat "$FRONT" 2>/dev/null); spento=1 ;;
       esac
     done
     spento=0 # luna-send started again with the TV already on
@@ -116,6 +139,7 @@ via_account() {
       vivo || exit
       case "$riga" in *'"event":"foreground"'*_WEBOS_WINDOW_TYPE_CARD*) ;; *) continue ;; esac
       app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+      [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
       if [ "$app" = com.webos.app.home ] && [ -n "$prima" ] && [ "$prima" != "$APP" ] &&
          [ "$prima" != "$app" ] && set_to key '"home"'; then
         # Launched at once, Lightkeeper ended up under LG's Home, still opening.

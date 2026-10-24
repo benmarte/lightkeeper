@@ -57,6 +57,16 @@ var noFilters = require('child_process').execFileSync(process.execPath, ['-e',
   'require(' + JSON.stringify(require.resolve('../app/service/server.js')) + ").applyKey('home', function (s) { console.log(s); })"],
   { env: Object.assign({}, process.env, { LIGHTKEEPER_KEY_FILTERS: path.join(tmp, 'no-key-filters') }) }).toString().trim();
 assert.equal(noFilters, 'unsupported');
+
+// At power on (the boot hook): over an input, LG's Home or nothing; over the app
+// webOS puts back from before the TV went off; not over one that came up with it.
+var HOOK_SCRIPT = path.join(__dirname, '..', 'app', 'service', 'lightkeeper-init');
+[['com.webos.app.hdmi3', 'org.webosbrew.hbchannel', 'open'], ['', 'netflix', 'open'], ['com.webos.app.home', '', 'open'],
+ ['org.webosbrew.hbchannel', 'org.webosbrew.hbchannel', 'cover'], ['netflix', 'com.webos.app.hdmi3', 'stay'],
+ ['netflix', '', 'stay'], ['io.github.chiotas.lightkeeper', 'io.github.chiotas.lightkeeper', 'self']].forEach(function (c) {
+  var got = require('child_process').execFileSync('sh', [HOOK_SCRIPT, '--decide', c[0], c[1]]).toString().trim();
+  assert.equal(got, c[2], c[0] + ' after ' + c[1]);
+});
 assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json')));
 [80, 70000, 8091.5, '8091', null].forEach(function (v) { assert.equal(s.validate({ port: v }, keys), 'port'); });
 assert.deepEqual(s.validate({ key: 'red' }, keys), { key: 'red' });

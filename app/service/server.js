@@ -24,7 +24,7 @@ var crypto = require('crypto');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.3';
+var VERSION = '1.0.4';
 var APP_ID = 'io.github.chiotas.lightkeeper';
 var HERE = __dirname;
 var APP_DIR = path.dirname(HERE);

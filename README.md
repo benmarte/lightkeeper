@@ -12,7 +12,7 @@ It shows the time, the weather for one city and a short row of your apps and inp
 2. Find Lightkeeper in the channel's list and install it.
 3. Open Lightkeeper once from the TV's apps. Then set it up from your phone at `http://<your-tv>:8090`.
 
-**What's new:** 1.0.3 adds TV, Media player and *Automatic* to the devices an input can show. 1.0.2 lets you choose the settings' port, and 1.0.1 brought icons without names and up to fifty tiles. Every change is in the [changelog](CHANGELOG.md).
+**What's new:** 1.0.4 also opens at power on over the app left open when the TV went off. 1.0.3 adds TV, Media player and *Automatic* to the devices an input can show, 1.0.2 lets you choose the settings' port, and 1.0.1 brought icons without names and up to fifty tiles. Every change is in the [changelog](CHANGELOG.md).
 
 GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs before those, and it started on an LG C1 running webOS 6.5.3.
 
@@ -61,7 +61,7 @@ The preview at the top is the Home as the TV draws it, and it changes as you go.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
 - **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
 - **Screen saver.** Pause LG's screen saver for an hour while you try things out. It comes back by itself, as an OLED should not show a still picture for long.
-- **Remote and power.** Pick which key opens Lightkeeper: Home, or another key GlassHouse can change on your remote, such as the coloured keys. With Home, pressing Back in the last app also returns to Lightkeeper. *Open at power on* brings Lightkeeper up when the TV switches on over an input or LG's Home. If you switch on with the Netflix button, you stay on Netflix.
+- **Remote and power.** Pick which key opens Lightkeeper: Home, or another key GlassHouse can change on your remote, such as the coloured keys. With Home, pressing Back in the last app also returns to Lightkeeper. *Open at power on* brings Lightkeeper up when the TV switches on, over an input, LG's Home, or the app that was open when the TV went off, which webOS puts back. An app that comes up with the TV stays: switch on with the Netflix button, or cast from your phone, and you stay there.
 - **Address.** The page's port: 8090, unless you choose another or another program on the TV already has it (see *Another port* in [Troubleshooting](#troubleshooting)).
 - **PIN.** An optional PIN for the settings page.
 
@@ -123,7 +123,7 @@ sh /media/developer/apps/usr/palm/applications/io.github.chiotas.lightkeeper/ser
 
 The port is also `"port"` in `/var/lib/lightkeeper/config.json`, read at each start.
 
-**Lightkeeper does not come up when the TV switches on.** Check *Open at power on* in the settings. Lightkeeper opens only over an input or LG's Home, so switching on with the Netflix button keeps you on Netflix. After a full restart of the TV, the Homebrew Channel starts Lightkeeper about 40 seconds in.
+**Lightkeeper does not come up when the TV switches on.** Check *Open at power on* in the settings. Lightkeeper opens over an input, LG's Home or the app left open when the TV went off, but not over an app that came up with the TV, so switching on with the Netflix button keeps you on Netflix. The log says which it was. After a full restart of the TV, the Homebrew Channel starts Lightkeeper about 40 seconds in.
 
 **Switching on the TV also switches on a console or a streaming box.** That is the TV's own HDMI-CEC, not Lightkeeper: Settings → General → Devices → HDMI Settings → SIMPLINK (HDMI-CEC) → *Auto Power Sync*. Turned off, the console's own button still switches on the TV.
 
@@ -193,7 +193,7 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 2. Trovate Lightkeeper nella lista del canale e installatela.
 3. Apritela una volta dalle app della TV. Poi si configura dal telefono su `http://<tv>:8090`.
 
-**Novità.** La 1.0.3 aggiunge TV, lettore multimediale (*Media player*) e *Automatic* agli apparecchi che un ingresso può mostrare. La 1.0.2 permette di scegliere la porta delle impostazioni, la 1.0.1 ha portato le icone senza nomi e fino a cinquanta voci. Tutte le modifiche sono nel [changelog](CHANGELOG.md).
+**Novità.** La 1.0.4 all'accensione si apre anche sopra l'app rimasta aperta allo spegnimento. La 1.0.3 aggiunge TV, lettore multimediale (*Media player*) e *Automatic* agli apparecchi che un ingresso può mostrare, la 1.0.2 permette di scegliere la porta delle impostazioni, la 1.0.1 ha portato le icone senza nomi e fino a cinquanta voci. Tutte le modifiche sono nel [changelog](CHANGELOG.md).
 
 **Cosa serve.** Una TV LG con root, il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati: questo progetto non spiega come installarli, seguite le loro guide. Poi un telefono o un computer sulla stessa rete della TV, e internet sulla TV per il meteo.
 
@@ -213,7 +213,7 @@ Poi aprite Lightkeeper una volta dalle app della TV (via SSH si apre da sola). A
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
 - l'orologio a 24 o 12 ore, e la città del meteo, cercata su Open-Meteo, in °C o °F;
 - una pausa di un'ora dello screensaver di LG, per fare prove;
-- il tasto che apre Lightkeeper (con Home, anche Indietro dall'ultima app torna qui) e l'apertura all'accensione;
+- il tasto che apre Lightkeeper (con Home, anche Indietro dall'ultima app torna qui) e l'apertura all'accensione, sopra un ingresso, la Home di LG o l'app rimasta aperta allo spegnimento, ma non sopra un'app partita con la TV (tasto Netflix, cast dal telefono);
 - la porta della pagina (*Address*);
 - un PIN facoltativo per la pagina.
 
