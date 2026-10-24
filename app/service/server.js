@@ -413,8 +413,9 @@ function readRemoteKeys() {
  */
 function applyKey(key, cb) {
   if (!fs.existsSync(path.join(TVWEB, 'tvweb.js'))) return cb(key === 'none' ? 'off' : 'noglasshouse');
-  // No LG key filters, as on webOS 3: nothing would read the key map (issue #3).
-  if (key !== 'none' && !fs.existsSync(KEY_FILTERS)) return cb('unsupported');
+  // No LG key filters, as on webOS 3: nothing would read the key map (issue #3),
+  // and an entry an earlier version wrote there is taken out.
+  if (key !== 'none' && !fs.existsSync(KEY_FILTERS)) return applyKey('none', function () { cb('unsupported'); });
   var j = readRemoteKeys();
   var keys = j.keys && typeof j.keys === 'object' ? j.keys : {};
   var before = JSON.stringify([keys, j.home || '']);
