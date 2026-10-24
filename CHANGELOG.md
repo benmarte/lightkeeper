@@ -3,6 +3,7 @@
 ## 1.0.4 (not released yet)
 
 - **Over the app left open at power on.** When the TV switches on, Lightkeeper now also opens over the app that was in front when it went off, which webOS puts back. Before, a Homebrew Channel left open stayed in front. An app that comes up with the TV still stays in front, such as Netflix from its button, a cast from a phone or an alarm. An update while you use an app does not cover it. With nothing in front at first, Lightkeeper waits a few seconds for an app that is still starting: before, switching on with the Netflix button could end on Lightkeeper.
+- **The background comes in whole.** The Home puts its picture on once it has loaded. Before, an uploaded picture came in at power on in strips over the app's own one (Godrevy) underneath.
 - **Back from the last app on webOS 3** ([#3](https://github.com/chiotas/lightkeeper/issues/3)). Where LG has no Home app to come up, Lightkeeper watches the app in front: when an app gives way to nothing, as Back from the last one does, Lightkeeper opens, and again if Live TV comes up right after. Picking an input or Live TV with the remote does not count. Before, on webOS 3 the start-up hook asked every five seconds for app events that TV does not have. Built from a B7's logs (webOS 3.9.3), thank you Docproc; not yet tried on a webOS 3 TV. The Home key itself stays LG's there, and the Home entry 1.0.1 and 1.0.2 wrote in GlassHouse's key map, which nothing reads on webOS 3, is taken out.
 
 ## 1.0.3 (24 October 2026)
