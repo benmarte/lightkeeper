@@ -1,7 +1,7 @@
 [
   { "id": "godrevy", "short": "Godrevy", "title": "Godrevy Lighthouse", "by": "Francesco Gola", "licence": "rights", "link": "https://francescogola.net" },
   { "id": "southampton", "short": "Southampton", "title": "Nocturne: Blue and Gold—Southampton Water", "by": "James McNeill Whistler, 1872", "licence": "pd", "link": "https://www.artic.edu/artworks/56905" },
-  { "id": "penobscot", "short": "Penobscot Bay", "title": "Lumber Schooners at Evening on Penobscot Bay", "by": "Fitz Henry Lane, 1863", "licence": "cc0", "link": "https://www.nga.gov/collection/art-object-page.57611.html" },
+  { "id": "penobscot", "short": "Penobscot Bay", "title": "Lumber Schooners at Evening on Penobscot Bay", "by": "Fitz Henry Lane, 1863", "licence": "cc0", "link": "https://www.nga.gov/artworks/57611-lumber-schooners-evening-penobscot-bay" },
   { "id": "northcape", "short": "North Cape", "title": "The North Cape by Moonlight", "by": "Peder Balke, 1848", "licence": "cc0", "link": "https://www.metmuseum.org/art/collection/search/441379" },
   { "id": "monk", "short": "Monk by the Sea", "title": "The Monk by the Sea", "by": "Caspar David Friedrich, 1808–1810", "licence": "pd", "link": "https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Der_M%C3%B6nch_am_Meer_-_Google_Art_Project.jpg" },
   { "id": "entrance", "short": "Entrance", "title": "Nocturne in Black and Gold: Entrance to Southampton Water", "by": "James McNeill Whistler, c. 1875–1876", "licence": "cc0", "link": "https://asia-archive.si.edu/object/F1897.21a-b/" },

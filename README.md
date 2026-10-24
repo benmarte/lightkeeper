@@ -2,9 +2,17 @@
 
 A calm Home screen for LG TVs on older webOS, made to sit beside [GlassHouse](https://github.com/rorygallagher2024/glasshouse).
 
-It shows the time, the weather for one city and a short row of your apps and HDMI inputs over a picture, and keeps LG's ads and suggestions out. The Home key opens it, it comes up when the TV switches on, and you set it up from your phone.
+It shows the time, the weather for one city and a short row of your apps and inputs over a picture, and keeps LG's ads and suggestions out. The Home key opens it, it comes up when the TV switches on, and you set it up from your phone.
 
 ![Lightkeeper on the TV](docs/screenshots/home-icons.jpg)
+
+**Quick start**, on a rooted LG TV with the Homebrew Channel and GlassHouse:
+
+1. In the Homebrew Channel, open the gear, choose *Add repository* and enter `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`.
+2. Find Lightkeeper in the channel's list and install it.
+3. Open Lightkeeper once from the TV's apps. Then set it up from your phone at `http://<your-tv>:8090`.
+
+**What's new:** 1.0.3 adds TV, Media player and *Automatic* to the devices an input can show. 1.0.2 lets you choose the settings' port, and 1.0.1 brought icons without names and up to fifty tiles. Every change is in the [changelog](CHANGELOG.md).
 
 GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs before those, and it started on an LG C1 running webOS 6.5.3.
 
@@ -20,8 +28,6 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 
 ![The settings page on a computer, with a live preview of the TV](docs/screenshots/settings.png)
 
-Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon from the TV, and an HDMI input shows the device you pick for it.
-
 ## What you need
 
 - **An LG webOS TV with root and the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel).** This project does not explain how to root a TV: follow the Homebrew Channel's own guides.
@@ -31,39 +37,32 @@ Logos are drawn in white. An app Lightkeeper has no logo for shows its own icon 
 
 ## Install
 
-1. **Download** `lightkeeper.ipk` from the [latest release](https://github.com/chiotas/lightkeeper/releases/latest).
-2. **Install it on the TV**, in one of these ways:
-   - GlassHouse dashboard → **Apps** tab → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)). You can also paste the release's link to the `.ipk` there.
-   - [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), or `ares-install` from LG's webOS CLI.
-3. **Open Lightkeeper once** from the TV's app list. On its first start it asks the Homebrew Channel to set up its settings server and its start-up hook. This takes about ten seconds, and nothing asks you anything.
-4. **Press Home.** From now on the Home key opens Lightkeeper, and so does switching the TV on. You can turn off either in the settings.
-5. **Set it up** from your phone: on the TV, move to the gear at the end of the row and the address to type appears beside it, something like `http://192.168.1.50:8090`.
+Pick one of three ways. Updates come the same way, and your settings stay.
 
-**Over SSH instead,** from a computer with this repository and root SSH access to the TV:
+1. **From the Homebrew Channel**, the simplest. Add Lightkeeper's repository once: the gear at the top → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper then appears in the channel's list among the other apps: open it and choose *Install*. When a new version is out, the same page shows it and offers *Update*.
+2. **From a file or a link.** `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` always leads to the newest release. Paste it in the GlassHouse dashboard → **Apps** → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)), or download it and install it with [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop) or `ares-install` from LG's webOS CLI.
+3. **Over SSH**, from a computer with this repository and root SSH access to the TV. If your TV needs a particular key, set `LIGHTKEEPER_SSH="ssh -i ~/.ssh/your_tv_key"` first.
 
-```sh
-./lightkeeper.sh install 192.168.1.50
-```
+   ```sh
+   ./lightkeeper.sh install 192.168.1.50
+   ```
 
-If your TV needs a particular key, set `LIGHTKEEPER_SSH="ssh -i ~/.ssh/your_tv_key"` first. To update later, install the new `.ipk` over the old one, or run the same command: your settings stay.
-
-## Always the latest version
-
-- **In the Homebrew Channel.** Add Lightkeeper's repository once: Homebrew Channel → the gear at the top → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper then appears in the channel's list, among the other apps. Open it there to install it, and later to update it: the page shows the new version and *Update*. Your settings stay.
-- **A link that does not change.** `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` always leads to the newest release. Paste it in GlassHouse (*Apps* → *Install app from a URL or file*) or in webOS Dev Manager.
+Then **open Lightkeeper once** from the TV's app list (over SSH it opens by itself). On its first start it asks the Homebrew Channel to set up its settings server and its start-up hook. This takes about ten seconds, and nothing asks you anything. From then on the Home key opens Lightkeeper, and so does switching the TV on; you can turn off either in the settings.
 
 ## Set it up
 
-Open **http://&lt;your-tv's-address&gt;:8090** on a phone or computer. On the TV, choose the gear at the end of the row; it opens the same page in the TV's browser and shows the address to type on your phone.
+Open **http://&lt;your-tv's-address&gt;:8090** on a phone or computer. On the TV, the gear at the end of the row shows that address, and choosing it opens the same page in the TV's browser.
 
 The preview at the top is the Home as the TV draws it, and it changes as you go. Lightkeeper saves each change at once, and the TV shows it within a few seconds.
 
-- **Tiles.** Choose apps and HDMI inputs, which keep the names you gave them on the TV. Put them in order, by dragging them by their handle on a phone or computer or with the arrows, and rename them if you like. Up to fifty: the row slides as you move along it.
-- **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. For each input you pick the device plugged into it (PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more), or a plain TV, media player, game console or HDMI icon. Until you pick one, *Automatic* guesses it from the tile's name, and Live TV shows a TV. With logos or icons, the names can show under every tile, under the selected one only, or not at all, which leaves the icons alone with a short line under the selected one.
+- **Tiles.** Choose apps and inputs, which keep the names you gave them on the TV. Put them in order, by dragging them by their handle on a phone or computer or with the arrows, and rename them if you like. Up to fifty: the row slides as you move along it.
+- **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. With logos or icons, the names can show under every tile, under the selected one only, or not at all, which leaves the icons alone with a short line under the selected one.
+- **Inputs.** Each input shows the device plugged into it: PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more, or a plain TV, media player, game console or HDMI icon. *Automatic*, the first choice, guesses it from the tile's name, and Live TV shows a TV.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
 - **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
 - **Screen saver.** Pause LG's screen saver for an hour while you try things out. It comes back by itself, as an OLED should not show a still picture for long.
 - **Remote and power.** Pick which key opens Lightkeeper: Home, or another key GlassHouse can change on your remote, such as the coloured keys. With Home, pressing Back in the last app also returns to Lightkeeper. *Open at power on* brings Lightkeeper up when the TV switches on over an input or LG's Home. If you switch on with the Netflix button, you stay on Netflix.
+- **Address.** The page's port: 8090, unless you choose another or another program on the TV already has it (see *Another port* in [Troubleshooting](#troubleshooting)).
 - **PIN.** An optional PIN for the settings page.
 
 On the remote: **← →** to move, **OK** to open, **Back** to leave, **↓** for LG's own Home.
@@ -81,7 +80,7 @@ All three give the Home key back to LG's Home, remove the start-up hook and dele
 ## How it works
 
 - `app/` is the webOS web app: the Home (`index.html`), the backgrounds it carries in `backgrounds/` (listed, with their credits, in `backgrounds/index.json`), and under `service/` a small node server, the settings page and the start-up hook. It is written in plain ES5 so it runs on the old Chromium and node versions these TVs ship.
-- The server listens on port 8090, or the port chosen in the settings (see *Another port* below). It answers only the TV itself and private network addresses, and only to an IP address or `localhost` in the Host header. It runs no command you send it: the only programs it starts are `luna-send`, with calls fixed in its code, and GlassHouse's `tvwebctl restart`. It checks every setting before saving it, takes only JPEG pictures up to 3840 × 2160 and 12 MB, and accepts writes only with a JSON or JPEG content type, which a web page elsewhere cannot send it.
+- The server listens on port 8090, or the port chosen in the settings (see *Another port* in [Troubleshooting](#troubleshooting)). It answers only the TV itself and private network addresses, and only to an IP address or `localhost` in the Host header. It runs no command you send it: the only programs it starts are `luna-send`, with calls fixed in its code, and GlassHouse's `tvwebctl restart`. It checks every setting before saving it, takes only JPEG pictures up to 3840 × 2160 and 12 MB, and accepts writes only with a JSON or JPEG content type, which a web page elsewhere cannot send it.
 - What it writes on the TV: `/var/lib/lightkeeper/` (settings and your picture) and a link in `/var/lib/webosbrew/init.d/60-lightkeeper`, pointing into the app. It also adds its own entry to GlassHouse's key map (`/var/lib/tvweb/remotekeys.json` and the `glasshouse.remoteKeys` setting its filter reads), and leaves the keys you set in GlassHouse alone. It touches nothing on the TV's read-only system.
 - The log is in `/tmp/lightkeeper.log`.
 
@@ -112,7 +111,7 @@ On webOS 3.9, people report that lginputhook 1.4.0 sees the buttons and 1.5.x do
 
 ## Troubleshooting
 
-**The Home key still opens LG's Home.** In the settings, *Remote and power* says what the key is doing. "Active within a minute" means GlassHouse is restarting to put its key filter in place: wait a minute. "GlassHouse is not installed" means Lightkeeper cannot find GlassHouse on the TV: install it first. A GlassHouse update can also reset the keys; changing the key in Lightkeeper's settings sets it again.
+**The Home key still opens LG's Home.** In the settings, *Remote and power* says what the key is doing. "Active within a minute" means GlassHouse is restarting to put its key filter in place: wait a minute. "GlassHouse is not installed" means Lightkeeper cannot find GlassHouse on the TV: install it first. On webOS 2 and 3 the settings say the key cannot be taken: see [The Home key on webOS 2 and 3](#the-home-key-on-webos-2-and-3). A GlassHouse update can also reset the keys; changing the key in Lightkeeper's settings sets it again.
 
 **The settings page does not open.** Make sure your phone is on the same network as the TV, and type the address with `http://` and the port the gear shows, `:8090` unless you changed it. If it still does not answer, open Lightkeeper once from the TV's app list: it starts its server again if needed. Over SSH, `./lightkeeper.sh install <address>` puts everything back in place and keeps your settings.
 
@@ -156,7 +155,7 @@ A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy
 Ideas, reports and pull requests are welcome.
 
 - **Missing a service or a console?** [Open an issue](https://github.com/chiotas/lightkeeper/issues/new/choose) with its name and, if you know it, a link to the official logo. I'll add the name and a white logo.
-- **Tried it on another TV?** The *Report from your TV* form takes two minutes and fills in the compatibility table.
+- **Tried it on another TV?** The [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) form takes two minutes and fills in the compatibility table.
 - **Pull requests:** keep the code plain ES5, as the older TVs need, and run `node test/check.js` before you send it.
 
 ## Credits
@@ -164,7 +163,7 @@ Ideas, reports and pull requests are welcome.
 - Default background: *Godrevy Lighthouse*, a photograph by [Francesco Gola](https://francescogola.net). © Francesco Gola, all rights reserved; it may be used only as part of Lightkeeper, see [PHOTO-LICENSE.md](PHOTO-LICENSE.md).
 - The other backgrounds, cropped to 16:9 from the museums' and the Library of Congress's own images:
   - James McNeill Whistler, *Nocturne: Blue and Gold—Southampton Water*, 1872. Art Institute of Chicago, public domain ([artic.edu](https://www.artic.edu/artworks/56905)).
-  - Fitz Henry Lane, *Lumber Schooners at Evening on Penobscot Bay*, 1863. National Gallery of Art, Washington, CC0 ([nga.gov](https://www.nga.gov/collection/art-object-page.57611.html)).
+  - Fitz Henry Lane, *Lumber Schooners at Evening on Penobscot Bay*, 1863. National Gallery of Art, Washington, CC0 ([nga.gov](https://www.nga.gov/artworks/57611-lumber-schooners-evening-penobscot-bay)).
   - Peder Balke, *The North Cape by Moonlight*, 1848. The Metropolitan Museum of Art, CC0 ([metmuseum.org](https://www.metmuseum.org/art/collection/search/441379)).
   - Caspar David Friedrich, *The Monk by the Sea*, 1808–1810. Alte Nationalgalerie, Berlin, public domain ([Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Der_M%C3%B6nch_am_Meer_-_Google_Art_Project.jpg)).
   - James McNeill Whistler, *Nocturne in Black and Gold: Entrance to Southampton Water*, c. 1875–1876. Freer Gallery of Art, Smithsonian, CC0 ([si.edu](https://asia-archive.si.edu/object/F1897.21a-b/)).
@@ -186,42 +185,48 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 
 ## Italiano
 
-**Lightkeeper** è una Home calma per le TV LG con webOS vecchi, da usare insieme a [GlassHouse](https://github.com/rorygallagher2024/glasshouse). Mostra l'ora, il meteo di una città e una fila corta di app e ingressi HDMI sopra un'immagine, e tiene fuori pubblicità e suggerimenti di LG. Si apre col tasto Home e all'accensione, e si configura dal telefono. GlassHouse ha la sua Home per webOS 9, 10 e 11; Lightkeeper è per le TV di prima ed è nata su una LG C1 con webOS 6.5.3.
+**Lightkeeper** è una Home calma per le TV LG con webOS vecchi, da usare insieme a [GlassHouse](https://github.com/rorygallagher2024/glasshouse). Mostra l'ora, il meteo di una città e una fila corta di app e ingressi sopra un'immagine, e tiene fuori pubblicità e suggerimenti di LG. Si apre col tasto Home e all'accensione, e si configura dal telefono. GlassHouse ha la sua Home per webOS 9, 10 e 11; Lightkeeper è per le TV di prima ed è nata su una LG C1 con webOS 6.5.3.
 
-**Cosa serve.** Una TV LG con il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati. Questo progetto non spiega come installarli: seguite le loro guide.
+**Avvio rapido**, su una TV LG con root, Homebrew Channel e GlassHouse:
 
-**Installazione.**
-1. Scaricate `lightkeeper.ipk` dall'[ultima release](https://github.com/chiotas/lightkeeper/releases/latest).
-2. Installatelo dalla scheda *Apps* di GlassHouse (*Install app from a URL or file*), con webOS Dev Manager o con `ares-install`.
-3. Aprite Lightkeeper una volta dall'elenco delle app. Al primo avvio chiede al Homebrew Channel di preparare il suo server e l'avvio automatico: una decina di secondi, senza domande.
-4. Premete Home. Da qui in poi il tasto Home e l'accensione aprono Lightkeeper; si possono spegnere entrambi dalle impostazioni.
+1. Nel Homebrew Channel aprite l'ingranaggio, scegliete *Add repository* e inserite `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`.
+2. Trovate Lightkeeper nella lista del canale e installatela.
+3. Apritela una volta dalle app della TV. Poi si configura dal telefono su `http://<tv>:8090`.
 
-In alternativa, da un computer via SSH come root: `./lightkeeper.sh install 192.168.1.50`.
+**Novità.** La 1.0.3 aggiunge TV, lettore multimediale (*Media player*) e *Automatic* agli apparecchi che un ingresso può mostrare. La 1.0.2 permette di scegliere la porta delle impostazioni, la 1.0.1 ha portato le icone senza nomi e fino a cinquanta voci. Tutte le modifiche sono nel [changelog](CHANGELOG.md).
 
-**Sempre l'ultima versione.**
-- Nel Homebrew Channel aggiungete una volta il repository di Lightkeeper: ingranaggio in alto → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper compare nella lista del canale insieme alle altre app: da lì si installa e, quando esce una versione nuova, si aggiorna con *Update*. Le impostazioni restano.
-- L'indirizzo `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` porta sempre all'ultima release: incollatelo in GlassHouse (*Apps* → *Install app from a URL or file*) o in webOS Dev Manager.
+**Cosa serve.** Una TV LG con root, il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati: questo progetto non spiega come installarli, seguite le loro guide. Poi un telefono o un computer sulla stessa rete della TV, e internet sulla TV per il meteo.
 
-**Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
+**Installazione.** Tre modi; gli aggiornamenti passano dallo stesso e le impostazioni restano.
 
-- le voci, cioè app e ingressi HDMI coi loro nomi, fino a cinquanta, da riordinare trascinandole o con le frecce e da rinominare;
-- solo nomi, loghi bianchi o icone delle app; con loghi e icone, i nomi sotto tutte le voci, solo sotto quella scelta o da nessuna parte (solo icone); per ogni ingresso l'apparecchio collegato, oppure un'icona generica (TV, lettore multimediale, console, HDMI); finché non lo scegliete, *Automatic* lo indovina dal nome della voce, e Live TV mostra una TV;
+1. **Dal Homebrew Channel**, il più semplice: ingranaggio in alto → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper compare nella lista del canale insieme alle altre app: apritela e scegliete *Install*. Quando esce una versione nuova, la stessa pagina la mostra e offre *Update*.
+2. **Da file o indirizzo.** `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` porta sempre all'ultima release. Incollatelo in GlassHouse (*Apps* → *Install app from a URL or file*), oppure scaricatelo e installatelo con webOS Dev Manager o `ares-install`.
+3. **Via SSH** da un computer, come root: `./lightkeeper.sh install 192.168.1.50`.
+
+Poi aprite Lightkeeper una volta dalle app della TV (via SSH si apre da sola). Al primo avvio chiede al Homebrew Channel di preparare il suo server e l'avvio automatico: una decina di secondi, senza domande. Da qui in poi il tasto Home e l'accensione aprono Lightkeeper; si possono spegnere entrambi dalle impostazioni.
+
+**Impostazioni.** Aprite **http://&lt;indirizzo-della-TV&gt;:8090** dal telefono o dal computer, oppure scegliete l'ingranaggio in fondo alla fila sulla TV, che mostra anche l'indirizzo. L'anteprima in alto è la Home come la disegna la TV e cambia mentre si regola. Ogni modifica si salva subito. Si possono scegliere:
+
+- le voci, cioè app e ingressi coi loro nomi, fino a cinquanta, da riordinare trascinandole o con le frecce e da rinominare;
+- solo nomi, loghi bianchi o icone delle app; con loghi e icone, i nomi sotto tutte le voci, solo sotto quella scelta o da nessuna parte (solo icone);
+- per ogni ingresso l'apparecchio collegato, oppure un'icona generica (TV, lettore multimediale, console, HDMI); *Automatic*, la prima scelta, lo indovina dal nome della voce, e Live TV mostra una TV;
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
-- l'orologio a 24 o 12 ore;
-- la città del meteo, cercata su Open-Meteo, in °C o °F;
+- l'orologio a 24 o 12 ore, e la città del meteo, cercata su Open-Meteo, in °C o °F;
 - una pausa di un'ora dello screensaver di LG, per fare prove;
-- il tasto che apre Lightkeeper; con Home, anche Indietro dall'ultima app torna qui;
-- l'apertura all'accensione;
+- il tasto che apre Lightkeeper (con Home, anche Indietro dall'ultima app torna qui) e l'apertura all'accensione;
+- la porta della pagina (*Address*);
 - un PIN facoltativo per la pagina.
 
 Sul telecomando: **← →** per scegliere, **OK** per aprire, **Indietro** per uscire, **↓** per la Home di LG.
 
 **Disinstallazione.** Dalla pagina (*Remove Lightkeeper*), con `./lightkeeper.sh uninstall 192.168.1.50`, o cancellando l'app dalla TV, che se ne accorge entro due minuti se resta accesa. Il tasto Home torna alla Home di LG, l'avvio automatico sparisce e le impostazioni vengono cancellate.
 
-**Compatibilità.** Provata solo su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Dovrebbe funzionare sui webOS da 4.x a 8.x con GlassHouse, ma lì non è provata. Sui webOS 2.x e 3.x funziona in parte (segnalazioni da una LG B7 con webOS 3.9.3 e da Reddit): la Home, le impostazioni e l'apertura all'accensione vanno, ma il tasto Home e Indietro dall'ultima app restano di LG, perché quei webOS non hanno i filtri tasti che GlassHouse usa. Lì si può provare [lginputhook](https://github.com/Simon34545/lginputhook) 1.4.0, che associa un tasto al comando nella sezione *The Home key on webOS 2 and 3*. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse. Sul webOS 11 non può prendere il tasto Home. Non sono supportati il webOS 1 e le TV senza root, Homebrew Channel e GlassHouse. La tabella completa è nella sezione *Compatibility*. Se la provate su un'altra TV, compilate il modulo [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) con modello, versione e com'è andata.
+**Come funziona.** Un'app web per webOS scritta in ES5 e un piccolo server node sulla porta 8090, che risponde solo alla TV e alla rete di casa e non esegue comandi ricevuti. Scrive solo in `/var/lib/lightkeeper/`, un collegamento in `/var/lib/webosbrew/init.d/` e la propria voce nella mappa dei tasti di GlassHouse, senza toccare i tasti impostati lì. Il registro è in `/tmp/lightkeeper.log`.
 
-**Problemi.** Se il tasto Home apre ancora la Home LG, nelle impostazioni la sezione *Remote and power* dice cosa sta facendo: «Active within a minute» vuol dire aspettare un minuto. Se la pagina non si apre: stessa rete della TV, indirizzo con `http://` e la porta che mostra l'ingranaggio (`:8090` se non l'avete cambiata), poi aprite Lightkeeper una volta dalla TV. Se un altro programma sulla TV usa già la 8090, Lightkeeper prende la prima porta libera fino alla 8100 e l'ingranaggio mostra l'indirizzo giusto. La porta si sceglie in *Address* nelle impostazioni, oppure via SSH con `sh /media/developer/apps/usr/palm/applications/io.github.chiotas.lightkeeper/service/setup.sh --port 8091`. Se accendendo la TV si accende anche la console, è il SIMPLINK della TV: Impostazioni → Generali → Dispositivi → Impostazioni HDMI → SIMPLINK → *Sincronizzazione accensione automatica*. Il registro è in `/tmp/lightkeeper.log` sulla TV.
+**Compatibilità.** Provata su LG OLED C1 (OLED65C11LB), webOS 6.5.3, GlassHouse 0.118.0. Dovrebbe funzionare sui webOS da 4.x a 8.x con GlassHouse. Sui webOS 2.x e 3.x funziona in parte (segnalazioni da una LG B7 con webOS 3.9.3 e da Reddit): il tasto Home e Indietro dall'ultima app restano di LG, perché lì GlassHouse non può prendere nessun tasto; si può provare [lginputhook](https://github.com/Simon34545/lginputhook) 1.4.0, come spiega *The Home key on webOS 2 and 3*. Sui webOS 9 e 10 va spenta prima la Home di GlassHouse; sul webOS 11 il tasto Home resta di LG. Non sono supportati il webOS 1 e le TV senza root, Homebrew Channel e GlassHouse. Se la provate su un'altra TV, compilate il modulo [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) con modello, versione e com'è andata.
 
-**Contribuire.** Suggerimenti, segnalazioni e pull request sono benvenuti. Manca un servizio o una console? [Aprite una segnalazione](https://github.com/chiotas/lightkeeper/issues/new/choose) col nome e, se c'è, il link al logo ufficiale: aggiungo nome e logo bianco. Se la provate su un'altra TV, il modulo *Report from your TV* richiede due minuti.
+**Problemi.** Se il tasto Home apre ancora la Home LG, nelle impostazioni la sezione *Remote and power* dice cosa sta facendo: «Active within a minute» vuol dire aspettare un minuto; sui webOS 2 e 3 dicono che il tasto non si può prendere (vedi *Compatibilità*). Se la pagina non si apre: stessa rete della TV, indirizzo con `http://` e la porta che mostra l'ingranaggio (`:8090` se non l'avete cambiata), poi aprite Lightkeeper una volta dalla TV. Se un altro programma sulla TV usa già la 8090, Lightkeeper prende la prima porta libera fino alla 8100 e l'ingranaggio mostra l'indirizzo giusto. La porta si sceglie in *Address* nelle impostazioni, oppure via SSH con `sh /media/developer/apps/usr/palm/applications/io.github.chiotas.lightkeeper/service/setup.sh --port 8091`. Se accendendo la TV si accende anche la console, è il SIMPLINK della TV: Impostazioni → Generali → Dispositivi → Impostazioni HDMI → SIMPLINK → *Sincronizzazione accensione automatica*. Il registro è in `/tmp/lightkeeper.log` sulla TV.
+
+**Contribuire.** Suggerimenti, segnalazioni e pull request sono benvenuti. Manca un servizio o una console? [Aprite una segnalazione](https://github.com/chiotas/lightkeeper/issues/new/choose) col nome e, se c'è, il link al logo ufficiale: aggiungo nome e logo bianco. Se la provate su un'altra TV, il modulo [Report from your TV](https://github.com/chiotas/lightkeeper/issues/new?template=2-report-from-your-tv.md) richiede due minuti.
 
 **Licenza.** Il codice è MIT, © 2026 Francesco Gola. La foto dello sfondo predefinito, *Godrevy Lighthouse* di [Francesco Gola](https://francescogola.net), ha una licenza sua ([PHOTO-LICENSE.md](PHOTO-LICENSE.md)): tutti i diritti riservati, si usa solo dentro Lightkeeper e senza modifiche. Gli altri sfondi e i loro crediti sono nella sezione *Credits*. I loghi appartengono ai rispettivi proprietari e sono usati solo per identificare app e apparecchi; i disegni vengono da Simple Icons (CC0) e da Wikimedia Commons (pubblico dominio). **Uso a proprio rischio**: Lightkeeper gira come root su una TV modificata e non ha alcuna garanzia. Non è affiliata né approvata da LG Electronics.
