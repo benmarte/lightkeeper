@@ -80,6 +80,14 @@ assert.deepEqual(replay(['io.github.chiotas.lightkeeper', 'cdp-30', '', 'com.web
 assert.deepEqual(replay(['cdp-30', 'com.webos.app.hdmi1', 'netflix', 'com.webos.app.livetv', 'io.github.chiotas.lightkeeper', '']), []);
 assert.deepEqual(replay(['com.webos.app.livetv', '', 'com.webos.app.livetv']), []);
 assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json')));
+// An entry left by 1.0.1 or 1.0.2 is taken out, GlassHouse's own keys stay.
+fs.writeFileSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json'), JSON.stringify({ keys: { red: 'some.app' }, home: 'io.github.chiotas.lightkeeper' }));
+require('child_process').execFileSync(process.execPath, ['-e',
+  'require(' + JSON.stringify(require.resolve('../app/service/server.js')) + ").applyKey('home', function () {})"],
+  { env: Object.assign({}, process.env, { LIGHTKEEPER_KEY_FILTERS: path.join(tmp, 'no-key-filters') }) });
+var left = JSON.parse(fs.readFileSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json'), 'utf8'));
+assert.equal(left.home, undefined); assert.deepEqual(left.keys, { red: 'some.app' });
+fs.unlinkSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json'));
 [80, 70000, 8091.5, '8091', null].forEach(function (v) { assert.equal(s.validate({ port: v }, keys), 'port'); });
 assert.deepEqual(s.validate({ key: 'red' }, keys), { key: 'red' });
 assert.equal(s.validate({ weather: { name: 'X', lat: 91, lon: 0 } }, keys), 'weather');
