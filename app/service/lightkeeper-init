@@ -28,6 +28,40 @@ scelta() {
 # For the tests: lightkeeper-init --decide <in front> <in front at power off>
 [ "$1" = --decide ] && { scelta "$2" "$3"; exit 0; }
 
+# Back from the last app where LG has no Home app (webOS 3 to 5), as seen on a B7
+# with webOS 3.9 (issue #3): the app gives way to nothing in front, "", then Live
+# TV. So Lightkeeper opens when a real app gives way to nothing, and again if Live
+# TV takes its place within five seconds. Picking an input or Live TV with the
+# remote goes straight from the app to it, and does not count. $1: the app in front now.
+vera() { case "$1" in ""|"$APP"|com.webos.app.livetv|com.webos.app.inputcommon|com.webos.app.hdmi*|com.webos.app.home) return 1 ;; esac; }
+uscita=0
+su_davanti() {
+  case "$1" in
+    "") if vera "$prima" && set_to key '"home"'; then
+          uscita=$(date +%s)
+          diario "nothing in front after $prima: opening Lightkeeper"
+          sleep 1; lancia "$APP"
+        fi ;;
+    com.webos.app.livetv)
+        if [ $(( $(date +%s) - uscita )) -le 5 ]; then
+          uscita=0
+          diario "Live TV after leaving an app: opening Lightkeeper again"
+          lancia "$APP"
+        fi ;;
+    *) uscita=0 ;;
+  esac
+  prima=$1
+}
+# For the tests: lightkeeper-init --replay, one foreground appId per line on stdin;
+# prints where Lightkeeper would open.
+if [ "$1" = --replay ]; then
+  diario() { :; }; set_to() { return 0; }; sleep() { :; }
+  lancia() { echo "open ($prima -> ${app:-nothing})"; }
+  prima=
+  while read -r app; do su_davanti "$app"; done
+  exit 0
+fi
+
 LOG=/tmp/lightkeeper.log
 LS=/usr/bin/luna-send
 HERE=$(dirname "$(readlink -f "$0")")
@@ -128,27 +162,49 @@ ultima=
   done
 ) </dev/null >/dev/null 2>&1 &
 
-# Back from the last app: sam opens LG's Home, for the same reason ("undefined")
-# as any other launch. So what counts is the full-screen window before it: if it
-# was not Lightkeeper (whose Down arrow opens LG's Home on purpose), Lightkeeper is
-# put in its place. Screen savers and overlays do not count.
+# Back from the last app, while Lightkeeper has the Home key. Where LG has a Home
+# app (webOS 6 on), sam opens it, for the same reason ("undefined") as any other
+# launch. So what counts is the full-screen window before it: if it was not
+# Lightkeeper (whose Down arrow opens LG's Home on purpose), Lightkeeper is put in
+# its place. Screen savers and overlays do not count. Where there is none, the
+# foreground app is watched instead (su_davanti above); webOS 3 has no life events.
+# Luna may be slow after a cold boot: asked until it answers, else as on webOS 6.
 (
+  home_lg=si
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    vivo || exit
+    r=$($LS -n 1 -w 5000 luna://com.webos.applicationManager/getAppInfo '{"id":"com.webos.app.home"}' 2>/dev/null)
+    case "$r" in *'"returnValue"'*) echo "$r" | grep -q '"returnValue" *: *false' && home_lg=no; break ;; esac
+    sleep 6
+  done
+  [ "$home_lg" = no ] && diario "no LG Home app: Back from the last app watched by the app in front"
   while vivo; do
-    $LS -i luna://com.webos.applicationManager/getAppLifeEvents '{"subscribe":true}' 2>/dev/null |
-    while read -r riga; do
-      vivo || exit
-      case "$riga" in *'"event":"foreground"'*_WEBOS_WINDOW_TYPE_CARD*) ;; *) continue ;; esac
-      app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
-      [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
-      if [ "$app" = com.webos.app.home ] && [ -n "$prima" ] && [ "$prima" != "$APP" ] &&
-         [ "$prima" != "$app" ] && set_to key '"home"'; then
-        # Launched at once, Lightkeeper ended up under LG's Home, still opening.
-        diario "LG's Home after $prima: opening Lightkeeper"
-        sleep 1; lancia "$APP"
-        sleep 2; [ "$(davanti)" = com.webos.app.home ] && { diario "still LG's Home: again"; lancia "$APP"; }
-      fi
-      prima=$app
-    done
+    if [ "$home_lg" = no ]; then
+      $LS -i luna://com.webos.applicationManager/getForegroundAppInfo '{"subscribe":true}' 2>/dev/null |
+      while read -r riga; do
+        vivo || exit
+        case "$riga" in *'"appId"'*) ;; *) continue ;; esac
+        app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+        [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
+        su_davanti "$app"
+      done
+    else
+      $LS -i luna://com.webos.applicationManager/getAppLifeEvents '{"subscribe":true}' 2>/dev/null |
+      while read -r riga; do
+        vivo || exit
+        case "$riga" in *'"event":"foreground"'*_WEBOS_WINDOW_TYPE_CARD*) ;; *) continue ;; esac
+        app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+        [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
+        if [ "$app" = com.webos.app.home ] && [ -n "$prima" ] && [ "$prima" != "$APP" ] &&
+           [ "$prima" != "$app" ] && set_to key '"home"'; then
+          # Launched at once, Lightkeeper ended up under LG's Home, still opening.
+          diario "LG's Home after $prima: opening Lightkeeper"
+          sleep 1; lancia "$APP"
+          sleep 2; [ "$(davanti)" = com.webos.app.home ] && { diario "still LG's Home: again"; lancia "$APP"; }
+        fi
+        prima=$app
+      done
+    fi
     sleep 5
   done
 ) </dev/null >/dev/null 2>&1 &

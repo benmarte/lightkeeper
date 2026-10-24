@@ -67,6 +67,18 @@ var HOOK_SCRIPT = path.join(__dirname, '..', 'app', 'service', 'lightkeeper-init
   var got = require('child_process').execFileSync('sh', [HOOK_SCRIPT, '--decide', c[0], c[1]]).toString().trim();
   assert.equal(got, c[2], c[0] + ' after ' + c[1]);
 });
+
+// Back from the last app without an LG Home app (webOS 3, issue #3), replaying the
+// foreground apps a B7 reported: Plex, nothing, Live TV. An input or Live TV picked
+// straight from an app, or Lightkeeper itself giving way, does not count.
+function replay(apps) {
+  return require('child_process').execFileSync('sh', [HOOK_SCRIPT, '--replay'], { input: apps.join('\n') + '\n' })
+    .toString().trim().split('\n').filter(Boolean);
+}
+assert.deepEqual(replay(['io.github.chiotas.lightkeeper', 'cdp-30', '', 'com.webos.app.livetv', 'io.github.chiotas.lightkeeper']),
+  ['open (cdp-30 -> nothing)', 'open ( -> com.webos.app.livetv)']);
+assert.deepEqual(replay(['cdp-30', 'com.webos.app.hdmi1', 'netflix', 'com.webos.app.livetv', 'io.github.chiotas.lightkeeper', '']), []);
+assert.deepEqual(replay(['com.webos.app.livetv', '', 'com.webos.app.livetv']), []);
 assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json')));
 [80, 70000, 8091.5, '8091', null].forEach(function (v) { assert.equal(s.validate({ port: v }, keys), 'port'); });
 assert.deepEqual(s.validate({ key: 'red' }, keys), { key: 'red' });
