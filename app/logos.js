@@ -73,7 +73,7 @@ var IMMAGINI = {"chromecast": [1981, 240], "discoveryplus": [1185, 221], "disney
   "hoopla": [593, 234], "fandangoathome": [2380, 240], "xumoplay": [965, 240], "bloomberg": [1300, 240],
   "nfl": [335, 240], "curiositystream": [699, 240], "vix": [647, 240], "univision": [290, 240],
   "telemundo": [284, 240], "globoplay": [1102, 240], "directvstream": [1261, 240], "betplus": [756, 240],
-  "stirr": [782, 228], "zee5": [286, 232], "amazonmusic": [1121, 240], "tunein": [545, 240], "siriusxm": [1547,
+  "stirr": [782, 228], "glasshouse": [203, 234], "zee5": [286, 232], "amazonmusic": [1121, 240], "tunein": [545, 240], "siriusxm": [1547,
   240], "qobuz": [605, 240], "my5": [165, 240], "uktvplay": [274, 240], "arte": [950, 232], "canalplus": [957,
   240], "francetv": [1384, 238], "m6plus": [460, 240], "franceinfo": [1574, 240], "ardmediathek": [428, 240],
   "joyn": [570, 240], "waipu": [1241, 240], "magentatv": [939, 240], "wow": [837, 240], "3sat": [429, 240],
@@ -146,7 +146,9 @@ function apparecchioAuto(tile, titoloTv) {
 var LOGHI_APP = { 'netflix': 'netflix', 'youtube.leanback.v4': 'youtube', 'cdp-30': 'plex', 'spotify-beehive': 'spotify',
   'com.apple.appletv': 'appletv', 'amazon': 'primevideo', 'com.disney.disneyplus-prod': 'disneyplus',
   'amazon.alexa.view': 'amazonalexa', 'com.amazon.luna': 'amazonluna', 'accuweather': 'accuweather',
-  'com.webos.app.lgchannels': 'lg', 'tv.twitch.tv.starshot.lg': 'twitch', 'it.rainet.raiplay': 'raiplay' };
+  'com.webos.app.lgchannels': 'lg', 'tv.twitch.tv.starshot.lg': 'twitch', 'it.rainet.raiplay': 'raiplay',
+  // GlassHouse's dashboard, with its own mark (MIT, licence in logos/).
+  'com.tvweb.dashboard': 'glasshouse' };
 var LOGHI_TITOLI = { netflix: 'netflix', youtube: 'youtube', plex: 'plex', spotify: 'spotify', twitch: 'twitch',
   appletv: 'appletv', dazn: 'dazn', crunchyroll: 'crunchyroll', paramount: 'paramountplus', paramountplus: 'paramountplus',
   mubi: 'mubi', tidal: 'tidal', applemusic: 'applemusic', jellyfin: 'jellyfin', kodi: 'kodi', emby: 'emby', vimeo: 'vimeo',
@@ -156,6 +158,7 @@ var LOGHI_TITOLI = { netflix: 'netflix', youtube: 'youtube', plex: 'plex', spoti
   nowtv: 'now', skygo: 'skygo', amazonalexa: 'amazonalexa', alexa: 'amazonalexa', amazonluna: 'amazonluna',
   luna: 'amazonluna', accuweather: 'accuweather', lgchannels: 'lg' ,
   // More streaming services (October 2026)
+  glasshouse: 'glasshouse',
   tubi: 'tubi', tubitv: 'tubi', youtubetv: 'youtubetv', fubo: 'fubo', fubotv: 'fubo', nbc: 'nbc', starz: 'starz',
   cnn: 'cnn', nba: 'nba', mlb: 'mlb', mlbtv: 'mlb', nhl: 'nhl', ufc: 'ufc', ufcfightpass: 'ufc', ted: 'ted',
   dailymotion: 'dailymotion', deezer: 'deezer', soundcloud: 'soundcloud', pandora: 'pandora',

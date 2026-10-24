@@ -151,6 +151,8 @@ Object.keys(logos.LOGHI_TITOLI).forEach(function (t) {
 });
 ['arte', 'ARTE', 'arte.tv'].forEach(function (t) { assert.equal(logos.logoDi({ id: 'some.arte.app', title: t }, 'logo'), 'arte', t); });
 assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), ''); // not free everywhere on Commons: the TV's icon
+assert.equal(logos.logoDi({ id: 'com.tvweb.dashboard', title: 'Glasshouse' }, 'logo'), 'glasshouse');
+assert.equal(logos.logoDi({ id: 'space.nuvio.webos', title: 'Nuvio TV' }, 'logo'), ''); // GPL-3.0 logo, not taken: the TV's icon
 // Live TV shows the TV unless a device is picked; every device, TV and media player
 // included (issue #4), can be picked, has a picture, and is one the server accepts.
 assert.equal(logos.logoDi({ id: 'com.webos.app.livetv', title: 'Live TV', device: 'hdmi' }, 'logo'), 'hdmi');

@@ -170,6 +170,7 @@ Ideas, reports and pull requests are welcome.
   - James Horsburgh, *China Sea, Sheet I*, 1806. Library of Congress, public domain ([loc.gov](https://www.loc.gov/item/84696453/)); shown here in negative.
   - *Night at sea* and *Dawn at sea*: gradients made for Lightkeeper, under its MIT licence.
 - Logos: drawings from [Simple Icons](https://simpleicons.org/) 16.35.0 (CC0), and for the brands Simple Icons does not carry, such as Prime Video, Disney+, RaiPlay, Xbox and Nintendo Switch, the brands' own logos from Wikimedia Commons, where they are in the public domain as simple text and shapes (list in `docs/art/logos-commons.tsv`). All are drawn in white for Lightkeeper. The logos and names belong to their owners and are used only to identify apps and devices.
+- GlassHouse's mark, for its dashboard's tile: drawn from [GlassHouse](https://github.com/rorygallagher2024/glasshouse)'s own logo, MIT, © 2026 Rory Gallagher (`app/logos/LICENSE-glasshouse.txt`).
 - Icons for LG's own apps, game consoles, plain HDMI and the settings gear: [Phosphor Icons](https://phosphoricons.com/) (MIT) and Google's [Material Symbols](https://fonts.google.com/icons) (Apache 2.0); their licences are in `app/logos/`.
 - Typeface: [Jost](https://github.com/indestructible-type/Jost), SIL Open Font License 1.1 (`app/OFL.txt`). The fixed 200, 300 and 500 weights, for engines without variable fonts, are instances of the same file.
 - Weather data by [Open-Meteo.com](https://open-meteo.com/), CC BY 4.0.
