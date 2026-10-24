@@ -68,6 +68,16 @@ var HOOK_SCRIPT = path.join(__dirname, '..', 'app', 'service', 'lightkeeper-init
   assert.equal(got, c[2], c[0] + ' after ' + c[1]);
 });
 
+// An app's icon: the largest the TV lists, 192 px extraLargeIcon before the 130 px largeIcon.
+var appDir = path.join(tmp, 'app-icons');
+fs.mkdirSync(appDir);
+['icon.png', 'largeIcon.png', 'extraLarge.png'].forEach(function (f) { fs.writeFileSync(path.join(appDir, f), 'x'); });
+var oneApp = [{ id: 'some.app', folderPath: appDir, icon: 'icon.png', largeIcon: 'largeIcon.png', extraLargeIcon: 'extraLarge.png' }];
+assert.equal(s.iconFile(oneApp, 'some.app'), path.join(appDir, 'extraLarge.png'));
+fs.unlinkSync(path.join(appDir, 'extraLarge.png'));
+assert.equal(s.iconFile(oneApp, 'some.app'), path.join(appDir, 'largeIcon.png'));
+assert.equal(s.iconFile([{ id: 'other.app', folderPath: appDir, icon: 'icon.png' }], 'other.app'), path.join(appDir, 'icon.png'));
+
 // Back from the last app without an LG Home app (webOS 3, issue #3), replaying the
 // foreground apps a B7 reported: Plex, nothing, Live TV. An input or Live TV picked
 // straight from an app, or Lightkeeper itself giving way, does not count.

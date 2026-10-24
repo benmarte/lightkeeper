@@ -367,11 +367,13 @@ function keysOnTv() {
 function keyNames() { return keysOnTv().map(function (k) { return k.key; }); }
 
 // The file an app's icon is in, from listApps only, so no other path is ever read.
+// The largest first: on our C1, extraLargeIcon is 192 px where an app lists it, largeIcon
+// 130 (96 for LG's own apps). Made white from the 192 px one, the edges come out cleaner.
 function iconFile(apps, id) {
   var a = null;
   (apps || []).forEach(function (x) { if (x.id === id) a = x; });
   if (!a) return null;
-  var names = [a.largeIcon, a.icon].filter(function (n) { return typeof n === 'string' && n; });
+  var names = [a.extraLargeIcon, a.largeIcon, a.icon].filter(function (n) { return typeof n === 'string' && n; });
   for (var i = 0; i < names.length; i++) {
     var n = names[i].charAt(0) === '$' ? names[i].slice(1) : names[i];
     var tries = n.charAt(0) === '/' ? [n] : [path.join(a.folderPath || '', n), path.join(a.folderPath || '', 'hd1080', n)];
