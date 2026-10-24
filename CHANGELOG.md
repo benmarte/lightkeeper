@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.4 (not released yet)
+## 1.0.4 (24 October 2026)
 
 - **Over the app left open at power on.** When the TV switches on, Lightkeeper now also opens over the app that was in front when it went off, which webOS puts back. Before, a Homebrew Channel left open stayed in front. An app that comes up with the TV still stays in front, such as Netflix from its button, a cast from a phone or an alarm. An update while you use an app does not cover it. With nothing in front at first, Lightkeeper waits a few seconds for an app that is still starting: before, switching on with the Netflix button could end on Lightkeeper.
 - **The background comes in whole.** The Home puts its picture on once it has loaded. Before, an uploaded picture came in at power on in strips over the app's own one (Godrevy) underneath.
