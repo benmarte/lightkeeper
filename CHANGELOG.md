@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5 (not released yet)
+
+- **91 more streaming services have a white logo** in *Logos*, found by the app's title on the TV: arte, Hulu, Peacock, ESPN, ITVX, Channel 4, ZDF, ARD Mediathek, Joyn, RTL+, Canal+, france.tv, La7, RTVE Play, atresplayer, SkyShowtime, Viaplay, NRK TV, Yle Areena, NPO Start, Eurosport and others. 23 come from Simple Icons, 68 from Wikimedia Commons, all public domain or CC0 there; `docs/art/logos-commons.tsv` lists each file and its licence.
+
 ## 1.0.4 (24 October 2026)
 
 - **Over the app left open at power on.** When the TV switches on, Lightkeeper now also opens over the app that was in front when it went off, which webOS puts back. Before, a Homebrew Channel left open stayed in front. An app that comes up with the TV still stays in front, such as Netflix from its button, a cast from a phone or an alarm. An update while you use an app does not cover it. With nothing in front at first, Lightkeeper waits a few seconds for an app that is still starting: before, switching on with the Netflix button could end on Lightkeeper.

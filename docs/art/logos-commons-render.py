@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 """Turns the brand logos listed in logos-commons.tsv into the white pictures in app/logos/.
 
-Put each SVG, downloaded from Wikimedia Commons, as <name>.svg beside this script, then run it with
-Python 3 and Pillow. Each logo is drawn by Chrome, then made white: what is white in the original,
-drawn over a colour, becomes a hole, as in the brands' own one-colour versions.
+Put each file downloaded from Wikimedia Commons, SVG or PNG, as <name>.svg or <name>.png beside this
+script, or in a folder given as the first argument, then run it with Python 3 and Pillow. A second
+argument writes the pictures elsewhere than app/logos/. Each logo is drawn by Chrome, then made white:
+what is white in the original, drawn over a colour, becomes a hole, as in the brands' own one-colour versions.
 """
 import os, subprocess, tempfile, sys
 from PIL import Image
 C = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 here = os.path.dirname(os.path.abspath(__file__))
+src = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else here
+dest = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else os.path.join(here, '..', '..', 'app', 'logos')
 tmp = tempfile.mkdtemp()
-for f in sorted(os.listdir(here)):
-    if not f.endswith('.svg'): continue
+for f in sorted(os.listdir(src)):
+    if not f.endswith(('.svg', '.png')): continue
     n = f[:-4]
     html = os.path.join(tmp, n + '.html')
-    open(html, 'w').write('<html><body style="margin:20px;background:transparent"><img src="file://%s/%s" style="height:240px"></body></html>' % (here, f))
+    open(html, 'w').write('<html><body style="margin:20px;background:transparent"><img src="file://%s/%s" style="height:240px"></body></html>' % (src, f))
     raw = os.path.join(tmp, n + '.raw.png')
     subprocess.run([C, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--default-background-color=00000000',
                     '--window-size=2400,300', '--allow-file-access-from-files', '--user-data-dir=' + tempfile.mkdtemp(),
@@ -32,5 +35,5 @@ for f in sorted(os.listdir(here)):
             po[x, y] = (255, 255, 255, int(round(a * (1 - w))))
     box = out.getbbox()
     out = out.crop(box)
-    out.save(os.path.join(here, '..', '..', 'app', 'logos', n + '.png'), optimize=True)
+    out.save(os.path.join(dest, n + '.png'), optimize=True)
     print(n, out.size)

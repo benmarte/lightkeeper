@@ -1,6 +1,7 @@
 # Brand logos taken from Wikimedia Commons, all "Public domain" there (simple text and shapes, not protected by copyright).
 # The trademarks belong to their owners. Made white by logos-commons-render.py into app/logos/<name>.png.
-name	Commons file
+# The third column, from October 2026 on: the licence templates on the file's page, read through the Commons API.
+name	Commons file	licence
 primevideo	File:Prime Video logo (2024).svg
 disneyplus	File:Disney+ 2024.svg
 raiplay	File:RaiPlay 2023 logo.svg
@@ -19,3 +20,71 @@ firetv	File:Amazon Fire TV 2024.svg
 chromecast	File:Google Chromecast wordmark.svg
 amazonalexa	File:Amazon Alexa Logo 2024.svg
 amazonluna	File:Amazon Luna logo 2025.svg (CC0)
+hulu	File:Hulu logo (2018).svg	pd-textlogo, trademarked
+peacock	File:NBCUniversal Peacock Logo (2026).svg	pd-textlogo, trademarked
+slingtv	File:Sling TV logo.svg	pd-textlogo, trademark
+philo	File:Philo (2024).svg	pd-textlogo, trademarked
+espn	File:ESPN wordmark.svg	pd-textlogo, trademarked
+foxnation	File:Fox Nation logo.svg	pd-textlogo, trademarked
+foxsports	File:Fox Sports wordmark logo.svg	pd-textlogo, trademarked
+cbsnews	File:CBS News 2020 (Stacked II).svg	pd-textlogo, trademarked
+abc	File:ABC-2021-LOGO.svg	pd-textlogo, trademarked
+pbs	File:PBS textlogo.svg	pd-textlogo, trademarked
+pbskids	File:PBS Kids logo (2022).svg	pd-textlogo, trademarked
+mgmplus	File:MGM+ logo.svg	pd-textlogo, trademark
+britbox	File:BritBox 2026.svg	pd-textlogo, too-uk, trademarked
+shudder	File:Shudder 2017.svg	pd-textlogo, trademarked
+criterionchannel	File:The Criterion Collection Logo.svg	pd-textlogo, trademark
+kanopy	File:Kanopy logo.png	pd-textlogo, trademarked
+hoopla	File:Hoopla logo.svg	pd-textlogo
+fandangoathome	File:Fandango at Home logo (horizontal).svg	pd-textlogo, trademark
+xumoplay	File:XUMO-logo-2022.svg	template:pd-textlogo
+bloomberg	File:New Bloomberg Logo.svg	pd-textlogo
+nfl	File:NFL wordmark logo 2008.svg	pd-textlogo, trademarked
+curiositystream	File:CuriosityStreamBlack.svg	pd-textlogo, trademarked
+vix	File:ViX Logo.svg	pd-textlogo
+univision	File:Logo Univision 2019.svg	pd-textlogo, trademarked
+telemundo	File:Telemundo logo 2018.svg	pd-textlogo, trademarked
+globoplay	File:Globoplay2020 red.svg	pd-textlogo, too-brazil, trademark
+directvstream	File:DIRECTV 2021 logo.svg	pd-textlogo, trademark
+betplus	File:BET+ logo 2019.svg	pd-textlogo, trademarked
+stirr	File:Stirr TV logo.png	pd-simple
+zee5	File:ZEE5 2025.svg	pd-textlogo, trademark
+amazonmusic	File:Amazon Music.svg	pd-textlogo, trademarked
+tunein	File:TuneIn Logo 2018.svg	pd-textlogo, trademarked
+siriusxm	File:Sirius XM logo 2023.svg	pd-textlogo, trademark
+qobuz	File:Qobuz logo light.svg	pd-textlogo, trademark
+my5	File:Channel 5 2025.svg	pd-textlogo, trademark
+uktvplay	File:U (2024).svg	pd-textlogo, trademark
+arte	File:Arte Logo 2026.svg	pd-textlogo, trademarked
+canalplus	File:Logo Canal+ 1995.svg	pd-textlogo, trademarked
+francetv	File:France.tv - logo 2022.svg	pd-textlogo, trademarked
+m6plus	File:M6+ (2024).svg	pd-textlogo, trademarked
+franceinfo	File:Franceinfo.svg	pd-textlogo, trademarked
+ardmediathek	File:ARD Mediathek-Logo.svg	pd-textlogo, trademark
+joyn	File:Joyn logo.svg	pd-textlogo, trademarked
+waipu	File:Waipu TV Logo 2016.svg	pd-textlogo, trademark
+magentatv	File:Magenta TV Logo 2024.svg	pd-textlogo, trademark
+wow	File:WOW Logo 2022.svg	pd-textlogo, trademark
+3sat	File:3sat 2019.svg	pd-textlogo, trademark
+orfon	File:ORF On Logo 2024.svg	pd-textlogo, trademark
+srf	File:Schweizer Radio und Fernsehen Logo.svg	pd-textlogo, trademarked
+la7	File:LA7 - Logo 2011.svg	pd-textlogo, trademarked
+rtveplay	File:RTVE Play logo.svg	pd-shape, pd-textlogo, trademarked
+atresplayer	File:Atresplayer 2023 Logo.svg	pd-textlogo, trademark
+rtpplay	File:RTP Play 2026.svg	pd-textlogo, trademark
+opto	File:Opto logo.png	pd-shape, pd-textlogo, trademarked
+skyshowtime	File:SkyShowtime Logo.svg	pd-textlogo, trademarked
+nrktv	File:NRK TV logo.svg	pd-textlogo, trademarked
+yleareena	File:Yle Areena logo 2017.svg	pd-textlogo
+npostart	File:NPO Start logo.svg	pd-textlogo, trademarked
+player	File:Player (TVN) 2024.png	pd-textlogo, trademarked
+polsatboxgo	File:Polsat Box Go.svg	pd-textlogo
+voyo	File:Voyo logo (2021).svg	pd-textlogo
+ertflix	File:Ertflix logo.svg	pd-shape
+megogo	File:Megogo logo.svg	pd-textlogo, trademarked
+eurosport	File:Eurosport Logo 2015.svg	pd-textlogo, trademarked
+euronews	File:Euronews Logo 2025.svg	pd-textlogo, trademarked
+france24	File:France 24 logo (2013).svg	pd-textlogo, trademarked
+dw	File:Deutsche Welle symbol 2012.svg	pd-textlogo, trademarked
+skynews	File:Sky News 2026.svg	pd-textlogo

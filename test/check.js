@@ -125,6 +125,22 @@ assert.equal(logos.logoDi({ id: 'com.webos.app.livetv', title: 'Canali TV' }, 't
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi3', title: 'PlayStation 5' }, 'icon'), 'playstation5');
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi1', title: 'Box', device: 'firetv' }, 'logo'), 'firetv');
 assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi2', title: 'Xbox Series X' }, 'logo'), 'xbox');
+// Every logo picture is in app/logos/ at the size the table gives; every Commons file listed has its
+// picture; every title leads to a drawing; arte, by the title its app has, gets its logo (October 2026).
+function pngSize(f) { var b = fs.readFileSync(f); return [b.readUInt32BE(16), b.readUInt32BE(20)]; }
+Object.keys(logos.IMMAGINI).forEach(function (n) {
+  assert.deepEqual(pngSize(path.join(__dirname, '..', 'app', 'logos', n + '.png')), logos.IMMAGINI[n], n);
+});
+fs.readFileSync(path.join(__dirname, '..', 'docs', 'art', 'logos-commons.tsv'), 'utf8').split('\n').forEach(function (l) {
+  var n = l.split('\t')[0];
+  if (n && n.charAt(0) !== '#' && n !== 'name') assert.ok(logos.IMMAGINI[n], 'a picture for ' + n);
+});
+Object.keys(logos.LOGHI_TITOLI).forEach(function (t) {
+  var n = logos.LOGHI_TITOLI[t];
+  assert.ok(logos.SIMPLE_ICONS[n] || logos.IMMAGINI[n] || logos.ICONE[n], t + ' leads to ' + n);
+});
+['arte', 'ARTE', 'arte.tv'].forEach(function (t) { assert.equal(logos.logoDi({ id: 'some.arte.app', title: t }, 'logo'), 'arte', t); });
+assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), ''); // not free everywhere on Commons: the TV's icon
 // Live TV shows the TV unless a device is picked; every device, TV and media player
 // included (issue #4), can be picked, has a picture, and is one the server accepts.
 assert.equal(logos.logoDi({ id: 'com.webos.app.livetv', title: 'Live TV', device: 'hdmi' }, 'logo'), 'hdmi');
