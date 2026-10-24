@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3 (not released yet)
+## 1.0.3 (24 October 2026)
 
 - **TV and media player icons for inputs** ([#4](https://github.com/chiotas/lightkeeper/issues/4)). Each input's device list now has a TV and a media player besides the game console and HDMI, so Live TV can go back to its TV icon and any input can use it.
 - **Automatic**, first in each input's device list, lets you go back to no device picked. Live TV then shows a TV, and other inputs show what their tile's name suggests, the same in the settings as on the TV. A new input starts as Automatic: before, Live TV was given HDMI the moment it was added.
