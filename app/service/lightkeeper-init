@@ -111,6 +111,10 @@ vecchio=$(cat /tmp/lightkeeper.pid 2>/dev/null)
 apri() {
   sleep 1
   fg=$(davanti)
+  # An app switched on with the TV, as by the Netflix button, is still starting:
+  # with nothing in front, it is given up to eight seconds to come up.
+  n=0
+  while [ -z "$fg" ] && [ $n -lt 8 ]; do sleep 1; fg=$(davanti); n=$((n+1)); done
   case $(scelta "$fg" "$1") in
     open) diario "opening Lightkeeper (in front: ${fg:-nothing})"; lancia "$APP" ;;
     cover) diario "opening Lightkeeper over $fg, in front when the TV went off"; lancia "$APP" ;;
