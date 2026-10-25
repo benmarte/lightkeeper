@@ -97,6 +97,7 @@ var DEFAULTS = {
   tiles: null,
   tileStyle: 'text',
   labels: 'all',
+  openApps: false,
   preset: 'godrevy',
   background: { custom: false, rev: 0 },
   veil: 80,
@@ -267,6 +268,8 @@ function validate(body, keyNames) {
     else if (k === 'labels') { if (['all', 'selected', 'none'].indexOf(v) === -1) return 'labels'; out[k] = v; }
     else if (k === 'veil') { if (!num(v, 0, 100)) return 'veil'; out[k] = Math.round(v); }
     else if (k === 'openAtPowerOn') { if (typeof v !== 'boolean') return 'openAtPowerOn'; out[k] = v; }
+    // The Home's open apps button; off, as before 1.0.7, and then the TV is not even asked.
+    else if (k === 'openApps') { if (typeof v !== 'boolean') return 'openApps'; out[k] = v; }
     else if (k === 'port') { if (typeof v !== 'number' || v % 1 || v < 1024 || v > 65535) return 'port'; out[k] = v; }
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }
     else if (k === 'key') {
@@ -867,6 +870,7 @@ function handle(req, res) {
       return send(res, 403, { ok: false, error: 'the Home only' });
     }
     var cors = req.headers.origin ? { 'Access-Control-Allow-Origin': req.headers.origin, 'Vary': 'Origin' } : {};
+    if (m === 'GET' && p === '/api/open' && !config.openApps) return send(res, 200, { ok: true, apps: [] }, cors);
     if (m === 'GET' && p === '/api/open') return listOpen(function (open) { send(res, 200, { ok: true, apps: open }, cors); });
     if (m === 'OPTIONS' && p === '/api/close') {
       cors['Access-Control-Allow-Methods'] = 'POST';
@@ -876,6 +880,7 @@ function handle(req, res) {
     }
     // JSON only: from a page elsewhere, that type needs a preflight, which fromHome refuses.
     if (m === 'POST' && p === '/api/close') {
+      if (!config.openApps) return send(res, 409, { ok: false, error: 'the open apps button is off' }, cors);
       if (String(req.headers['content-type'] || '').split(';')[0].toLowerCase() !== 'application/json') return send(res, 415, { ok: false, error: 'bad request' }, cors);
       return readBody(req, MAX_JSON, function (b) {
         var body = null;

@@ -209,9 +209,6 @@ function seleziona(i, colPuntatore) {
     hint.textContent = (voci.length === 1 ? t.empty : t.settings) +
       (cfg.address ? ' · ' + t.phone + cfg.address + ':' + (cfg.port || porta) : '');
     hint.className = 'on';
-  } else if (voci[sel] && voci[sel].aperte) {
-    hint.textContent = quanteAperte();
-    hint.className = 'on';
   } else {
     hint.className = '';
   }
@@ -363,6 +360,8 @@ function quanteAperte() { return aperte.length === 1 ? TEXT.open1 : aperte.lengt
 function ultimaVoce() { return voci.length - (aperte.length ? 2 : 1); }
 
 function chiediAperte() {
+  // Off in the settings: the TV is not asked.
+  if (!cfg.openApps) { aperteLette = true; return mettiAperte([]); }
   var x = new XMLHttpRequest();
   x.open('GET', server() + '/api/open');
   x.timeout = 5000;
@@ -379,6 +378,7 @@ function mettiAperte(nuove, restaInFondo) {
   aperte = nuove;
   if (JSON.stringify(aperte) !== prima) disegna();
   if (restaInFondo) seleziona(ultimaVoce());
+  if (!aperte.length && !pannello.hidden) chiudiPannello();
 }
 
 // The tile an open app has, for its name and the logo chosen for it.
@@ -531,6 +531,7 @@ function leggi(cb) {
       cfg = c;
       try { localStorage.setItem('config', j); } catch (e) {}
       disegna();
+      chiediAperte(); // the button may have been turned on or off
     }
     if (cb) cb(c);
   };

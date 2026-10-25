@@ -329,6 +329,10 @@ footer a { color: var(--muted); }
             <label><input type="radio" name="labels" value="none"><span data-t="labelsNone">None</span></label>
           </div>
         </div>
+        <div class="row">
+          <label for="open-apps"><span data-t="openApps">Open apps button</span><span class="sub" data-t="openAppsLede">Before the gear, when apps are open: it lists them and closes them.</span></label>
+          <input type="checkbox" class="switch" id="open-apps" role="switch">
+        </div>
       </section>
 
       <section aria-labelledby="h-bg">
@@ -502,6 +506,7 @@ footer a { color: var(--muted); }
       keyHome: 'Home', keyNone: 'None', active: 'Active.', pending: 'Active within a minute, once GlassHouse has restarted.',
       noglasshouse: 'GlassHouse is not installed, so the key cannot be changed.', failed: 'The TV did not take the change. Try again.',
       unsupported: 'This TV has no key filters for GlassHouse to use, as on webOS 3, so the key stays LG\'s. Back from the last app still comes here, and Lightkeeper opens at power on; the README has another way to map a button.',
+      openApps: 'Open apps button', openAppsLede: 'Before the gear, when apps are open: it lists them and closes them.',
       power: 'Open at power on', powerLede: 'When the TV comes on over an input or LG\'s Home.', more: 'PIN',
       saver: 'Screen saver', saverPause: 'Pause for an hour', saverResume: 'Resume now', saverOn: 'On, as LG set it.',
       saverUntil: 'Paused until ', saverLede: 'LG\'s screen saver keeps still pictures from marking an OLED screen. Pause it while you try things out; it comes back by itself.',
@@ -1280,6 +1285,7 @@ footer a { color: var(--muted); }
   }
   $('key').onchange = function () { save({ key: this.value }); };
   $('power').onchange = function () { save({ openAtPowerOn: this.checked }); };
+  $('open-apps').onchange = function () { save({ openApps: this.checked }); };
 
   // The pause is the server's, for an hour at most, and ends with a restart of the TV.
   function renderSaver() {
@@ -1485,6 +1491,7 @@ footer a { color: var(--muted); }
     radios('size', size, function (v) { try { localStorage.setItem('size', v); } catch (e) {} });
     $('veil').value = cfg.veil;
     $('power').checked = cfg.openAtPowerOn;
+    $('open-apps').checked = !!cfg.openApps;
     renderSaver();
     $('city').value = cfg.weather ? cfg.weather.name : '';
     $('version').textContent = 'Lightkeeper ' + cfg.version;

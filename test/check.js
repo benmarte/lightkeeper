@@ -42,6 +42,9 @@ var s = require('../app/service/server.js');
 // Validation: good values pass cleaned, anything else refuses the change.
 var keys = ['red', 'netflix'];
 assert.deepEqual(s.validate({ clock: '12', veil: 42.4, openAtPowerOn: false }, keys), { clock: '12', veil: 42, openAtPowerOn: false });
+assert.equal(s.DEFAULTS.openApps, false); // the Home looks as before until it is turned on
+assert.deepEqual(s.validate({ openApps: true }, keys), { openApps: true });
+assert.equal(s.validate({ openApps: 'true' }, keys), 'openApps');
 assert.deepEqual(s.validate({ tiles: [{ id: 'netflix', title: '  Netflix \n' }] }, keys), { tiles: [{ id: 'netflix', title: 'Netflix' }] });
 assert.equal(s.validate({ tiles: [{ id: '../etc', title: 'x' }] }, keys), 'tiles');
 assert.equal(s.validate({ tiles: [{ id: 'a', title: 'x' }, { id: 'a', title: 'y' }] }, keys), 'tiles');
@@ -386,6 +389,39 @@ function httpChecks() {
     function (next) { req('POST', '/api/config', json({ preset: 'night' }), function (st, j) {
       assert.equal(st, 200); assert.equal(j.config.preset, 'night'); assert.equal(j.config.background.custom, false);
       assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_DATA, 'background.jpg'))); next(); }); },
+    // Open apps: off by default, and then the TV is not even asked.
+    function (next) {
+      fs.writeFileSync(RUNNING, 'netflix\n');
+      req('GET', '/api/open', { headers: { Origin: 'null' } }, function (st, j) {
+        assert.equal(st, 200); assert.deepEqual(j.apps, []);
+        assert.ok(!/applicationManager\/running/.test(fs.readFileSync(path.join(FAKE, 'calls.log'), 'utf8')), 'running not asked');
+        var o = json({ all: true }); o.headers.Origin = 'null';
+        req('POST', '/api/close', o, function (st2) { assert.equal(st2, 409); next(); });
+      });
+    },
+    function (next) { req('POST', '/api/config', json({ openApps: 'yes' }), function (st, j) { assert.equal(st, 400); assert.equal(j.error, 'invalid: openApps'); next(); }); },
+    function (next) { req('POST', '/api/config', json({ openApps: true }), function (st, j) { assert.equal(st, 200); assert.equal(j.config.openApps, true); next(); }); },
+    // On, from the Home's file:// page.
+    function (next) {
+      fs.writeFileSync(RUNNING, 'netflix\ncom.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\nyoutube.leanback.v4\n');
+      req('GET', '/api/open', { headers: { Origin: 'null' } }, function (st, j, h) {
+        assert.equal(st, 200); assert.equal(h['access-control-allow-origin'], 'null');
+        assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['netflix', 'youtube.leanback.v4']); next(); }); },
+    function (next) { req('GET', '/api/open', { headers: { Origin: 'http://evil.example' } }, function (st) { assert.equal(st, 403); next(); }); },
+    function (next) { req('OPTIONS', '/api/close', { headers: { Origin: 'null', 'Access-Control-Request-Method': 'POST' } }, function (st, j, h) {
+      assert.equal(st, 204); assert.equal(h['access-control-allow-origin'], 'null'); assert.equal(h['access-control-allow-headers'], 'Content-Type'); next(); }); },
+    function (next) { req('POST', '/api/close', { headers: { Origin: 'null', 'Content-Type': 'text/plain' }, body: '{"all":true}' }, function (st) { assert.equal(st, 415); next(); }); },
+    function (next) { var o = json({ id: 'com.webos.app.hdmi1' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.equal(st, 200); assert.deepEqual(j.closed, []); assert.equal(j.apps.length, 2); next(); }); },
+    function (next) { var o = json({ id: 'netflix' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.deepEqual(j.closed, ['netflix']); assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['youtube.leanback.v4']); next(); }); },
+    function (next) { var o = json({ all: true }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.deepEqual(j.closed, ['youtube.leanback.v4']); assert.deepEqual(j.apps, []);
+      var calls = fs.readFileSync(path.join(FAKE, 'calls.log'), 'utf8').split('\n').filter(function (l) { return /closeByAppId/.test(l); });
+      assert.deepEqual(calls, ['luna://com.webos.applicationManager/closeByAppId {"id":"netflix"}', 'luna://com.webos.applicationManager/closeByAppId {"id":"youtube.leanback.v4"}']);
+      assert.equal(fs.readFileSync(RUNNING, 'utf8'), 'com.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\n');
+      fs.unlinkSync(RUNNING);
+      next(); }); },
     function (next) { req('POST', '/api/pin', json({ pin: '12' }), function (st) { assert.equal(st, 400); next(); }); },
     function (next) { req('POST', '/api/pin', json({ pin: '2468' }), function (st) { assert.equal(st, 200); next(); }); },
     function (next) { req('GET', '/api/tv', {}, function (st) { assert.equal(st, 401); next(); }); },
@@ -406,27 +442,8 @@ function httpChecks() {
       assert.ok(/^[0-9a-f]{64}$/.test(saved.pin.hash) && JSON.stringify(saved).indexOf('2468') === -1, 'the PIN is kept hashed');
       next();
     },
-    // Open apps, from the Home's file:// page, while the PIN is locked: the Home has none.
-    function (next) {
-      fs.writeFileSync(RUNNING, 'netflix\ncom.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\nyoutube.leanback.v4\n');
-      req('GET', '/api/open', { headers: { Origin: 'null' } }, function (st, j, h) {
-        assert.equal(st, 200); assert.equal(h['access-control-allow-origin'], 'null');
-        assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['netflix', 'youtube.leanback.v4']); next(); }); },
-    function (next) { req('GET', '/api/open', { headers: { Origin: 'http://evil.example' } }, function (st) { assert.equal(st, 403); next(); }); },
-    function (next) { req('OPTIONS', '/api/close', { headers: { Origin: 'null', 'Access-Control-Request-Method': 'POST' } }, function (st, j, h) {
-      assert.equal(st, 204); assert.equal(h['access-control-allow-origin'], 'null'); assert.equal(h['access-control-allow-headers'], 'Content-Type'); next(); }); },
-    function (next) { req('POST', '/api/close', { headers: { Origin: 'null', 'Content-Type': 'text/plain' }, body: '{"all":true}' }, function (st) { assert.equal(st, 415); next(); }); },
-    function (next) { var o = json({ id: 'com.webos.app.hdmi1' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
-      assert.equal(st, 200); assert.deepEqual(j.closed, []); assert.equal(j.apps.length, 2); next(); }); },
-    function (next) { var o = json({ id: 'netflix' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
-      assert.deepEqual(j.closed, ['netflix']); assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['youtube.leanback.v4']); next(); }); },
-    function (next) { var o = json({ all: true }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
-      assert.deepEqual(j.closed, ['youtube.leanback.v4']); assert.deepEqual(j.apps, []);
-      var calls = fs.readFileSync(path.join(FAKE, 'calls.log'), 'utf8').split('\n').filter(function (l) { return /closeByAppId/.test(l); });
-      assert.deepEqual(calls, ['luna://com.webos.applicationManager/closeByAppId {"id":"netflix"}', 'luna://com.webos.applicationManager/closeByAppId {"id":"youtube.leanback.v4"}']);
-      assert.equal(fs.readFileSync(RUNNING, 'utf8'), 'com.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\n');
-      fs.unlinkSync(RUNNING);
-      next(); }); }
+    // The Home has no PIN: its open apps answer even while the page is locked.
+    function (next) { req('GET', '/api/open', { headers: { Origin: 'null' } }, function (st, j) { assert.equal(st, 200); assert.deepEqual(j.apps, []); next(); }); }
   ];
   function run(i) {
     if (i === steps.length) {
