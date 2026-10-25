@@ -179,6 +179,40 @@ assert.deepEqual(replay(['io.github.chiotas.lightkeeper', 'cdp-30', '', 'com.web
   ['open (cdp-30 -> nothing)', 'open ( -> com.webos.app.livetv)']);
 assert.deepEqual(replay(['cdp-30', 'com.webos.app.hdmi1', 'netflix', 'com.webos.app.livetv', 'io.github.chiotas.lightkeeper', '']), []);
 assert.deepEqual(replay(['com.webos.app.livetv', '', 'com.webos.app.livetv']), []);
+
+// Back from the last app with LG's Home app (webOS 6), replaying life events as a
+// C1 with webOS 6.5.3 sent them (25/10): Lightkeeper opens at the stop of the app in
+// front, before sam launches LG's Home. Not when switching apps (the next app in
+// front in the same millisecond, no stop), not for apps closed from Lightkeeper, not
+// for LG's Home after Lightkeeper's Down arrow, not while the TV goes off.
+function replayLife(lines, power) {
+  // "<seconds> <event> <appId> [card]", sent as the JSON lines luna-send prints.
+  var json = lines.map(function (l) {
+    var w = l.split(' ');
+    return w[0] + ' ' + JSON.stringify({ event: w[1], appId: w[2], reason: 'undefined',
+      windowType: w[3] === 'card' ? '_WEBOS_WINDOW_TYPE_CARD' : '_WEBOS_WINDOW_TYPE_OVERLAY', returnValue: true, subscribed: true });
+  });
+  return require('child_process').execFileSync('sh', [HOOK_SCRIPT, '--replay-life'],
+    { input: json.join('\n') + '\n', env: Object.assign({}, process.env, { POWER: power || 'Active' }) })
+    .toString().trim().split('\n').filter(Boolean);
+}
+var LK = 'io.github.chiotas.lightkeeper', LGHOME = 'com.webos.app.home';
+var backOut = ['50 foreground amazon card', '56 background amazon', '56 stop amazon'];
+assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card'])), ['open (stop amazon)']);
+// LG's Home in front all the same, right after: covered again; later, it is the Down arrow.
+assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '57 foreground ' + LGHOME + ' card'])),
+  ['open (stop amazon)', 'open (foreground ' + LGHOME + ')']);
+assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '70 foreground ' + LGHOME + ' card'])), ['open (stop amazon)']);
+// As 1.0.7 measured it, LG's Home before Lightkeeper: covered.
+assert.deepEqual(replayLife(['50 foreground amazon card', '57 foreground ' + LGHOME + ' card']), ['open (foreground ' + LGHOME + ')']);
+// Switching apps, then the old one stopped; apps closed from Lightkeeper; Down from Lightkeeper.
+assert.deepEqual(replayLife(['50 foreground amazon card', '55 background amazon', '55 foreground netflix card', '60 stop amazon']), []);
+assert.deepEqual(replayLife(['50 foreground ' + LK + ' card', '52 stop netflix', '53 stop youtube.leanback.v4']), []);
+assert.deepEqual(replayLife(['50 foreground ' + LK + ' card', '60 foreground ' + LGHOME + ' card']), []);
+// Overlays do not count; an input stopping does not; nor an app stopping as the TV goes off.
+assert.deepEqual(replayLife(['50 foreground amazon card', '51 foreground com.webos.app.voice', '52 stop com.webos.app.voice']), []);
+assert.deepEqual(replayLife(['50 foreground com.webos.app.hdmi3 card', '52 stop com.webos.app.hdmi3']), []);
+assert.deepEqual(replayLife(backOut, 'Active Standby'), []);
 assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json')));
 // An entry left by 1.0.1 or 1.0.2 is taken out, GlassHouse's own keys stay.
 fs.writeFileSync(path.join(env.LIGHTKEEPER_TVWEB, 'remotekeys.json'), JSON.stringify({ keys: { red: 'some.app' }, home: 'io.github.chiotas.lightkeeper' }));

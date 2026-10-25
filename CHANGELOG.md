@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.8 (not released yet)
+
+- **Back from the last app skips LG's Home on webOS 6.** Back out of the last app showed LG's Home for about a second before Lightkeeper: on a C1, the app stops 0.2 s after Back, LG's Home comes up 0.9 s later, and Lightkeeper waited for it. Lightkeeper now opens as soon as the app that was in front stops. If LG's Home still comes to the front, Lightkeeper goes back over it after a shorter pause than before, and checks that it stays in front. Switching apps, closing apps from Lightkeeper, Down to LG's Home and switching the TV off do not count. Not yet tried on a TV.
+
 ## 1.0.7 (25 October 2026)
 
 - **The clock lines up with the weather** in the five styles 1.0.6 added. Each typeface puts a digit's ink at its own distance from the edge: in Digital, a "1" started 98 px to the right at the medium size, so from 10:00 to 19:59 the clock sat out of line. Lightkeeper now moves the clock by the amount measured for its first digit, which also works on older TVs, whose browsers cannot measure ink. Thin, the default, stays where it was: its digits start 4 to 14 px in.

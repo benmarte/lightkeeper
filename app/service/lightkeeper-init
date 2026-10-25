@@ -52,6 +52,73 @@ su_davanti() {
   esac
   prima=$1
 }
+# Back from the last app where LG has a Home app (webOS 6 on). Measured on a C1 with
+# webOS 6.5.3, Back out of Prime Video: background amazon, nothing in front, stop
+# amazon 0.2 s later; sam launched LG's Home 0.8 s after that, in front 0.1 s later,
+# and Lightkeeper, opened a second after, showed over it 1.2 s after LG's Home. So
+# Lightkeeper now opens at the stop of the app that was in front, before LG's Home.
+# Switching apps puts the next one in front in the same millisecond as the last one
+# goes to the background, with no stop; closing apps from Lightkeeper stops apps
+# that are not in front. LG's Home in front within three seconds of that, or after
+# another full-screen app with no stop seen, is covered again. Not after Lightkeeper
+# otherwise: its Down arrow opens LG's Home on purpose. Screen savers and overlays
+# do not count. $1 the event, $2 the app, $3 card for a full-screen window, $4 the time in s.
+ritorno=0
+su_evento() {
+  case "$1" in
+    stop)
+      if [ "$2" = "$prima" ] && vera "$2" && acceso && set_to key '"home"'; then
+        ritorno=$4
+        diario "$2 closed: opening Lightkeeper"
+        lancia "$APP"
+      fi ;;
+    foreground)
+      [ "$3" = card ] || return 0
+      if [ "$2" = com.webos.app.home ] && set_to key '"home"' &&
+         { [ $(( $4 - ritorno )) -le 3 ] || { [ -n "$prima" ] && [ "$prima" != "$APP" ] && [ "$prima" != "$2" ]; }; }; then
+        ritorno=0
+        diario "LG's Home after ${prima:-nothing}: opening Lightkeeper"
+        sopra_home
+      fi
+      prima=$2 ;;
+  esac
+}
+# Over LG's Home: launched as it comes to the front, Lightkeeper ended up under it,
+# still opening. So it is launched after a short pause, then checked and launched
+# again until it is in front twice in a row, for three seconds or so.
+pausa() { sleep 0.3 2>/dev/null || sleep 1; } # where sleep takes whole seconds only, one
+sopra_home() {
+  pausa; lancia "$APP"
+  n=0 su=0
+  while [ $n -lt 8 ] && [ $su -lt 2 ]; do
+    pausa
+    if [ "$(davanti)" = "$APP" ]; then su=$((su+1)); else su=0; diario "LG's Home still in front: again"; lancia "$APP"; fi
+    n=$((n+1))
+  done
+}
+# One line of getAppLifeEvents, as luna-send prints it: evento (stop, foreground or
+# nothing else), app and card for a full-screen window.
+evento_da() {
+  case "$1" in *'"event":"stop"'*) evento=stop ;; *'"event":"foreground"'*) evento=foreground ;; *) evento= ; return ;; esac
+  app=$(echo "$1" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+  card=; case "$1" in *_WEBOS_WINDOW_TYPE_CARD*) card=card ;; esac
+}
+# The TV is on: an app stopping as it goes off must not bring Lightkeeper up.
+acceso() { case "$(cat /tmp/lightkeeper.power 2>/dev/null)" in ""|Active) return 0 ;; esac; return 1; }
+
+# For the tests: lightkeeper-init --replay-life, one life event per line on stdin,
+# "<seconds> <line from luna-send>"; prints where Lightkeeper would open. POWER sets
+# the TV's power state, Active by default.
+if [ "$1" = --replay-life ]; then
+  diario() { :; }; set_to() { return 0; }; sleep() { :; }
+  acceso() { [ "${POWER:-Active}" = Active ]; }
+  davanti() { echo "$APP"; }
+  lancia() { echo "open ($evento $app)"; }
+  prima=
+  while read -r t riga; do evento_da "$riga"; [ -n "$evento" ] && su_evento "$evento" "$app" "$card" "$t"; done
+  exit 0
+fi
+
 # For the tests: lightkeeper-init --replay, one foreground appId per line on stdin;
 # prints where Lightkeeper would open.
 if [ "$1" = --replay ]; then
@@ -153,6 +220,7 @@ ultima=
       vivo || exit
       stato=$(echo "$riga" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
       [ -n "$stato" ] || continue
+      echo "$stato" > /tmp/lightkeeper.power
       case "$stato" in
         Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri "$ultima"; via_account & }; spento=0 ;;
         "Screen Saver"|"Screen Off") spento=0 ;;
@@ -168,9 +236,7 @@ ultima=
 
 # Back from the last app, while Lightkeeper has the Home key. Where LG has a Home
 # app (webOS 6 on), sam opens it, for the same reason ("undefined") as any other
-# launch. So what counts is the full-screen window before it: if it was not
-# Lightkeeper (whose Down arrow opens LG's Home on purpose), Lightkeeper is put in
-# its place. Screen savers and overlays do not count. Where there is none, the
+# launch: the life events are watched (su_evento above). Where there is none, the
 # foreground app is watched instead (su_davanti above); webOS 3 has no life events.
 # Luna may be slow after a cold boot: asked until it answers, else as on webOS 6.
 (
@@ -196,17 +262,10 @@ ultima=
       $LS -i luna://com.webos.applicationManager/getAppLifeEvents '{"subscribe":true}' 2>/dev/null |
       while read -r riga; do
         vivo || exit
-        case "$riga" in *'"event":"foreground"'*_WEBOS_WINDOW_TYPE_CARD*) ;; *) continue ;; esac
-        app=$(echo "$riga" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
-        [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
-        if [ "$app" = com.webos.app.home ] && [ -n "$prima" ] && [ "$prima" != "$APP" ] &&
-           [ "$prima" != "$app" ] && set_to key '"home"'; then
-          # Launched at once, Lightkeeper ended up under LG's Home, still opening.
-          diario "LG's Home after $prima: opening Lightkeeper"
-          sleep 1; lancia "$APP"
-          sleep 2; [ "$(davanti)" = com.webos.app.home ] && { diario "still LG's Home: again"; lancia "$APP"; }
-        fi
-        prima=$app
+        evento_da "$riga"
+        [ -n "$evento" ] || continue
+        [ "$evento" = foreground ] && [ "$card" = card ] && [ -n "$app" ] && [ "$app" != "$prima" ] && echo "$app" > "$FRONT" 2>/dev/null
+        su_evento "$evento" "$app" "$card" "$(date +%s)"
       done
     fi
     sleep 5
