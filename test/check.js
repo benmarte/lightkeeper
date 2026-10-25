@@ -198,6 +198,11 @@ function pngSize(f) { var b = fs.readFileSync(f); return [b.readUInt32BE(16), b.
 Object.keys(logos.IMMAGINI).forEach(function (n) {
   assert.deepEqual(pngSize(path.join(__dirname, '..', 'app', 'logos', n + '.png')), logos.IMMAGINI[n], n);
 });
+// Every logo has the name the settings' icon grid shows under it.
+Object.keys(logos.SIMPLE_ICONS).forEach(function (n) { assert.ok(logos.SIMPLE_ICONS_NOMI[n], 'a name for ' + n); });
+Object.keys(logos.IMMAGINI).forEach(function (n) { assert.ok(logos.IMMAGINI_NOMI[n], 'a name for ' + n); });
+assert.deepEqual([logos.IMMAGINI_NOMI.amazonalexa, logos.SIMPLE_ICONS_NOMI.applemusic, logos.IMMAGINI_NOMI.ardmediathek, logos.IMMAGINI_NOMI.betplus],
+  ['Alexa', 'Apple Music', 'ARD Mediathek', 'BET+']);
 fs.readFileSync(path.join(__dirname, '..', 'docs', 'art', 'logos-commons.tsv'), 'utf8').split('\n').forEach(function (l) {
   var n = l.split('\t')[0];
   if (n && n.charAt(0) !== '#' && n !== 'name') assert.ok(logos.IMMAGINI[n], 'a picture for ' + n);

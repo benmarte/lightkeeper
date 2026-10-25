@@ -799,8 +799,17 @@ footer a { color: var(--muted); }
   function catalogue() {
     var alias = {};
     Object.keys(LOGHI_TITOLI).forEach(function (k) { (alias[LOGHI_TITOLI[k]] = alias[LOGHI_TITOLI[k]] || []).push(k); });
-    var services = Object.keys(SIMPLE_ICONS).concat(Object.keys(IMMAGINI)).sort();
-    return { generic: Object.keys(ICONE).sort(), services: services, alias: alias };
+    return { generic: Object.keys(ICONE), services: Object.keys(SIMPLE_ICONS).concat(Object.keys(IMMAGINI)), alias: alias };
+  }
+  function genericName(n) { return t['gen_' + n] || n; }
+  function serviceName(n) { return SIMPLE_ICONS_NOMI[n] || IMMAGINI_NOMI[n] || n; }
+  // In the order of the names shown, whatever their case.
+  function byName(list, name) {
+    return list.slice().sort(function (a, b) {
+      a = name(a).toLowerCase();
+      b = name(b).toLowerCase();
+      return a < b ? -1 : a > b ? 1 : 0;
+    });
   }
   function pickButton(name, caption, on) {
     var b = document.createElement('button');
@@ -833,12 +842,12 @@ footer a { color: var(--muted); }
     top.style.marginTop = '16px';
     top.appendChild(pickButton('', t.iconAutoLede, !chosen));
     body.appendChild(top);
-    [[t.iconGeneric, c.generic, function (n) { return t['gen_' + n] || n; }], [t.iconServices, c.services, function (n) { return n; }]].forEach(function (sec) {
+    [[t.iconGeneric, c.generic, genericName], [t.iconServices, c.services, serviceName]].forEach(function (sec) {
       var h = document.createElement('h3');
       h.textContent = sec[0];
       var grid = document.createElement('div');
       grid.className = 'grid';
-      sec[1].forEach(function (n) {
+      byName(sec[1], sec[2]).forEach(function (n) {
         var b = pickButton(n, sec[2](n), n === chosen);
         b.setAttribute('data-find', (n + ' ' + sec[2](n) + ' ' + (c.alias[n] || []).join(' ')).toLowerCase());
         grid.appendChild(b);
@@ -872,7 +881,8 @@ footer a { color: var(--muted); }
   }
   $('picker-close').onclick = closePicker;
   $('picker-search').oninput = function () {
-    var q = this.value.toLowerCase().replace(/[^a-z0-9]/g, ''), any = false;
+    // A plus as in the technical names: "bet+" finds BET+, not YouTube TV.
+    var q = this.value.toLowerCase().replace(/\+/g, 'plus').replace(/[^a-z0-9]/g, ''), any = false;
     var all = $('picker-body').querySelectorAll('.pick[data-find]');
     for (var i = 0; i < all.length; i++) {
       var hit = !q || all[i].getAttribute('data-find').replace(/[^a-z0-9 ]/g, '').indexOf(q) !== -1;
