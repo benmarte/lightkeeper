@@ -214,14 +214,20 @@ li .sub.url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The backgrounds the app carries, three to a row. */
 .bgs { display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 16px -6px 0; }
-.bgs button { width: calc(33.333% - 12px); margin: 6px; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; text-align: left; }
+.bgs .tile { position: relative; width: calc(33.333% - 12px); margin: 6px; }
+.bgs .tile > button[role] { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; text-align: left; }
 .bgs img { display: block; width: 100%; height: auto; border-radius: 8px; background: #000; transition: opacity .18s; }
-.bgs button:hover img { opacity: .85; }
+.bgs .tile > button[role]:hover img { opacity: .85; }
+/* A picture of yours: the cross that takes it away. */
+.bgs .del {
+  position: absolute; top: 8px; left: 8px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(18, 14, 10, .78); color: var(--ink); font: inherit; font-size: 18px; line-height: 28px; text-align: center; cursor: pointer;
+}
+.bgs .del:hover, .bgs .del:focus { background: var(--ink); color: var(--ground); }
 .bgs button[aria-checked=true] img { outline: 2px solid var(--ink); outline-offset: 2px; }
 .bgs span { display: block; margin-top: 7px; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bgs button[aria-checked=true] span { color: var(--ink); }
 /* Random: each picture ticked or not, the ticked ones marked. */
-.bgs.pool button { position: relative; }
 .bgs.pool button[aria-checked=false] img { opacity: .4; }
 .bgs.pool button[aria-checked=true]::after {
   content: "\2713"; position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%;
@@ -360,8 +366,9 @@ footer a { color: var(--muted); }
         </div>
         <div class="actions">
           <input class="file" type="file" id="file" accept="image/*">
-          <label class="btn primary" for="file" id="choose" tabindex="0" data-t="choose">Choose a picture</label><button class="btn" type="button" id="bg-default" data-t="useDefault">Remove my picture</button>
+          <label class="btn primary" for="file" id="choose" tabindex="0" data-t="choose">Add a picture</label>
         </div>
+        <p class="note" id="bg-space" aria-live="polite"></p>
         <p class="note" id="bg-note" data-t="sizeNote">The picture is cropped to 16:9 and resized on this device before it is sent.</p>
         <div class="range">
           <label for="veil" data-t="veil">Shade</label>
@@ -507,9 +514,11 @@ footer a { color: var(--muted); }
       showLede: 'Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.',
       randomBg: 'Random each time the TV turns on', randomBgLede: 'One of the pictures ticked above, never the same twice in a row.',
       randomNow: 'This time: ', randomFew: 'Tick at least two pictures: until then the Home shows ',
-      yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
+      yours: 'Your picture', yoursShort: 'Yours', removeOne: 'Remove ', removeAsk: 'Remove ',
+      spaceMine: 'Your pictures: ', spaceNone: 'No pictures of yours yet', spaceFree: ' free on the TV',
+      noSpace: 'Not saved: the TV would have less than ', noSpaceEnd: ' free. Remove a picture first.', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
       cc0: 'public domain (CC0)', own: 'made for Lightkeeper', night: 'Night at sea', nightShort: 'Night', dawn: 'Dawn at sea',
-      dawnShort: 'Dawn', choose: 'Choose a picture', useDefault: 'Remove my picture', size: 'Size',
+      dawnShort: 'Dawn', choose: 'Add a picture', size: 'Size',
       sizeNote: 'The picture is cropped to 16:9 and resized on this device before it is sent.',
       sending: 'Sending the picture… ', notImage: 'This browser cannot open that file as a picture.',
       veil: 'Shade', veilLede: 'How dark the picture is behind the time and the tiles.', light: 'Light', dark: 'Dark',
@@ -625,10 +634,11 @@ footer a { color: var(--muted); }
   }
 
   // The background the Home shows now: this time's random one, the uploaded picture or the chosen one.
-  function bgUrl(custom) {
+  function bgUrl() {
     var now = /^[a-z0-9-]+$/.test(cfg.backgroundNow || '') ? cfg.backgroundNow : null;
-    if (custom || now === 'custom' || !now && cfg.background && cfg.background.custom) return '/background.jpg?rev=' + (cfg.background.rev || 0);
-    return '/backgrounds/' + (now || (/^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy')) + '.jpg';
+    if (now) return (/^my-/.test(now) ? '/mine/' : '/backgrounds/') + now + '.jpg';
+    if (cfg.background && cfg.background.custom) return '/background.jpg?rev=' + (cfg.background.rev || 0);
+    return '/backgrounds/' + (/^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy') + '.jpg';
   }
 
   function preview() {
@@ -1125,29 +1135,40 @@ footer a { color: var(--muted); }
   function bgName(b, short) { return t[b.id + (short ? 'Short' : '')] || (short ? b.short : b.title); }
 
   // With a random background, the pictures it may pick: all of them until some are unticked.
+  // The small copies sent from this page: asked again under another address, as the
+  // browser keeps the picture shown in their place before they came.
+  var thumbed = {};
+
+  // The pictures uploaded, by id, as tiles: Yours 1, Yours 2...
+  function mine() {
+    return (cfg.mine || []).map(function (id, i) { return { id: id, mine: true, title: t.yours + ' ' + (i + 1), short: t.yoursShort + ' ' + (i + 1) }; });
+  }
+
+  // With a random background, the pictures it may pick: all of them until some are unticked.
   function pool() {
-    var all = bgs.map(function (b) { return b.id; }).concat(cfg.background && cfg.background.custom ? ['custom'] : []);
+    var all = bgs.map(function (b) { return b.id; }).concat(cfg.mine || []);
     return cfg.backgroundPool ? all.filter(function (id) { return cfg.backgroundPool.indexOf(id) !== -1; }) : all;
   }
 
   function renderBg() {
     var custom = cfg.background && cfg.background.custom, box = $('bgs'), chosen = null, random = !!cfg.randomBackground;
-    var picks = pool(), now = cfg.backgroundNow;
+    var picks = pool(), now = cfg.backgroundNow, list = bgs.concat(mine());
+    // Chosen: this time's random one, else the picture uploaded or the one the app carries.
+    var fixed = custom ? cfg.background.id : cfg.preset;
     box.innerHTML = '';
     box.className = 'bgs' + (random ? ' pool' : '');
     box.setAttribute('role', random ? 'group' : 'radiogroup');
     $('random-bg').checked = random;
-    // Random: the uploaded picture is one more to tick.
-    var list = random && custom ? bgs.concat([{ id: 'custom', title: t.yours, short: t.yours }]) : bgs;
     list.forEach(function (b) {
-      var on = random ? picks.indexOf(b.id) !== -1 : !custom && cfg.preset === b.id;
-      var btn = document.createElement('button'), img = document.createElement('img');
-      if (random && now ? now === b.id : !custom && cfg.preset === b.id) chosen = b;
+      var on = random ? picks.indexOf(b.id) !== -1 : fixed === b.id;
+      var tile = document.createElement('div'), btn = document.createElement('button'), img = document.createElement('img');
+      if (b.id === (random && now ? now : fixed)) chosen = b;
+      tile.className = 'tile';
       btn.type = 'button';
       btn.setAttribute('role', random ? 'checkbox' : 'radio');
       btn.setAttribute('aria-checked', on ? 'true' : 'false');
       btn.setAttribute('aria-label', bgName(b));
-      img.src = b.id === 'custom' ? bgUrl(true) : '/backgrounds/thumbs/' + b.id + '.jpg';
+      img.src = b.mine ? '/mine/' + b.id + '-thumb.jpg' + (thumbed[b.id] ? '?t=1' : '') : '/backgrounds/thumbs/' + b.id + '.jpg';
       img.alt = '';
       img.width = 384;
       img.height = 216;
@@ -1164,23 +1185,48 @@ footer a { color: var(--muted); }
           renderBg();
           return save({ backgroundPool: next }, renderBg);
         }
-        cfg.preset = b.id;
-        if (cfg.background) cfg.background.custom = false;
+        if (b.mine) cfg.background = { custom: true, id: b.id, rev: (cfg.background.rev || 0) + 1 };
+        else {
+          cfg.preset = b.id;
+          if (cfg.background) cfg.background.custom = false;
+        }
         renderBg();
         preview();
         save({ preset: b.id });
       };
-      box.appendChild(btn);
+      tile.appendChild(btn);
+      // A picture uploaded can be taken away, after a question.
+      if (b.mine) {
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'del';
+        del.innerHTML = '&times;';
+        del.setAttribute('aria-label', t.removeOne + bgName(b));
+        del.onclick = function () {
+          if (!window.confirm(t.removeAsk + bgName(b) + '?')) return;
+          status(t.saving);
+          api('DELETE', '/api/background?id=' + b.id, null, function (r) {
+            if (!r) return status(t.notSaved + t.offline, true);
+            cfg = r.config;
+            status(t.saved);
+            renderBg();
+            preview();
+            space();
+          });
+        };
+        tile.appendChild(del);
+      }
+      box.appendChild(tile);
     });
     var note = $('random-note');
     note.hidden = !random;
     if (random) {
-      var fixed = custom ? t.yours : bgName(bgs.filter(function (b) { return b.id === cfg.preset; })[0] || bgs[0] || { id: '', title: '' });
-      note.textContent = picks.length < 2 ? t.randomFew + fixed + '.' : now ? t.randomNow + (chosen ? bgName(chosen) : now) + '.' : '';
+      var held = list.filter(function (b) { return b.id === fixed; })[0] || bgs[0] || { id: '', title: '' };
+      note.textContent = picks.length < 2 ? t.randomFew + bgName(held) + '.' : now ? t.randomNow + (chosen ? bgName(chosen) : now) + '.' : '';
     }
     var c = $('bg-credit');
     c.innerHTML = '';
-    if (chosen && chosen.id === 'custom' || !(random && now) && custom) c.textContent = t.yours + ' · ' + t.yoursBy;
+    if (chosen && chosen.mine) c.textContent = bgName(chosen) + ' · ' + t.yoursBy;
     else if (chosen) {
       var name = document.createTextNode(bgName(chosen));
       if (chosen.link) {
@@ -1194,7 +1240,19 @@ footer a { color: var(--muted); }
       c.appendChild(name);
       c.appendChild(document.createTextNode(' · ' + chosen.by + ' · ' + t[chosen.licence]));
     }
-    $('bg-default').hidden = !custom;
+  }
+
+  // How much the pictures uploaded take, and the room left on the TV.
+  function mb(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : (n / 1e6).toFixed(n < 1e7 ? 1 : 0) + ' MB'; }
+  function space() {
+    api('GET', '/api/backgrounds', null, function (r) {
+      var el = $('bg-space');
+      if (!r) return;
+      var used = 0;
+      r.mine.forEach(function (m) { used += m.bytes; });
+      el.textContent = (r.mine.length ? t.spaceMine + r.mine.length + ', ' + mb(used) : t.spaceNone) +
+        (r.free !== null ? ' · ' + mb(r.free) + t.spaceFree : '');
+    });
   }
 
   function toBlob(canvas, cb) {
@@ -1235,23 +1293,18 @@ footer a { color: var(--muted); }
     resize(f, size, function (blob) {
       if (!blob) return status(t.notImage, true);
       api('POST', '/api/background', blob, function (r, raw) {
+        if (raw && raw.error === 'space') return status(t.noSpace + mb(raw.keepFree) + t.noSpaceEnd, true);
         if (!r) return status(t.notSaved + ((raw && raw.error) || t.offline), true);
         cfg = r.config;
-        status(t.saved);
         renderBg();
         preview();
+        // Its small copy for these tiles, then the space it takes.
+        resize(f, 384, function (small) {
+          var done = function () { thumbed[r.id] = true; status(t.saved); renderBg(); space(); };
+          if (!small) return done();
+          api('POST', '/api/background/thumb?id=' + r.id, small, done, 'image/jpeg');
+        });
       }, 'image/jpeg');
-    });
-  };
-  $('bg-default').onclick = function () {
-    status(t.saving);
-    api('DELETE', '/api/background', null, function (r) {
-      if (!r) return status(t.notSaved + t.offline, true);
-      cfg = r.config;
-      status(t.saved);
-      renderBg();
-      preview();
-      $('choose').focus();
     });
   };
   $('random-bg').onchange = function () { save({ randomBackground: this.checked }, renderBg); };
@@ -1522,6 +1575,7 @@ footer a { color: var(--muted); }
   function render() {
     renderTiles();
     renderBg();
+    space();
     renderKeys();
     keyNote(cfg.keyStatus || 'active');
     radios('tileStyle', cfg.tileStyle, function (v) { save({ tileStyle: v }); });

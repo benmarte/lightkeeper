@@ -334,7 +334,9 @@ function disegna() {
   // With a random background, the one the server picked for this time the TV is on.
   var bg = /^[a-z0-9-]+$/.test(cfg.backgroundNow || '') ? cfg.backgroundNow :
     cfg.background && cfg.background.custom ? 'custom' : /^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy';
-  var url = bg === 'custom' ? server() + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) : 'backgrounds/' + bg + '.jpg';
+  // A picture uploaded, picked at random, comes from the server under its own id.
+  var url = bg === 'custom' ? server() + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) :
+    /^my-/.test(bg) ? server() + '/mine/' + bg + '.jpg?s=' + (cfg.started || 0) : 'backgrounds/' + bg + '.jpg';
   // The random one kept from last time is not shown before the server's answer, for a moment at most.
   if (cfg.randomBackground && !letto) setTimeout(function () { if (!letto) sfondo(url); }, 800);
   else sfondo(url);

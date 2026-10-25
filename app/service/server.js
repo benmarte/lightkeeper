@@ -41,7 +41,16 @@ var KEY_FILTERS = process.env.LIGHTKEEPER_KEY_FILTERS || '/usr/lib/qt5/qml/KeyFi
 var PORT_FILE = process.env.LIGHTKEEPER_PORT_FILE || '/tmp/lightkeeper.port';
 var DEFAULT_PORT = +process.env.LIGHTKEEPER_PORT || 8090;
 var CONFIG = path.join(DATA, 'config.json');
-var BACKGROUND = path.join(DATA, 'background.jpg');
+// The pictures uploaded, as <id>.jpg, each with <id>-thumb.jpg for the settings page.
+// Up to 1.0.7 there was one, background.jpg, moved into the list at start (migrate).
+var MINE = path.join(DATA, 'backgrounds');
+var MINE_ID = /^my-[0-9a-f]{8}$/;
+// Left free where DATA is after a picture is saved, for what else the TV keeps there:
+// its database and logs, Homebrew apps, Lightkeeper's own updates (3.5 MB a package).
+// ponytail: a guess, 256 MB, until df is read on a TV; one constant to change.
+var MIN_FREE = 256 * 1024 * 1024;
+var DF = process.env.LIGHTKEEPER_DF || 'df';
+var MAX_THUMB = 512 * 1024;
 // A new mark each time the TV comes on, written by the boot hook; the background picked for it.
 var SESSION_FILE = process.env.LIGHTKEEPER_SESSION || '/tmp/lightkeeper.session';
 var BG_SESSION = path.join(DATA, 'background-session.json');
@@ -103,6 +112,7 @@ var DEFAULTS = {
   openApps: false,
   preset: 'godrevy',
   background: { custom: false, rev: 0 },
+  mine: [],
   randomBackground: false,
   backgroundPool: null,
   veil: 80,
@@ -209,8 +219,62 @@ function publicConfig() {
  * keeps it. Null when off, or with fewer than two to pick from: the Home shows the chosen one.
  */
 function bgPool() {
-  var all = PRESETS.concat(config.background.custom && fs.existsSync(BACKGROUND) ? ['custom'] : []);
+  var all = PRESETS.concat(mineIds());
   return config.backgroundPool ? all.filter(function (b) { return config.backgroundPool.indexOf(b) !== -1; }) : all;
+}
+
+/* ---------- the pictures uploaded ---------- */
+
+function minePath(id, thumb) { return path.join(MINE, id + (thumb ? '-thumb' : '') + '.jpg'); }
+
+// Those in the list that are there, in the order they came.
+function mineIds() {
+  return ((config && config.mine) || []).filter(function (id) { return MINE_ID.test(id) && fs.existsSync(minePath(id)); });
+}
+
+function newMineId() {
+  var id;
+  do { id = 'my-' + crypto.randomBytes(4).toString('hex'); } while (fs.existsSync(minePath(id)));
+  return id;
+}
+
+// The background chosen: an uploaded picture while it is there, else one the app carries.
+function chosenFile() {
+  var b = config.background;
+  if (b.custom && MINE_ID.test(b.id || '') && fs.existsSync(minePath(b.id))) return minePath(b.id);
+  return path.join(APP_DIR, 'backgrounds', (PRESETS.indexOf(config.preset) !== -1 ? config.preset : PRESETS[0]) + '.jpg');
+}
+
+// Up to 1.0.7, one picture as background.jpg: now the first of the list, chosen as it was.
+function migrate() {
+  var old = path.join(DATA, 'background.jpg');
+  if (!fs.existsSync(old)) return;
+  if (!fs.existsSync(MINE)) fs.mkdirSync(MINE, 448);
+  var id = newMineId();
+  fs.renameSync(old, minePath(id));
+  config.mine = [id].concat(config.mine || []);
+  if (config.background.custom) config.background = { custom: true, id: id, rev: config.background.rev || 0 };
+  saveConfig();
+  log('background.jpg is now backgrounds/' + id + '.jpg');
+}
+
+// Bytes free where DATA is, from df: node has no statfs before 18. cb(null) when it cannot tell.
+function freeSpace(cb) {
+  var dir = DATA;
+  while (!fs.existsSync(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+  execFile(DF, ['-k', dir], { timeout: 5000 }, function (err, out) {
+    // After the header, wrapped or not: filesystem, size, used, available.
+    var w = String(out || '').split('\n').slice(1).join(' ').trim().split(/\s+/), kb = parseInt(w[3], 10);
+    cb(!err && kb >= 0 ? kb * 1024 : null);
+  });
+}
+
+function mineSizes() {
+  return mineIds().map(function (id) {
+    var n = 0;
+    [false, true].forEach(function (t) { try { n += fs.statSync(minePath(id, t)).size; } catch (e) {} });
+    return { id: id, bytes: n };
+  });
 }
 
 function pickBackground(pool, last, rnd) {
@@ -311,12 +375,14 @@ function validate(body, keyNames) {
     // The Home's open apps button; off, as before 1.0.7, and then the TV is not even asked.
     else if (k === 'openApps') { if (typeof v !== 'boolean') return 'openApps'; out[k] = v; }
     else if (k === 'port') { if (typeof v !== 'number' || v % 1 || v < 1024 || v > 65535) return 'port'; out[k] = v; }
-    else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }
+    // One the app carries, or a picture uploaded.
+    else if (k === 'preset') { if (PRESETS.indexOf(v) === -1 && mineIds().indexOf(v) === -1) return 'preset'; out[k] = v; }
     else if (k === 'randomBackground') { if (typeof v !== 'boolean') return 'randomBackground'; out[k] = v; }
-    // The backgrounds a random pick may use, each once: the app's own, and "custom" for the uploaded picture.
+    // The backgrounds a random pick may use, each once: the app's own and the pictures uploaded.
     else if (k === 'backgroundPool') {
-      if (v !== null && (!Array.isArray(v) || v.length > PRESETS.length + 1 || v.some(function (b, j) {
-        return (PRESETS.indexOf(b) === -1 && b !== 'custom') || v.indexOf(b) !== j;
+      var ids = PRESETS.concat(mineIds());
+      if (v !== null && (!Array.isArray(v) || v.length > ids.length || v.some(function (b, j) {
+        return ids.indexOf(b) === -1 || v.indexOf(b) !== j;
       }))) return 'backgroundPool';
       out[k] = v;
     }
@@ -886,9 +952,13 @@ function handle(req, res) {
     return sendFile(res, path.join(APP_DIR, p.slice(1)), /\.json$/.test(p) ? 'no-cache' : 'max-age=86400');
   }
   // The background in use: the picture uploaded, or the one chosen among those the app carries.
-  if (m === 'GET' && p === '/background.jpg') {
-    var preset = PRESETS.indexOf(config.preset) !== -1 ? config.preset : PRESETS[0];
-    return sendFile(res, config.background.custom && fs.existsSync(BACKGROUND) ? BACKGROUND : path.join(APP_DIR, 'backgrounds', preset + '.jpg'), 'max-age=31536000');
+  if (m === 'GET' && p === '/background.jpg') return sendFile(res, chosenFile(), 'max-age=31536000');
+  // A picture uploaded, never changed under its id; its small copy, or itself when it has none.
+  var mp = /^\/mine\/(my-[0-9a-f]{8})(-thumb)?\.jpg$/.exec(p);
+  if (m === 'GET' && mp) {
+    var thumb = mp[2] && fs.existsSync(minePath(mp[1], true));
+    // Not kept by the browser when the small copy is still on its way.
+    return sendFile(res, minePath(mp[1], thumb), mp[2] && !thumb ? 'no-store' : 'max-age=31536000');
   }
   if (m === 'GET' && p === '/icon') {
     var id = decodeURIComponent((/(?:^|&)id=([^&]*)/.exec(query) || [])[1] || '');
@@ -970,12 +1040,12 @@ function handle(req, res) {
       if (typeof change === 'string') return send(res, 400, { ok: false, error: 'invalid: ' + change });
       movePort(change.port, function (err) {
         if (err) return send(res, 409, { ok: false, error: err });
+        // A picture uploaded is chosen as such; one the app carries leaves the pictures in the list.
+        var mine = has(change, 'preset') && MINE_ID.test(change.preset) ? change.preset : null;
+        if (mine) delete change.preset;
         Object.keys(change).forEach(function (k) { config[k] = change[k]; });
-        // Choosing one of the app's backgrounds puts an uploaded picture away.
-        if (has(change, 'preset') && config.background.custom) {
-          try { fs.unlinkSync(BACKGROUND); } catch (e) {}
-          config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
-        }
+        if (mine) config.background = { custom: true, id: mine, rev: (config.background.rev || 0) + 1 };
+        else if (has(change, 'preset') && config.background.custom) config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
         try { saveConfig(); } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
         if (!has(change, 'key')) return send(res, 200, { ok: true, config: publicConfig(), keyStatus: keyStatus });
         applyKey(config.key, function (state) {
@@ -985,6 +1055,11 @@ function handle(req, res) {
       });
     });
   }
+  // The pictures uploaded: how many bytes each, and the room left where they are kept.
+  if (m === 'GET' && p === '/api/backgrounds') {
+    return freeSpace(function (free) { send(res, 200, { ok: true, mine: mineSizes(), free: free, keepFree: MIN_FREE }); });
+  }
+  // One more picture, chosen at once; refused when it would leave less than MIN_FREE free.
   if (m === 'POST' && p === '/api/background') {
     if (!postOk(req, 'image/jpeg')) return send(res, 415, { ok: false, error: 'a JPEG is expected' });
     return readBody(req, MAX_IMAGE, function (b) {
@@ -993,18 +1068,45 @@ function handle(req, res) {
       if (!size || size.width < 640 || size.width > 3840 || size.height > 2160) {
         return send(res, 400, { ok: false, error: 'a JPEG up to 3840 × 2160 is expected' });
       }
-      try {
-        if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, 448);
-        writeAtomic(BACKGROUND, b, 420);
-        config.background = { custom: true, rev: (config.background.rev || 0) + 1 };
-        saveConfig();
-      } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
-      send(res, 200, { ok: true, config: publicConfig() });
+      freeSpace(function (free) {
+        if (free === null || free - b.length < MIN_FREE) {
+          log('picture refused: ' + (free === null ? 'free space unknown' : free + ' bytes free'));
+          return send(res, 507, { ok: false, error: 'space', free: free, keepFree: MIN_FREE });
+        }
+        var id = newMineId();
+        try {
+          if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, 448);
+          if (!fs.existsSync(MINE)) fs.mkdirSync(MINE, 448);
+          writeAtomic(minePath(id), b, 420);
+          config.mine = mineIds().concat([id]);
+          config.background = { custom: true, id: id, rev: (config.background.rev || 0) + 1 };
+          saveConfig();
+        } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
+        send(res, 200, { ok: true, id: id, config: publicConfig() });
+      });
     });
   }
+  // Its small copy, made by the page that sent it.
+  var tid = (/(?:^|&)id=(my-[0-9a-f]{8})(?:&|$)/.exec(query) || [])[1];
+  if (m === 'POST' && p === '/api/background/thumb') {
+    if (!postOk(req, 'image/jpeg')) return send(res, 415, { ok: false, error: 'a JPEG is expected' });
+    if (!tid || mineIds().indexOf(tid) === -1) return send(res, 404, { ok: false, error: 'no such picture' });
+    return readBody(req, MAX_THUMB, function (b) {
+      var size = b && jpegSize(b);
+      if (!size || size.width > 640) return send(res, 400, { ok: false, error: 'a JPEG up to 640 wide is expected' });
+      try { writeAtomic(minePath(tid, true), b, 420); } catch (e) { return send(res, 500, { ok: false, error: e.message }); }
+      send(res, 200, { ok: true });
+    });
+  }
+  // A picture taken away, with its small copy: the chosen one without an id, as up to 1.0.7.
   if (m === 'DELETE' && p === '/api/background') {
-    try { fs.unlinkSync(BACKGROUND); } catch (e) {}
-    config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
+    var gone = tid || (config.background.custom ? config.background.id : null);
+    if (gone) {
+      [false, true].forEach(function (t) { try { fs.unlinkSync(minePath(gone, t)); } catch (e) {} });
+      config.mine = mineIds();
+      if (config.backgroundPool) config.backgroundPool = config.backgroundPool.filter(function (b) { return b !== gone; });
+    }
+    if (config.background.custom && (!gone || config.background.id === gone)) config.background = { custom: false, rev: (config.background.rev || 0) + 1 };
     saveConfig();
     return send(res, 200, { ok: true, config: publicConfig() });
   }
@@ -1109,6 +1211,7 @@ function movePort(port, cb) {
 
 function start() {
   config = loadConfig();
+  try { migrate(); } catch (e) { log('background.jpg: ' + e.message); }
   // While another program has the port, the next free one of the ten after it.
   listen(config.port, Math.min(config.port + 10, 65535), function (e, server, port) {
     if (e) {
