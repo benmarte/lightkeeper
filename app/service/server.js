@@ -42,6 +42,9 @@ var PORT_FILE = process.env.LIGHTKEEPER_PORT_FILE || '/tmp/lightkeeper.port';
 var DEFAULT_PORT = +process.env.LIGHTKEEPER_PORT || 8090;
 var CONFIG = path.join(DATA, 'config.json');
 var BACKGROUND = path.join(DATA, 'background.jpg');
+// A new mark each time the TV comes on, written by the boot hook; the background picked for it.
+var SESSION_FILE = process.env.LIGHTKEEPER_SESSION || '/tmp/lightkeeper.session';
+var BG_SESSION = path.join(DATA, 'background-session.json');
 // The backgrounds the app carries, by id, from backgrounds/index.json.
 var PRESETS = (function () {
   try { return JSON.parse(fs.readFileSync(path.join(APP_DIR, 'backgrounds', 'index.json'), 'utf8')).map(function (b) { return b.id; }); }
@@ -100,6 +103,8 @@ var DEFAULTS = {
   openApps: false,
   preset: 'godrevy',
   background: { custom: false, rev: 0 },
+  randomBackground: false,
+  backgroundPool: null,
   veil: 80,
   key: 'home',
   openAtPowerOn: true,
@@ -193,7 +198,42 @@ function publicConfig() {
   c.portTaken = portTaken;
   c.saverPausedUntil = saverUntil > Date.now() ? saverUntil : 0;
   c.started = STARTED;
+  c.backgroundNow = sessionBackground();
   return c;
+}
+
+/*
+ * A background for each time the TV comes on, at random among those ticked: kept until
+ * the TV goes off and on again, and never the one of the time before. The boot hook
+ * writes a new mark in SESSION_FILE then, and at a cold start; an update of the app
+ * keeps it. Null when off, or with fewer than two to pick from: the Home shows the chosen one.
+ */
+function bgPool() {
+  var all = PRESETS.concat(config.background.custom && fs.existsSync(BACKGROUND) ? ['custom'] : []);
+  return config.backgroundPool ? all.filter(function (b) { return config.backgroundPool.indexOf(b) !== -1; }) : all;
+}
+
+function pickBackground(pool, last, rnd) {
+  if (pool.length < 2) return null;
+  var others = pool.filter(function (b) { return b !== last; });
+  return others[Math.floor((rnd || Math.random)() * others.length)];
+}
+
+var bgSession = null; // {mark, now}
+function sessionBackground() {
+  if (!config.randomBackground) return null;
+  var pool = bgPool();
+  if (pool.length < 2) return null;
+  if (!bgSession) {
+    try { bgSession = JSON.parse(fs.readFileSync(BG_SESSION, 'utf8')); } catch (e) { bgSession = {}; }
+  }
+  var mark = '';
+  try { mark = fs.readFileSync(SESSION_FILE, 'utf8').trim(); } catch (e) {}
+  if (mark === bgSession.mark && pool.indexOf(bgSession.now) !== -1) return bgSession.now;
+  bgSession = { mark: mark, now: pickBackground(pool, bgSession.now) };
+  try { writeAtomic(BG_SESSION, JSON.stringify(bgSession) + '\n'); } catch (e) {}
+  log('background for this time the TV is on: ' + bgSession.now);
+  return bgSession.now;
 }
 
 /*
@@ -272,6 +312,14 @@ function validate(body, keyNames) {
     else if (k === 'openApps') { if (typeof v !== 'boolean') return 'openApps'; out[k] = v; }
     else if (k === 'port') { if (typeof v !== 'number' || v % 1 || v < 1024 || v > 65535) return 'port'; out[k] = v; }
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1) return 'preset'; out[k] = v; }
+    else if (k === 'randomBackground') { if (typeof v !== 'boolean') return 'randomBackground'; out[k] = v; }
+    // The backgrounds a random pick may use, each once: the app's own, and "custom" for the uploaded picture.
+    else if (k === 'backgroundPool') {
+      if (v !== null && (!Array.isArray(v) || v.length > PRESETS.length + 1 || v.some(function (b, j) {
+        return (PRESETS.indexOf(b) === -1 && b !== 'custom') || v.indexOf(b) !== j;
+      }))) return 'backgroundPool';
+      out[k] = v;
+    }
     else if (k === 'key') {
       if (v !== 'none' && v !== 'home' && keyNames.indexOf(v) === -1) return 'key';
       out[k] = v;
@@ -1098,7 +1146,7 @@ function start() {
 }
 
 module.exports = { DEVICES: DEVICES, DEFAULTS: DEFAULTS, CATALOG: CATALOG, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
-  applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, openApps: openApps, fromHome: fromHome, keysOnTv: keysOnTv,
+  applyKey: applyKey, iconFile: iconFile, pickBackground: pickBackground, appChoices: appChoices, openApps: openApps, fromHome: fromHome, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 
 if (require.main === module) {

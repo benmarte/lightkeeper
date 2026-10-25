@@ -220,6 +220,13 @@ li .sub.url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bgs button[aria-checked=true] img { outline: 2px solid var(--ink); outline-offset: 2px; }
 .bgs span { display: block; margin-top: 7px; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bgs button[aria-checked=true] span { color: var(--ink); }
+/* Random: each picture ticked or not, the ticked ones marked. */
+.bgs.pool button { position: relative; }
+.bgs.pool button[aria-checked=false] img { opacity: .4; }
+.bgs.pool button[aria-checked=true]::after {
+  content: "\2713"; position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--ink); color: var(--ground); font-size: 15px; line-height: 26px; text-align: center;
+}
 .credit { margin-top: 12px; font-size: 15px; color: var(--muted); }
 .credit a { color: var(--ink); }
 .file { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -339,6 +346,11 @@ footer a { color: var(--muted); }
         <h2 id="h-bg" data-t="background">Background</h2>
         <div class="bgs" id="bgs" role="radiogroup" aria-labelledby="h-bg"></div>
         <p class="credit" id="bg-credit"></p>
+        <div class="row">
+          <label for="random-bg"><span data-t="randomBg">Random each time the TV turns on</span><span class="sub" data-t="randomBgLede">One of the pictures ticked above, never the same twice in a row.</span></label>
+          <input type="checkbox" class="switch" id="random-bg" role="switch">
+        </div>
+        <p class="note" id="random-note" aria-live="polite" hidden></p>
         <div class="row">
           <span class="label" id="l-size" data-t="size">Size</span>
           <div class="seg" role="radiogroup" aria-labelledby="l-size">
@@ -493,6 +505,8 @@ footer a { color: var(--muted); }
       full: 'Fifty tiles at most.', drag: 'Drag to move', labels: 'Names under them', labelsAll: 'All', labelsSel: 'Selected', labelsNone: 'None', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
       device: 'Device', dev_console: 'Game console', dev_hdmi: 'HDMI', dev_player: 'Media player', dev_tv: 'TV', devAuto: 'Automatic: ',
       showLede: 'Logos are drawn in white; an app without one shows its own icon from the TV. Inputs show the device you pick.',
+      randomBg: 'Random each time the TV turns on', randomBgLede: 'One of the pictures ticked above, never the same twice in a row.',
+      randomNow: 'This time: ', randomFew: 'Tick at least two pictures: until then the Home shows ',
       yours: 'Your picture', yoursBy: 'uploaded from this page', rights: 'all rights reserved', pd: 'public domain',
       cc0: 'public domain (CC0)', own: 'made for Lightkeeper', night: 'Night at sea', nightShort: 'Night', dawn: 'Dawn at sea',
       dawnShort: 'Dawn', choose: 'Choose a picture', useDefault: 'Remove my picture', size: 'Size',
@@ -610,9 +624,11 @@ footer a { color: var(--muted); }
     return cfg.clock === '12' ? ((h + 11) % 12 + 1) + m + '<small>' + (h < 12 ? 'AM' : 'PM') + '</small>' : h + m;
   }
 
-  function bgUrl() {
-    if (cfg.background && cfg.background.custom) return '/background.jpg?rev=' + (cfg.background.rev || 0);
-    return '/backgrounds/' + (/^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy') + '.jpg';
+  // The background the Home shows now: this time's random one, the uploaded picture or the chosen one.
+  function bgUrl(custom) {
+    var now = /^[a-z0-9-]+$/.test(cfg.backgroundNow || '') ? cfg.backgroundNow : null;
+    if (custom || now === 'custom' || !now && cfg.background && cfg.background.custom) return '/background.jpg?rev=' + (cfg.background.rev || 0);
+    return '/backgrounds/' + (now || (/^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy')) + '.jpg';
   }
 
   function preview() {
@@ -1108,17 +1124,30 @@ footer a { color: var(--muted); }
 
   function bgName(b, short) { return t[b.id + (short ? 'Short' : '')] || (short ? b.short : b.title); }
 
+  // With a random background, the pictures it may pick: all of them until some are unticked.
+  function pool() {
+    var all = bgs.map(function (b) { return b.id; }).concat(cfg.background && cfg.background.custom ? ['custom'] : []);
+    return cfg.backgroundPool ? all.filter(function (id) { return cfg.backgroundPool.indexOf(id) !== -1; }) : all;
+  }
+
   function renderBg() {
-    var custom = cfg.background && cfg.background.custom, box = $('bgs'), chosen = null;
+    var custom = cfg.background && cfg.background.custom, box = $('bgs'), chosen = null, random = !!cfg.randomBackground;
+    var picks = pool(), now = cfg.backgroundNow;
     box.innerHTML = '';
-    bgs.forEach(function (b) {
-      var on = !custom && cfg.preset === b.id, btn = document.createElement('button'), img = document.createElement('img');
-      if (on) chosen = b;
+    box.className = 'bgs' + (random ? ' pool' : '');
+    box.setAttribute('role', random ? 'group' : 'radiogroup');
+    $('random-bg').checked = random;
+    // Random: the uploaded picture is one more to tick.
+    var list = random && custom ? bgs.concat([{ id: 'custom', title: t.yours, short: t.yours }]) : bgs;
+    list.forEach(function (b) {
+      var on = random ? picks.indexOf(b.id) !== -1 : !custom && cfg.preset === b.id;
+      var btn = document.createElement('button'), img = document.createElement('img');
+      if (random && now ? now === b.id : !custom && cfg.preset === b.id) chosen = b;
       btn.type = 'button';
-      btn.setAttribute('role', 'radio');
+      btn.setAttribute('role', random ? 'checkbox' : 'radio');
       btn.setAttribute('aria-checked', on ? 'true' : 'false');
       btn.setAttribute('aria-label', bgName(b));
-      img.src = '/backgrounds/thumbs/' + b.id + '.jpg';
+      img.src = b.id === 'custom' ? bgUrl(true) : '/backgrounds/thumbs/' + b.id + '.jpg';
       img.alt = '';
       img.width = 384;
       img.height = 216;
@@ -1127,6 +1156,14 @@ footer a { color: var(--muted); }
       btn.appendChild(img);
       btn.appendChild(label);
       btn.onclick = function () {
+        if (random) {
+          var next = pool().filter(function (id) { return id !== b.id; });
+          if (!on) next.push(b.id);
+          // Kept here at once, so that quick clicks each start from the last one.
+          cfg.backgroundPool = next;
+          renderBg();
+          return save({ backgroundPool: next }, renderBg);
+        }
         cfg.preset = b.id;
         if (cfg.background) cfg.background.custom = false;
         renderBg();
@@ -1135,9 +1172,15 @@ footer a { color: var(--muted); }
       };
       box.appendChild(btn);
     });
+    var note = $('random-note');
+    note.hidden = !random;
+    if (random) {
+      var fixed = custom ? t.yours : bgName(bgs.filter(function (b) { return b.id === cfg.preset; })[0] || bgs[0] || { id: '', title: '' });
+      note.textContent = picks.length < 2 ? t.randomFew + fixed + '.' : now ? t.randomNow + (chosen ? bgName(chosen) : now) + '.' : '';
+    }
     var c = $('bg-credit');
     c.innerHTML = '';
-    if (custom) c.textContent = t.yours + ' · ' + t.yoursBy;
+    if (chosen && chosen.id === 'custom' || !(random && now) && custom) c.textContent = t.yours + ' · ' + t.yoursBy;
     else if (chosen) {
       var name = document.createTextNode(bgName(chosen));
       if (chosen.link) {
@@ -1211,6 +1254,7 @@ footer a { color: var(--muted); }
       $('choose').focus();
     });
   };
+  $('random-bg').onchange = function () { save({ randomBackground: this.checked }, renderBg); };
   $('veil').oninput = preview;
   $('veil').onchange = function () { save({ veil: +this.value }); };
 

@@ -13,3 +13,4 @@ docs/screenshots/candidati/
 __pycache__/
 test/fake-tv/port
 test/fake-tv/running
+test/fake-tv/session

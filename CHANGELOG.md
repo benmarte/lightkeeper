@@ -3,6 +3,7 @@
 ## 1.0.8 (not released yet)
 
 - **Back from the last app skips LG's Home on webOS 6.** Back out of the last app showed LG's Home for about a second before Lightkeeper: on a C1, the app stops 0.2 s after Back, LG's Home comes up 0.9 s later, and Lightkeeper waited for it. Lightkeeper now opens as soon as the app that was in front stops. If LG's Home still comes to the front, Lightkeeper goes back over it after a shorter pause than before, and checks that it stays in front. Switching apps, closing apps from Lightkeeper, Down to LG's Home and switching the TV off do not count. Not yet tried on a TV.
+- **A random background each time the TV turns on**, with *Random each time the TV turns on* under the backgrounds in the settings, off until you turn it on. Tick the pictures it may use, your own included: all of them at first. Lightkeeper picks one when the TV comes on and keeps it until it goes off, and never picks the same one twice in a row. With fewer than two ticked, the Home shows the background you chose, and the settings say so. An update of the app keeps the picture of the moment. Not yet tried on a TV.
 
 ## 1.0.7 (25 October 2026)
 

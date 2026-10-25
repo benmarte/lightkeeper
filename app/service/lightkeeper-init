@@ -137,6 +137,10 @@ GEN=$$
 cd / || exit 0
 [ -x /usr/bin/node ] && [ -f "$HERE/server.js" ] || exit 0
 echo "$GEN" > /tmp/lightkeeper.gen
+# The random background is kept while the TV stays on: a new mark here at a cold start,
+# and each time the TV goes off; an update, which starts this script again, keeps it.
+SESSIONE=/tmp/lightkeeper.session
+[ -f "$SESSIONE" ] || date +%s > "$SESSIONE"
 [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 65536 ] && mv -f "$LOG" "$LOG.old"
 
 diario() { echo "$(date '+%F %T') $*" >> "$LOG"; }
@@ -225,8 +229,9 @@ ultima=
         Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri "$ultima"; via_account & }; spento=0 ;;
         "Screen Saver"|"Screen Off") spento=0 ;;
         Prepared) ;;
-        # Going off: the app in front now is the one webOS will put back.
-        *) [ "$spento" = 0 ] && ultima=$(cat "$FRONT" 2>/dev/null); spento=1 ;;
+        # Going off: the app in front now is the one webOS will put back, and the next
+        # time on gets a new random background.
+        *) [ "$spento" = 0 ] && { ultima=$(cat "$FRONT" 2>/dev/null); date +%s > "$SESSIONE"; }; spento=1 ;;
       esac
     done
     spento=0 # luna-send started again with the TV already on

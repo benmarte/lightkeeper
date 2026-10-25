@@ -19,6 +19,7 @@ setTimeout(function () { console.error('check: no end after a minute'); process.
 
 var FAKE = path.join(__dirname, 'fake-tv');
 var RUNNING = path.join(FAKE, 'running'); // the fake TV's open apps
+var BACKGROUNDS = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'app', 'backgrounds', 'index.json'), 'utf8')).map(function (b) { return b.id; });
 var tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lightkeeper-'));
 var env = {
   LIGHTKEEPER_DATA: path.join(tmp, 'data'),
@@ -27,7 +28,8 @@ var env = {
   LIGHTKEEPER_LUNA_SEND: path.join(FAKE, 'luna-send'),
   LIGHTKEEPER_KEY_FILTERS: path.join(FAKE, 'KeyFilters'),
   LIGHTKEEPER_PORT: '18090',
-  LIGHTKEEPER_PORT_FILE: path.join(tmp, 'port')
+  LIGHTKEEPER_PORT_FILE: path.join(tmp, 'port'),
+  LIGHTKEEPER_SESSION: path.join(tmp, 'session') // the boot hook's mark for each time the TV is on
 };
 fs.mkdirSync(env.LIGHTKEEPER_TVWEB);
 fs.writeFileSync(path.join(env.LIGHTKEEPER_TVWEB, 'tvweb.js'), '');
@@ -43,6 +45,17 @@ var s = require('../app/service/server.js');
 var keys = ['red', 'netflix'];
 assert.deepEqual(s.validate({ clock: '12', veil: 42.4, openAtPowerOn: false }, keys), { clock: '12', veil: 42, openAtPowerOn: false });
 assert.equal(s.DEFAULTS.openApps, false); // the Home looks as before until it is turned on
+
+// A random background: off by default, any of the pool but never the last one, none from fewer than two.
+assert.equal(s.DEFAULTS.randomBackground, false); assert.equal(s.DEFAULTS.backgroundPool, null);
+for (var r = 0; r < 300; r++) { var last = ['a', 'b', 'c'][r % 3]; assert.notEqual(s.pickBackground(['a', 'b', 'c'], last), last); }
+assert.equal(s.pickBackground(['a', 'b'], 'a'), 'b');
+assert.equal(s.pickBackground(['a', 'b'], null, function () { return 0.99; }), 'b');
+assert.equal(s.pickBackground(['a'], null), null); assert.equal(s.pickBackground([], 'a'), null);
+assert.deepEqual(s.validate({ randomBackground: true, backgroundPool: ['night', 'custom'] }, keys), { randomBackground: true, backgroundPool: ['night', 'custom'] });
+assert.deepEqual(s.validate({ backgroundPool: null }, keys), { backgroundPool: null });
+['yes', 1].forEach(function (v) { assert.equal(s.validate({ randomBackground: v }, keys), 'randomBackground'); });
+[['nope'], ['night', 'night'], 'night', {}].forEach(function (v) { assert.equal(s.validate({ backgroundPool: v }, keys), 'backgroundPool', JSON.stringify(v)); });
 assert.deepEqual(s.validate({ openApps: true }, keys), { openApps: true });
 assert.equal(s.validate({ openApps: 'true' }, keys), 'openApps');
 assert.deepEqual(s.validate({ tiles: [{ id: 'netflix', title: '  Netflix \n' }] }, keys), { tiles: [{ id: 'netflix', title: 'Netflix' }] });
@@ -427,6 +440,48 @@ function httpChecks() {
     function (next) { req('POST', '/api/config', json({ preset: 'night' }), function (st, j) {
       assert.equal(st, 200); assert.equal(j.config.preset, 'night'); assert.equal(j.config.background.custom, false);
       assert.ok(!fs.existsSync(path.join(env.LIGHTKEEPER_DATA, 'background.jpg'))); next(); }); },
+    // A random background for each time the TV is on: off, nothing changes.
+    function (next) { req('GET', '/api/config', {}, function (st, j) { assert.equal(j.backgroundNow, null); assert.equal(j.preset, 'night'); next(); }); },
+    function (next) {
+      fs.writeFileSync(env.LIGHTKEEPER_SESSION, 's0\n');
+      req('POST', '/api/config', json({ randomBackground: true }), function (st, j) {
+        assert.equal(st, 200); assert.ok(BACKGROUNDS.indexOf(j.config.backgroundNow) !== -1, j.config.backgroundNow);
+        var first = j.config.backgroundNow, seen = [first];
+        req('GET', '/api/config', {}, function (st2, j2) {
+          assert.equal(j2.backgroundNow, first, 'the same while the TV stays on');
+          (function next1(n) {
+            if (n === 12) { assert.ok(seen.length > 3); return next(); }
+            fs.writeFileSync(env.LIGHTKEEPER_SESSION, 's' + (n + 1) + '\n');
+            req('GET', '/api/config', {}, function (st3, j3) {
+              assert.notEqual(j3.backgroundNow, seen[seen.length - 1], 'never twice in a row');
+              assert.equal(JSON.parse(fs.readFileSync(path.join(env.LIGHTKEEPER_DATA, 'background-session.json'), 'utf8')).now, j3.backgroundNow);
+              seen.push(j3.backgroundNow);
+              next1(n + 1);
+            });
+          })(0);
+        });
+      });
+    },
+    // Two ticked: one, then the other; one or none ticked: the chosen background, as when off.
+    function (next) {
+      req('POST', '/api/config', json({ backgroundPool: ['night', 'dawn'] }), function (st, j) {
+        var a = j.config.backgroundNow;
+        assert.ok(a === 'night' || a === 'dawn', a);
+        fs.writeFileSync(env.LIGHTKEEPER_SESSION, 'pair\n');
+        req('GET', '/api/config', {}, function (st2, j2) {
+          assert.equal(j2.backgroundNow, a === 'night' ? 'dawn' : 'night');
+          req('POST', '/api/config', json({ backgroundPool: ['night'] }), function (st3, j3) {
+            assert.equal(j3.config.backgroundNow, null);
+            req('POST', '/api/config', json({ backgroundPool: [] }), function (st4, j4) {
+              assert.equal(j4.config.backgroundNow, null);
+              req('POST', '/api/config', json({ backgroundPool: null, randomBackground: false }), function (st5, j5) {
+                assert.equal(j5.config.backgroundNow, null); assert.equal(j5.config.preset, 'night'); next();
+              });
+            });
+          });
+        });
+      });
+    },
     // Open apps: off by default, and then the TV is not even asked.
     function (next) {
       fs.writeFileSync(RUNNING, 'netflix\n');

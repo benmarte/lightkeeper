@@ -172,6 +172,7 @@ var voci = [];      // the tiles, the open apps' button when it is on, then the 
 var aperte = [];    // the apps open on the TV, as the server lists them
 var sel = 0;
 var meteoAlle = 0, meteoPer = '';
+var letto = false; // the server has answered since this page started
 
 function cached() {
   try { return JSON.parse(localStorage.getItem('config')); } catch (e) { return null; }
@@ -330,9 +331,13 @@ function disegna() {
   veil.style.opacity = (typeof cfg.veil === 'number' ? cfg.veil : 80) / 100;
   // An uploaded picture comes from the server; the app's own backgrounds are beside this page.
   // With the server's start in the address: a picture that failed while it was down is asked again.
-  var preset = /^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy';
-  sfondo(cfg.background && cfg.background.custom ?
-    server() + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) : 'backgrounds/' + preset + '.jpg');
+  // With a random background, the one the server picked for this time the TV is on.
+  var bg = /^[a-z0-9-]+$/.test(cfg.backgroundNow || '') ? cfg.backgroundNow :
+    cfg.background && cfg.background.custom ? 'custom' : /^[a-z0-9-]+$/.test(cfg.preset || '') ? cfg.preset : 'godrevy';
+  var url = bg === 'custom' ? server() + '/background.jpg?rev=' + cfg.background.rev + '&s=' + (cfg.started || 0) : 'backgrounds/' + bg + '.jpg';
+  // The random one kept from last time is not shown before the server's answer, for a moment at most.
+  if (cfg.randomBackground && !letto) setTimeout(function () { if (!letto) sfondo(url); }, 800);
+  else sfondo(url);
   seleziona(Math.min(ultima(), voci.length - 1));
   aggiorna();
 }
@@ -527,6 +532,7 @@ function leggi(cb) {
     var c = null;
     try { c = JSON.parse(x.responseText); } catch (e) {}
     if (!c || !c.version) return cb && cb(null);
+    letto = true;
     if (c.port && c.port !== porta) {
       porta = c.port;
       try { localStorage.setItem('port', String(porta)); } catch (e) {}
@@ -590,14 +596,25 @@ document.addEventListener('visibilitychange', function () {
 });
 
 // Home key with the app already open: with handlesRelaunch it comes to the front only if it asks.
+// With a random background, the TV may have just come on: the server is asked first,
+// and the new picture loaded, so the last one does not show; 400 ms at most.
 document.addEventListener('webOSRelaunch', function () {
-  if (sistema) sistema.activate();
-  pannello.hidden = true;
-  document.body.className = '';
-  seleziona(Math.min(ultima(), voci.length - 1));
-  aggiorna();
-  leggi();
-  chiediAperte();
+  var fatto = false;
+  function mostra() {
+    if (fatto) return;
+    fatto = true;
+    if (sistema) sistema.activate();
+    pannello.hidden = true;
+    document.body.className = '';
+    seleziona(Math.min(ultima(), voci.length - 1));
+    aggiorna();
+    chiediAperte();
+  }
+  if (!cfg.randomBackground) { mostra(); return leggi(); }
+  setTimeout(mostra, 400);
+  leggi(function () {
+    (function attendi() { if (!sfondoChiesto) return mostra(); setTimeout(attendi, 30); })();
+  });
 });
 
 disegna();
