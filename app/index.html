@@ -11,6 +11,11 @@
 @font-face { font-family: Jost; src: url(jost-300.woff2) format('woff2'); font-weight: 300; }
 @font-face { font-family: Jost; src: url(jost-500.woff2) format('woff2'); font-weight: 500; }
 @font-face { font-family: Jost; src: url(jost.woff2) format('woff2'); font-weight: 100 900; }
+/* The clock's other typefaces, digits only, in clock/ with their licences (OFL). */
+@font-face { font-family: 'LK Classic'; src: url(clock/classic.woff2) format('woff2'); font-weight: 300; }
+@font-face { font-family: 'LK Mono'; src: url(clock/mono.woff2) format('woff2'); font-weight: 200; }
+@font-face { font-family: 'LK Rounded'; src: url(clock/rounded.woff2) format('woff2'); font-weight: 300; }
+@font-face { font-family: 'LK Digital'; src: url(clock/digital.woff2) format('woff2'); font-weight: 300; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
 body {
@@ -31,6 +36,17 @@ header, nav, #hint { position: absolute; left: 112px; }
 header { top: 68px; }
 #ora { font-size: 150px; font-weight: 200; line-height: 1; letter-spacing: -.02em; }
 #ora small { font-size: 52px; font-weight: 300; letter-spacing: .02em; margin-left: 14px; }
+/* Other styles and sizes for the clock; without a class it is Jost 200 at 150 px, as always. */
+#ora.st-classic { font-family: 'LK Classic', Jost, serif; font-weight: 300; letter-spacing: 0; -webkit-font-feature-settings: 'lnum'; font-feature-settings: 'lnum'; }
+#ora.st-bold { font-weight: 500; }
+#ora.st-mono { font-family: 'LK Mono', Jost, monospace; font-weight: 200; letter-spacing: -.05em; }
+#ora.st-rounded { font-family: 'LK Rounded', Jost, sans-serif; font-weight: 300; letter-spacing: -.01em; }
+#ora.st-digital { font-family: 'LK Digital', Jost, monospace; font-weight: 300; letter-spacing: 0; }
+#ora.st-digital small { font-family: Jost, sans-serif; }
+#ora.sz-small { font-size: 110px; }
+#ora.sz-small small { font-size: 40px; margin-left: 10px; }
+#ora.sz-large { font-size: 200px; }
+#ora.sz-large small { font-size: 68px; margin-left: 18px; }
 #meteo { margin-top: 18px; height: 40px; font-size: 34px; font-weight: 300; opacity: .9; display: flex; align-items: center; }
 #meteo svg { width: 34px; height: 34px; margin-left: 14px; }
 nav { bottom: 104px; display: flex; align-items: flex-end; transition: -webkit-transform .2s, transform .2s; }
@@ -226,6 +242,7 @@ function sfondo(url) {
 }
 
 function disegna() {
+  ora.className = classeOra(cfg);
   // Names only; logos, or the TV's icon where an app has none; the TV's icons. Inputs show their device.
   var modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
   nav.className = modo === 'text' ? '' : 'icons' + (cfg.labels === 'none' ? ' bare' : cfg.labels === 'selected' ? ' only-sel' : '');

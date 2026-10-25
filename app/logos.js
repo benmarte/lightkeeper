@@ -194,6 +194,14 @@ function indirizzoWeb(u) {
     /^https?:\/\/([A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(:\d{1,5})?([\/?#][^\s<>"'\\]*)?$/.test(u);
 }
 
+// The clock's classes for its style and size: none for thin and medium, the way it has always looked.
+function classeOra(c) {
+  var out = [];
+  if (c.clockStyle && c.clockStyle !== 'thin') out.push('st-' + c.clockStyle);
+  if (c.clockSize && c.clockSize !== 'medium') out.push('sz-' + c.clockSize);
+  return out.join(' ');
+}
+
 // What a tile opens: a web page in the TV's browser, as the gear does; else the app or input.
 function apertura(tile, browser) {
   return tile.url ? { id: browser, params: { target: tile.url } } : { id: tile.id };

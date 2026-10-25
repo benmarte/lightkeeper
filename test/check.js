@@ -40,6 +40,12 @@ assert.equal(s.validate({ tiles: [{ id: 'a', title: 'x' }, { id: 'a', title: 'y'
 assert.equal(s.validate({ veil: 101 }, keys), 'veil');
 assert.equal(s.validate({ key: 'power' }, keys), 'key');
 assert.deepEqual(s.validate({ port: 8091 }, keys), { port: 8091 });
+// The clock's style and size: only these values; Jost 200 at the medium size unless chosen.
+['thin', 'classic', 'bold', 'mono', 'rounded', 'digital'].forEach(function (v) { assert.deepEqual(s.validate({ clockStyle: v }, keys), { clockStyle: v }); });
+['small', 'medium', 'large'].forEach(function (v) { assert.deepEqual(s.validate({ clockSize: v }, keys), { clockSize: v }); });
+['comic', '', 'Thin', 12, null].forEach(function (v) { assert.equal(s.validate({ clockStyle: v }, keys), 'clockStyle', String(v)); });
+['huge', '', 2, null].forEach(function (v) { assert.equal(s.validate({ clockSize: v }, keys), 'clockSize', String(v)); });
+assert.equal(s.DEFAULTS.clockStyle, 'thin'); assert.equal(s.DEFAULTS.clockSize, 'medium');
 // Web page tiles: an id of their own and an http or https address.
 var webTile = { id: 'web.k3x9', title: ' Meteo  ', url: 'https://www.meteo.it/oggi?citta=Stradella#ora' };
 assert.deepEqual(s.validate({ tiles: [webTile] }, keys), { tiles: [{ id: 'web.k3x9', title: 'Meteo', url: webTile.url }] });
@@ -197,6 +203,18 @@ assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), '')
 ['https://www.meteo.it', 'http://192.168.0.1:8080/x?a=1', 'https://[::1]/', 'javascript:alert(1)', 'https://', 'https://a b.com', 'https://x.com/"><b>']
   .forEach(function (u) { assert.equal(logos.indirizzoWeb(u), s.webUrl(u), 'page and server agree on ' + u); });
 assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it' }, 'logo'), 'browser');
+// The clock: no class, so the Home's rule for it as it has always been, unless a style or size is chosen.
+assert.equal(logos.classeOra({}), '');
+assert.equal(logos.classeOra({ clockStyle: 'thin', clockSize: 'medium' }), '');
+assert.equal(logos.classeOra({ clockStyle: 'digital', clockSize: 'large' }), 'st-digital sz-large');
+var homeHtml = fs.readFileSync(path.join(__dirname, '..', 'app', 'index.html'), 'utf8');
+assert.ok(homeHtml.indexOf('#ora { font-size: 150px; font-weight: 200; line-height: 1; letter-spacing: -.02em; }') !== -1, 'the default clock rule is unchanged');
+['classic', 'mono', 'rounded', 'digital'].forEach(function (n) {
+  var f = path.join(__dirname, '..', 'app', 'clock', n + '.woff2');
+  assert.equal(fs.readFileSync(f).slice(0, 4).toString(), 'wOF2', n);
+  assert.ok(/SIL Open Font License, Version 1\.1/.test(fs.readFileSync(path.join(__dirname, '..', 'app', 'clock', 'OFL-' + n + '.txt'), 'utf8')), n + ' licence');
+  assert.ok(homeHtml.indexOf('url(clock/' + n + '.woff2)') !== -1, n + ' in the Home');
+});
 assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it' }, 'icon'), '');
 assert.deepEqual(JSON.parse(JSON.stringify(logos.apertura({ id: 'web.k3x9', url: 'https://a.it/' }, 'com.webos.app.browser'))),
   { id: 'com.webos.app.browser', params: { target: 'https://a.it/' } });

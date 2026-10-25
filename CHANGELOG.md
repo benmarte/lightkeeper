@@ -2,6 +2,7 @@
 
 ## 1.0.6 (not released yet)
 
+- **The clock's style and size.** Six styles: Thin, as before, Classic (Cormorant Garamond), Bold (Jost 500), Monospaced (JetBrains Mono), Rounded (Nunito) and Digital (seven segments, from DSEG7), each shown with the time in the settings; and three sizes. Thin and medium stay the default, so the Home looks the same until you choose. The typefaces come with the app, digits only, about 12 KB in all.
 - **Web pages as tiles.** A tile can open a web page in the TV's browser, as the gear opens the settings: give it a name and an `http://` or `https://` address of up to 500 characters, under the list of tiles in the settings. With *Logos* it shows the browser's icon; Lightkeeper fetches no site icons.
 - **Updates from the settings.** *Updates* shows the version in use and looks for a newer one in the latest release's manifest. *Update*, behind the PIN like any other change, downloads the package only from this project's GitHub releases, checks its size and sha256 against the manifest, and installs nothing when they do not match. It never installs an older or the same version. The install runs apart from the settings server, which it restarts, and the page then shows the new version, or what went wrong.
 

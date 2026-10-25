@@ -83,8 +83,14 @@ var KEYS = [
 var USUAL_APPS = ['netflix', 'amazon', 'youtube.leanback.v4', 'com.disney.disneyplus-prod',
   'cdp-30', 'spotify-beehive', 'com.apple.appletv'];
 
+// The clock's typefaces and sizes; thin and medium are how it has always looked.
+var CLOCK_STYLES = ['thin', 'classic', 'bold', 'mono', 'rounded', 'digital'];
+var CLOCK_SIZES = ['small', 'medium', 'large'];
+
 var DEFAULTS = {
   clock: '24',
+  clockStyle: 'thin',
+  clockSize: 'medium',
   units: 'c',
   weather: null,
   tiles: null,
@@ -252,6 +258,8 @@ function validate(body, keyNames) {
   for (var i = 0; i < fields.length; i++) {
     var k = fields[i], v = body[k];
     if (k === 'clock') { if (v !== '24' && v !== '12') return 'clock'; out[k] = v; }
+    else if (k === 'clockStyle') { if (CLOCK_STYLES.indexOf(v) === -1) return 'clockStyle'; out[k] = v; }
+    else if (k === 'clockSize') { if (CLOCK_SIZES.indexOf(v) === -1) return 'clockSize'; out[k] = v; }
     else if (k === 'units') { if (v !== 'c' && v !== 'f') return 'units'; out[k] = v; }
     else if (k === 'tileStyle') { if (['text', 'logo', 'icon'].indexOf(v) === -1) return 'tileStyle'; out[k] = v; }
     // Names under logos and icons: all of them, the selected one's only, or none.
@@ -755,6 +763,7 @@ function handle(req, res) {
   if (m === 'GET' && p === '/logos.js') return sendFile(res, path.join(APP_DIR, 'logos.js'), 'no-cache');
   if (m === 'GET' && /^\/logos\/[a-z0-9]+\.png$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/jost(-[235]00)?\.woff2$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
+  if (m === 'GET' && /^\/clock\/(classic|mono|rounded|digital)\.woff2$/.test(p)) return sendFile(res, path.join(APP_DIR, p.slice(1)), 'max-age=86400');
   if (m === 'GET' && /^\/backgrounds\/((thumbs\/)?[a-z0-9-]+\.jpg|index\.json)$/.test(p)) {
     // The list changes with an update of the app; the pictures under a name never do.
     return sendFile(res, path.join(APP_DIR, p.slice(1)), /\.json$/.test(p) ? 'no-cache' : 'max-age=86400');
@@ -986,7 +995,7 @@ function start() {
   process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
-module.exports = { DEVICES: DEVICES, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
+module.exports = { DEVICES: DEVICES, DEFAULTS: DEFAULTS, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
   applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 

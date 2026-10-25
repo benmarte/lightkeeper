@@ -59,7 +59,7 @@ The preview at the top is the Home as the TV draws it, and it changes as you go.
 - **Names, logos or app icons.** Show the names alone; white logos, with the app's own icon where there is no logo; or every app's own icon from the TV. With logos or icons, the names can show under every tile, under the selected one only, or not at all, which leaves the icons alone with a short line under the selected one.
 - **Inputs.** Each input shows the device plugged into it: PlayStation 5, Xbox, Nintendo Switch, Apple TV, Chromecast, Fire TV and more, or a plain TV, media player, game console or HDMI icon. *Automatic*, the first choice, guesses it from the tile's name, and Live TV shows a TV.
 - **Background.** Pick one of the nine backgrounds Lightkeeper carries: a photograph of Godrevy Lighthouse, six sea paintings and charts in the public domain, and two quiet gradients, night and dawn. Or upload your own picture: your phone or computer crops it to 16:9 and resizes it to 1920 or 3840 pixels before sending it. The *shade* slider sets how dark the picture is behind the time and the tiles.
-- **Clock and weather.** Choose a 24 or 12-hour clock and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
+- **Clock and weather.** Choose a 24 or 12-hour clock, its style (thin, classic, bold, monospaced, rounded or digital) and size, and search for a city (from [Open-Meteo](https://open-meteo.com/)). Pick °C or °F, or turn the weather off.
 - **Screen saver.** Pause LG's screen saver for an hour while you try things out. It comes back by itself, as an OLED should not show a still picture for long.
 - **Remote and power.** Pick which key opens Lightkeeper: Home, or another key GlassHouse can change on your remote, such as the coloured keys. With Home, pressing Back in the last app also returns to Lightkeeper. *Open at power on* brings Lightkeeper up when the TV switches on, over an input, LG's Home, or the app that was open when the TV went off, which webOS puts back. An app that comes up with the TV stays: switch on with the Netflix button, or cast from your phone, and you stay there.
 - **Address.** The page's port: 8090, unless you choose another or another program on the TV already has it (see *Another port* in [Troubleshooting](#troubleshooting)).
@@ -175,6 +175,7 @@ Ideas, reports and pull requests are welcome.
 - GlassHouse's mark, for its dashboard's tile: drawn from [GlassHouse](https://github.com/rorygallagher2024/glasshouse)'s own logo, MIT, © 2026 Rory Gallagher (`app/logos/LICENSE-glasshouse.txt`).
 - Icons for LG's own apps, game consoles, plain HDMI and the settings gear: [Phosphor Icons](https://phosphoricons.com/) (MIT) and Google's [Material Symbols](https://fonts.google.com/icons) (Apache 2.0); their licences are in `app/logos/`.
 - Typeface: [Jost](https://github.com/indestructible-type/Jost), SIL Open Font License 1.1 (`app/OFL.txt`). The fixed 200, 300 and 500 weights, for engines without variable fonts, are instances of the same file.
+- The clock's other typefaces, digits only, made by `docs/art/clock-fonts.py`: [Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant), [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono), [Nunito](https://github.com/googlefonts/nunito) and [DSEG7](https://github.com/keshikan/DSEG), all SIL Open Font License 1.1, their licences in `app/clock/`. DSEG's subset is renamed, as its Reserved Font Name asks of modified versions.
 - Weather data by [Open-Meteo.com](https://open-meteo.com/), CC BY 4.0.
 - [GlassHouse](https://github.com/rorygallagher2024/glasshouse), whose key filter and set-up through the Homebrew Channel Lightkeeper builds on.
 
@@ -214,7 +215,7 @@ Poi aprite Lightkeeper una volta dalle app della TV (via SSH si apre da sola). A
 - solo nomi, loghi bianchi o icone delle app; con loghi e icone, i nomi sotto tutte le voci, solo sotto quella scelta o da nessuna parte (solo icone);
 - per ogni ingresso l'apparecchio collegato, oppure un'icona generica (TV, lettore multimediale, console, HDMI); *Automatic*, la prima scelta, lo indovina dal nome della voce, e Live TV mostra una TV;
 - lo sfondo, tra i nove che Lightkeeper porta con sé (la foto del faro di Godrevy, sei marine e carte nautiche di pubblico dominio, due sfumature) oppure una vostra immagine, ritagliata e ridimensionata a 1920 o 3840 pixel sul telefono prima dell'invio; e l'intensità del velo;
-- l'orologio a 24 o 12 ore, e la città del meteo, cercata su Open-Meteo, in °C o °F;
+- l'orologio a 24 o 12 ore, il suo stile (sottile, classico, deciso, monospaziato, arrotondato o digitale) e la dimensione, e la città del meteo, cercata su Open-Meteo, in °C o °F;
 - una pausa di un'ora dello screensaver di LG, per fare prove;
 - il tasto che apre Lightkeeper (con Home, anche Indietro dall'ultima app torna qui) e l'apertura all'accensione, sopra un ingresso, la Home di LG o l'app rimasta aperta allo spegnimento, ma non sopra un'app partita con la TV (tasto Netflix, cast dal telefono);
 - la porta della pagina (*Address*);
