@@ -85,7 +85,9 @@ var tvApps = [{ id: 'netflix', title: 'Netflix' }, { id: 'youtube.leanback.v4', 
   { id: 'com.webos.app.livetv', title: 'Live TV' }, { id: 'com.webos.app.membership', title: 'LG Account', visible: false },
   { id: 'com.webos.app.home', title: 'Home' }, { id: 'cdp-30', title: 'Plex' }];
 var runningNow = { returnValue: true, running: ['youtube.leanback.v4', 'com.webos.app.home', 'io.github.chiotas.lightkeeper', 'com.webos.app.hdmi1',
-  'com.webos.app.livetv', 'com.webos.app.membership', 'netflix', 'com.palm.service.something'].map(function (id) { return { id: id, defaultWindowType: 'card' }; }) };
+  'com.webos.app.livetv', 'com.webos.app.membership', 'netflix', 'com.palm.service.something'].map(function (id) {
+    return { id: id, appType: 'web', defaultWindowType: 'card', processid: '', webprocessid: '' }; // as a C1 answers
+  }) };
 assert.deepEqual(s.openApps(runningNow, tvApps), [{ id: 'netflix', title: 'Netflix' }, { id: 'youtube.leanback.v4', title: 'YouTube' }]);
 assert.deepEqual(s.openApps(null, tvApps), []);
 assert.deepEqual(s.openApps({ running: [{ appId: 'netflix' }, null, 'netflix'] }, tvApps), []);

@@ -700,8 +700,9 @@ function sendFile(res, file, cache, extra) {
 /*
  * The apps open on the TV that the Home offers to close: those a tile could open, which
  * LG's launcher shows (appChoices: not Lightkeeper, inputs, Live TV or apps kept hidden),
- * and never LG's Home. Read from applicationManager/running in the form webOS OSE
- * documents, {running: [{id, processId, defaultWindowType, ...}]}; not yet seen on an LG TV.
+ * and never LG's Home. From applicationManager/running, which on a C1 with webOS 6.5.3
+ * answers {running: [{id, appType, defaultWindowType, processid, webprocessid}]}, listing
+ * LG's Home, inputs, overlays (voice, livemenu) and AirPlay too.
  */
 var LG_HOME = 'com.webos.app.home';
 function openApps(running, apps) {

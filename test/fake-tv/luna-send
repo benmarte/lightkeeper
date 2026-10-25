@@ -14,10 +14,10 @@ case "$uri" in
     else
       echo '{"returnValue":true,"configs":{"com.webos.surfacemanager.keyFilters":[{"file":"/usr/lib/qt5/qml/KeyFilters/a.js","handler":"h"}]}}'
     fi ;;
-  # The apps open, one id per line in $F/running (none without it), in the form webOS OSE documents.
+  # The apps open, one id per line in $F/running (none without it), as a C1 with webOS 6.5.3 lists them.
   */running)
     printf '{"returnValue":true,"running":['
-    [ -s "$F/running" ] && sed 's/.*/{"id":"&","processId":"","webprocessid":"","defaultWindowType":"card","appType":"web"}/' "$F/running" | paste -sd, -
+    [ -s "$F/running" ] && sed 's/.*/{"id":"&","appType":"web","defaultWindowType":"card","processid":"","webprocessid":""}/' "$F/running" | paste -sd, -
     echo ']}' ;;
   */closeByAppId)
     id=$(printf %s "$params" | sed -n 's/.*"id": *"\([^"]*\)".*/\1/p')

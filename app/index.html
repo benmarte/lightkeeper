@@ -124,6 +124,9 @@ body.pannello header, body.pannello nav, body.pannello #hint { visibility: hidde
 }
 #aperte .riquadro { display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(40, 32, 24, .9); }
 #aperte li.tutte { margin-top: 24px; padding-left: 216px; }
+/* No open apps: a line to read, not a choice. */
+#aperte li.vuota, #aperte li.vuota.sel { opacity: .8; font-weight: 400; font-weight: 380; cursor: default; }
+#aperte li.vuota span::after { display: none; }
 #aperte p { position: absolute; left: 112px; bottom: 50px; font-size: 26px; font-weight: 300; font-weight: 350; opacity: .8; }
 #hint {
   bottom: 50px; font-size: 26px; font-weight: 300; font-weight: 350; opacity: 0; transition: opacity .2s;
@@ -152,7 +155,8 @@ function server() { return 'http://127.0.0.1:' + porta; }
 var APP_DIR = decodeURIComponent(location.pathname.replace(/\/[^\/]*$/, ''));
 
 var TEXT = { settings: 'Settings', phone: 'or on your phone: ', empty: 'Choose your tiles in Settings',
-  open1: '1 open app', openN: ' open apps', openTitle: 'Open apps', closeAll: 'Close all', openNote: 'OK closes an app · Back returns to the Home' };
+  open1: '1 open app', openN: ' open apps', openTitle: 'Open apps', closeAll: 'Close all', openNote: 'OK closes an app · Back returns to the Home',
+  none: 'No open apps', openNoteEmpty: 'Back returns to the Home' };
 
 var nav = document.querySelector('nav');
 var ora = document.getElementById('ora');
@@ -164,7 +168,7 @@ var chiamate = []; // the bridges stay alive until the service answers
 
 var cfg = cached() || { tiles: [], veil: 80, clock: '24', tileStyle: 'text', units: 'c', weather: null, background: {} };
 var shown = '';     // the config the page shows, as JSON
-var voci = [];      // the tiles, the open apps' button when there are some, then the gear
+var voci = [];      // the tiles, the open apps' button when it is on, then the gear
 var aperte = [];    // the apps open on the TV, as the server lists them
 var sel = 0;
 var meteoAlle = 0, meteoPer = '';
@@ -296,7 +300,7 @@ function disegna() {
   spostamento = 0;
   caricatori = [];
   voci = (cfg.tiles || []).slice();
-  if (aperte.length) voci.push({ aperte: true });
+  if (cfg.openApps) voci.push({ aperte: true });
   voci.push({ gear: true });
   voci.forEach(function (v, i) {
     var a = document.createElement('a');
@@ -304,7 +308,7 @@ function disegna() {
       a.innerHTML = GEAR;
       a.setAttribute('aria-label', TEXT.settings);
     } else if (v.aperte) {
-      a.innerHTML = CARDS + '<b>' + aperte.length + '</b>';
+      a.innerHTML = CARDS + (aperte.length ? '<b>' + aperte.length + '</b>' : ''); // no 0
       a.setAttribute('aria-label', quanteAperte());
     } else {
       if (modo !== 'text') {
@@ -345,19 +349,19 @@ document.addEventListener('keydown', function (e) {
 });
 
 /*
- * Open apps, which the server reads from the TV and closes: the button shows when
- * there are some; its panel lists them, then Close all. OK closes, Back returns.
+ * Open apps, which the server reads from the TV and closes: the button shows when it
+ * is on in the settings, with how many when there are some; its panel lists them,
+ * then Close all, or says there are none. OK closes, Back returns.
  */
 var pannello = document.getElementById('aperte');
 var righe = pannello.querySelector('.righe'), lista = pannello.querySelector('ul');
 var selP = 0, chiudendo = false, aperteLette = false;
 pannello.querySelector('h2').textContent = TEXT.openTitle;
-pannello.querySelector('p').textContent = TEXT.openNote;
 pannello.onclick = function (e) { if (e.target === pannello) chiudiPannello(); };
 
-function quanteAperte() { return aperte.length === 1 ? TEXT.open1 : aperte.length + TEXT.openN; }
+function quanteAperte() { return !aperte.length ? TEXT.none : aperte.length === 1 ? TEXT.open1 : aperte.length + TEXT.openN; }
 // The button, or the gear when there is none.
-function ultimaVoce() { return voci.length - (aperte.length ? 2 : 1); }
+function ultimaVoce() { return voci.length - (cfg.openApps ? 2 : 1); }
 
 function chiediAperte() {
   // Off in the settings: the TV is not asked.
@@ -378,7 +382,7 @@ function mettiAperte(nuove, restaInFondo) {
   aperte = nuove;
   if (JSON.stringify(aperte) !== prima) disegna();
   if (restaInFondo) seleziona(ultimaVoce());
-  if (!aperte.length && !pannello.hidden) chiudiPannello();
+  if (!cfg.openApps && !pannello.hidden) chiudiPannello();
 }
 
 // The tile an open app has, for its name and the logo chosen for it.
@@ -394,7 +398,7 @@ function disegnaPannello() {
   aperte.concat([{ tutte: true }]).forEach(function (v, i) {
     var li = document.createElement('li'), nome = document.createElement('span');
     if (v.tutte) {
-      nome.textContent = TEXT.closeAll;
+      nome.textContent = aperte.length ? TEXT.closeAll : TEXT.none;
     } else {
       var t = tesseraDi(v.id) || v, box = document.createElement('div');
       box.className = 'logo';
@@ -408,12 +412,13 @@ function disegnaPannello() {
     lista.appendChild(li);
   });
   selezionaP(Math.min(selP, aperte.length));
+  pannello.querySelector('p').textContent = aperte.length ? TEXT.openNote : TEXT.openNoteEmpty;
 }
 
 function selezionaP(i) {
   selP = i;
   for (var k = 0; k < lista.children.length; k++) {
-    lista.children[k].className = (k === i ? 'sel' : '') + (k === aperte.length ? ' tutte' : '');
+    lista.children[k].className = (k === i ? 'sel' : '') + (k < aperte.length ? '' : aperte.length ? ' tutte' : ' vuota');
   }
   var li = lista.children[i];
   if (li.offsetTop < righe.scrollTop) righe.scrollTop = li.offsetTop;
@@ -421,6 +426,7 @@ function selezionaP(i) {
 }
 
 function premiP(i) {
+  if (!aperte.length) return chiudiPannello(); // No open apps: OK goes back too
   if (chiudendo) return;
   chiudendo = true;
   for (var k = 0; k < aperte.length; k++) if (k === i || i === aperte.length) lista.children[k].className += ' via';
