@@ -420,9 +420,16 @@ function updateChecks(done) {
               assert.equal(fs.readFileSync(path.join(work, 'lightkeeper-update.ipk'), 'utf8'), 'a package');
               req('GET', '/api/update', { port: 18390 }, function (st5, j5) {
                 assert.equal(j5.status.state, 'installing'); assert.equal(j5.status.version, '99.0.0');
-                child.removeAllListeners('exit');
-                child.kill();
-                done();
+                // Another manifest to read: not the one kept from before.
+                var other = path.join(dir, 'other.manifest.json');
+                fs.writeFileSync(other, JSON.stringify({ version: '98.0.0', ipkUrl: 'file://' + ipk, ipkHash: { sha256: sha }, ipkSize: 9 }));
+                fs.writeFileSync(path.join(data, 'update-test.json'), JSON.stringify({ manifest: 'file://' + other }));
+                req('GET', '/api/update', { port: 18390 }, function (st6, j6) {
+                  assert.equal(j6.latest, '98.0.0');
+                  child.removeAllListeners('exit');
+                  child.kill();
+                  done();
+                });
               });
             }, 500);
           });

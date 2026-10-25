@@ -438,9 +438,9 @@ footer a { color: var(--muted); }
       portMoving: 'Moving to the new address…',
       updTitle: 'Updates', updGo: 'Update', updChecking: 'Looking for a newer version…', updLatest: 'This is the latest version.',
       updAvailable: ' is available.', updNoCheck: 'Could not look for a newer version: ', updWorking: 'Downloading and checking the package…',
-      updInstalling: 'Installing. Lightkeeper starts again on the TV, and this page comes back within a minute or two.',
+      updInstalling: 'Installing. Lightkeeper starts again on the TV, and this page comes back in a few minutes.',
       updDone: 'Updated to ', updFailed: 'The update did not go through: ',
-      updSlow: 'No answer after four minutes. The TV\'s log, /tmp/lightkeeper.log, says what happened.',
+      updSlow: 'No answer after six minutes. The TV\'s log, /tmp/lightkeeper.log, says what happened.',
       removeTitle: 'Remove Lightkeeper', removeLede: 'Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.',
       removeYes: 'Remove for good', cancel: 'Cancel', removed: 'Lightkeeper has been removed from the TV. You can close this page.',
       licence: 'MIT licence, use at your own risk', lockTitle: 'Enter the PIN', unlock: 'Unlock', wrong: 'Wrong PIN.',
@@ -1134,7 +1134,8 @@ footer a { color: var(--muted); }
   }
 
   function waitForUpdate(version, since) {
-    if (Date.now() - since > 240000) { $('upd-go').disabled = false; return updNote(t.updSlow, true); }
+    // An update took close to three minutes on a C1.
+    if (Date.now() - since > 360000) { $('upd-go').disabled = false; return updNote(t.updSlow, true); }
     setTimeout(function () {
       quietly('/api/update', function (u) {
         if (u && u.current === version) {

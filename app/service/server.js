@@ -526,16 +526,18 @@ function curl(args, cb) {
   execFile(CURL, ['-fsSL', '--max-time', '180'].concat(args), { maxBuffer: 1024 * 1024 }, cb);
 }
 
-// The latest version, asked at most every ten minutes unless an update needs it fresh.
-var latest = null, latestAt = 0;
+// The latest version, asked at most every ten minutes unless an update needs it
+// fresh, or the manifest to read has changed (update-test.json added or removed).
+var latest = null, latestAt = 0, latestFrom = '';
 function checkUpdate(fresh, cb) {
-  if (!fresh && latest && Date.now() - latestAt < 600000) return cb(latest);
   var src = updateSource();
+  if (!fresh && latest && src.manifest === latestFrom && Date.now() - latestAt < 600000) return cb(latest);
   if (src.test) log('update: test manifest ' + src.manifest);
   curl([src.manifest], function (err, out) {
     var r = err ? 'the latest version could not be read: ' + String(err.message).split('\n')[0] : readManifest(out, src.base);
     latest = typeof r === 'string' ? { error: r } : r;
     latestAt = Date.now();
+    latestFrom = src.manifest;
     cb(latest);
   });
 }
