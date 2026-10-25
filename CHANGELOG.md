@@ -1,12 +1,11 @@
 # Changelog
 
-## 1.0.7 (not released yet)
+## 1.0.7 (25 October 2026)
 
-- **The clock lines up with the weather** in every style but Thin. A digit's ink starts at a different distance from its edge in each typeface: in Digital, a "1" started 98 px to the right at the medium size, so from 10:00 to 19:59 the clock sat out of line. Lightkeeper now moves the clock by the amount measured for its first digit, which also works on older TVs, whose browsers cannot measure ink. Thin, the default, stays where it has always been: its digits start 4 to 14 px in.
-
-- **Pick a tile's icon.** In the settings, the icon beside each tile opens every logo and icon Lightkeeper carries, generic ones and services, with a search and *Automatic* at the top; it works with the remote's arrows and OK in the TV's browser too. With *Logos*, the one you pick takes the place of Lightkeeper's. With *App icons*, it shows white on a dark tile the size of the icons. *Names* stays as it is. Without a choice, nothing changes.
-
-- **Close open apps from the Home**, with *Open apps button* in the settings, off unless you turn it on. Turned on, a button before the gear shows how many apps are open, and no number when there are none. It opens a list of them, with their icons and names, and *Close all* at the end: OK closes one, Back returns to the Home. Lightkeeper, inputs, Live TV, LG's Home and the apps LG keeps hidden are left out. With none open, the list says so. The server reads the list from the TV and closes the apps, for the Home only.
+- **The clock lines up with the weather** in the five styles 1.0.6 added. Each typeface puts a digit's ink at its own distance from the edge: in Digital, a "1" started 98 px to the right at the medium size, so from 10:00 to 19:59 the clock sat out of line. Lightkeeper now moves the clock by the amount measured for its first digit, which also works on older TVs, whose browsers cannot measure ink. Thin, the default, stays where it was: its digits start 4 to 14 px in.
+- **Pick a tile's icon.** In the settings, the icon beside a tile opens every logo and icon Lightkeeper carries, generic ones and services, with a search and *Automatic* at the top. Each logo has its service's name under it, such as Apple Music or BET+, and the search finds it by that name or by its short one. The grid works with the remote's arrows and OK in the TV's browser too. With *Logos*, your pick replaces Lightkeeper's. With *App icons*, it shows white on a dark tile the size of the icons. *Names* stays as it is, and a tile you leave alone keeps its icon.
+- **Close open apps from the Home**, with *Open apps button* in the settings. It is off until you turn it on, so the Home looks as before. Turned on, a button before the gear shows how many apps are open, with no number when none are. It lists them with their icons and names, and *Close all* at the end: OK closes one, Back returns to the Home. Lightkeeper, inputs, Live TV, LG's Home and the apps LG keeps hidden stay out of the list. Tried on a C1 with webOS 6.5.3.
+- **webOS 2 and 3:** the README now gives the way round the Home key that a B7 owner found ([#3](https://github.com/chiotas/lightkeeper/issues/3)). LG's Quick Access opens Lightkeeper when you hold down a number key. lginputhook did not work on that TV.
 
 ## 1.0.6 (25 October 2026)
 
