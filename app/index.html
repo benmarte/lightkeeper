@@ -76,6 +76,14 @@ nav.icons .logo {
 nav.icons .logo svg, nav.icons .logo img { display: block; }
 nav.icons .logo img, nav.icons a.sel .logo img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 nav.icons a.sel .logo { -webkit-transform: scale(1.06); transform: scale(1.06); }
+/* A logo chosen for a tile, among app icons: on a dark tile of the icons' size. */
+nav.icons .riquadro {
+  display: flex; align-items: center; justify-content: center; width: 132px; height: 132px; margin: 0 auto 20px;
+  border-radius: 24px; background: rgba(20, 16, 12, .86); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); transition: transform .2s;
+}
+nav.icons a.sel .riquadro { -webkit-transform: scale(1.06); transform: scale(1.06); }
+nav.icons .riquadro svg, nav.icons .riquadro img { display: block; }
+nav.icons .riquadro img, nav.icons a.sel .riquadro img { margin: 0; border-radius: 0; box-shadow: none; -webkit-transform: none; transform: none; }
 nav.icons a.sel::after { bottom: -16px; left: 50%; margin-left: -18px; }
 /* Names under logos and icons: only the selected one's, smaller; or none, the line under the icon alone. */
 nav.icons.only-sel i { visibility: hidden; font-size: 26px; }
@@ -195,6 +203,7 @@ function iconaTv(url) {
 function riempi(box, v, modo) {
   return function () {
     var logo = logoDi(v, modo);
+    if (logo && modo === 'icon' && v.logo) return box.parentNode.replaceChild(riquadro(logo), box);
     if (logo) return box.appendChild(disegnaLogo(logo, 80, 176, 96));
     var url = server() + '/icon?id=' + encodeURIComponent(v.id) + '&s=' + (cfg.started || 0);
     if (modo !== 'logo') return box.parentNode.replaceChild(iconaTv(url), box);

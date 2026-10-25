@@ -233,6 +233,26 @@ li .sub.url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .pinrow input { width: 160px; margin-right: 10px; letter-spacing: .2em; }
 .confirm { margin-top: 18px; padding: 18px 0 0; }
+button.ic { border: 0; padding: 0; cursor: pointer; font: inherit; }
+button.ic:focus { outline: none; box-shadow: 0 0 0 2px var(--ink); }
+.screen nav.icons .riquadro { display: flex; align-items: center; justify-content: center; width: 132px; height: 132px; margin: 0 auto 20px;
+  border-radius: 24px; background: rgba(20, 16, 12, .86); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.screen nav.icons .riquadro svg, .screen nav.icons .riquadro img { display: block; margin: 0; border-radius: 0; box-shadow: none; }
+/* The icon catalogue: big tiles, for a mouse, a finger or a remote's arrows. */
+.picker { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; background: rgba(0, 0, 0, .72); overflow-y: auto; }
+.picker-box { max-width: 1040px; margin: 4vh auto; padding: 24px; background: var(--ground); border: 1px solid var(--line-strong); border-radius: 18px; }
+.picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.picker-head h2 { margin: 0; }
+.picker h3 { margin: 22px 0 10px; font-size: 15px; font-weight: 400; color: var(--muted); }
+.picker .grid { display: flex; flex-wrap: wrap; margin-right: -12px; }
+.pick { width: 148px; margin: 0 12px 12px 0; padding: 0; border: 1px solid var(--line-strong); border-radius: 14px; background: transparent; color: var(--ink); cursor: pointer; font: inherit; text-align: center; }
+.pick .art { display: flex; align-items: center; justify-content: center; height: 92px; margin: 6px 6px 0; border-radius: 10px; background: #161210; color: #f4f1ec; overflow: hidden; }
+.pick .art svg, .pick .art img { display: block; }
+.pick .cap { display: block; padding: 6px 6px 8px; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pick:hover { background: var(--wash); }
+.pick:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(244, 241, 236, .3); }
+.pick.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+.pick.auto .art { font-size: 15px; letter-spacing: .02em; }
 footer { max-width: 1240px; margin: 0 auto; padding: 30px 24px 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
 footer a { color: var(--muted); }
 
@@ -436,6 +456,15 @@ footer a { color: var(--muted); }
   <footer><span id="version"></span> · <span data-t="licence">MIT licence, use at your own risk</span> · <a href="https://github.com/chiotas/lightkeeper" target="_blank" rel="noopener">github.com/chiotas/lightkeeper</a></footer>
 </div>
 
+<div class="picker" id="picker" hidden role="dialog" aria-modal="true" aria-labelledby="picker-title">
+  <div class="picker-box">
+    <div class="picker-head"><h2 id="picker-title">Icon</h2><button class="btn" type="button" id="picker-close" data-t="close">Close</button></div>
+    <input type="search" id="picker-search" autocomplete="off" spellcheck="false" placeholder="Search icons" aria-label="Search icons">
+    <div id="picker-body"></div>
+    <p class="note" id="picker-none" hidden></p>
+  </div>
+</div>
+
 <div class="lock" id="lock" hidden>
   <h2 data-t="lockTitle">Enter the PIN</h2>
   <form id="lock-form">
@@ -483,6 +512,10 @@ footer a { color: var(--muted); }
       portLede: 'The Home and this page use it. Change it if another program on the TV needs this one.',
       portTaken: ' is in use by another program on the TV, so this page is on ', portBad: 'A port is a number from 1024 to 65535.',
       portMoving: 'Moving to the new address…',
+      iconFor: 'Icon for ', iconAuto: 'Automatic', iconAutoLede: 'as Lightkeeper picks it', iconGeneric: 'Generic', iconServices: 'Services',
+      iconSearch: 'Search icons', iconNone: 'No icon by that name.', close: 'Close', iconChange: 'Change the icon of ',
+      gen_browser: 'Browser', gen_gallery: 'Gallery', gen_apps: 'Apps', gen_media: 'Media', gen_home: 'Home', gen_sport: 'Sport',
+      gen_tv: 'TV', gen_console: 'Console', gen_hdmi: 'HDMI',
       clockStyle: 'Style', clockSize: 'Size', sizeSmall: 'Small', sizeMedium: 'Medium', sizeLarge: 'Large',
       clock_thin: 'Thin', clock_classic: 'Classic', clock_bold: 'Bold', clock_mono: 'Monospaced', clock_rounded: 'Rounded', clock_digital: 'Digital',
       updTitle: 'Updates', updGo: 'Update', updChecking: 'Looking for a newer version…', updLatest: 'This is the latest version.',
@@ -593,7 +626,9 @@ footer a { color: var(--muted); }
       var s = document.createElement('span');
       if (i === 0) s.className = 'sel';
       var logo = modo === 'text' ? '' : logoDi(tile, modo);
-      if (logo) {
+      if (logo && modo === 'icon' && tile.logo) {
+        s.appendChild(riquadro(logo));
+      } else if (logo) {
         var box = document.createElement('div');
         box.className = 'logo';
         box.appendChild(disegnaLogo(logo, 80, 176, 96));
@@ -756,6 +791,133 @@ footer a { color: var(--muted); }
     return null;
   }
 
+  /* ---------- the icon catalogue ---------- */
+
+  // Every logo and icon Lightkeeper draws: the generic icons, then the services by name. A
+  // service is also found by the app titles it is known by (LOGHI_TITOLI).
+  var pickerFor = null, pickerFrom = null;
+  function catalogue() {
+    var alias = {};
+    Object.keys(LOGHI_TITOLI).forEach(function (k) { (alias[LOGHI_TITOLI[k]] = alias[LOGHI_TITOLI[k]] || []).push(k); });
+    var services = Object.keys(SIMPLE_ICONS).concat(Object.keys(IMMAGINI)).sort();
+    return { generic: Object.keys(ICONE).sort(), services: services, alias: alias };
+  }
+  function pickButton(name, caption, on) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pick' + (on ? ' on' : '') + (name ? '' : ' auto');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('data-name', name);
+    var art = document.createElement('span');
+    art.className = 'art';
+    if (name) art.appendChild(disegnaLogo(name, 40, 116, 56));
+    else art.textContent = t.iconAuto;
+    var cap = document.createElement('span');
+    cap.className = 'cap';
+    cap.textContent = caption;
+    b.appendChild(art);
+    b.appendChild(cap);
+    b.onclick = function () { choose(name); };
+    return b;
+  }
+  function openPicker(id, from) {
+    var tile = tileNow(id);
+    if (!tile) return;
+    pickerFor = id;
+    pickerFrom = from;
+    var c = catalogue(), body = $('picker-body'), chosen = tile.logo || '';
+    $('picker-title').textContent = t.iconFor + tile.title;
+    body.innerHTML = '';
+    var top = document.createElement('div');
+    top.className = 'grid';
+    top.style.marginTop = '16px';
+    top.appendChild(pickButton('', t.iconAutoLede, !chosen));
+    body.appendChild(top);
+    [[t.iconGeneric, c.generic, function (n) { return t['gen_' + n] || n; }], [t.iconServices, c.services, function (n) { return n; }]].forEach(function (sec) {
+      var h = document.createElement('h3');
+      h.textContent = sec[0];
+      var grid = document.createElement('div');
+      grid.className = 'grid';
+      sec[1].forEach(function (n) {
+        var b = pickButton(n, sec[2](n), n === chosen);
+        b.setAttribute('data-find', (n + ' ' + sec[2](n) + ' ' + (c.alias[n] || []).join(' ')).toLowerCase());
+        grid.appendChild(b);
+      });
+      body.appendChild(h);
+      body.appendChild(grid);
+    });
+    $('picker-search').value = '';
+    $('picker-none').hidden = true;
+    $('picker').hidden = false;
+    var on = body.querySelector('.pick.on') || body.querySelector('.pick');
+    on.focus();
+    if (on.scrollIntoView) on.scrollIntoView(false);
+  }
+  function closePicker() {
+    $('picker').hidden = true;
+    if (pickerFrom && document.body.contains(pickerFrom)) pickerFrom.focus();
+    pickerFor = pickerFrom = null;
+  }
+  function choose(name) {
+    var tile = tileNow(pickerFor), id = pickerFor;
+    if (!tile) return closePicker();
+    if (name) tile.logo = name;
+    else delete tile.logo;
+    $('picker').hidden = true;
+    pickerFor = pickerFrom = null;
+    saveTiles();
+    // The list was drawn again: back to the icon of the tile just changed.
+    var li = document.querySelector('#tiles li[data-id="' + id + '"] .ic');
+    if (li) li.focus();
+  }
+  $('picker-close').onclick = closePicker;
+  $('picker-search').oninput = function () {
+    var q = this.value.toLowerCase().replace(/[^a-z0-9]/g, ''), any = false;
+    var all = $('picker-body').querySelectorAll('.pick[data-find]');
+    for (var i = 0; i < all.length; i++) {
+      var hit = !q || all[i].getAttribute('data-find').replace(/[^a-z0-9 ]/g, '').indexOf(q) !== -1;
+      all[i].hidden = !hit;
+      if (hit) any = true;
+    }
+    var grids = $('picker-body').querySelectorAll('.grid');
+    for (var g = 1; g < grids.length; g++) {
+      var shown = grids[g].querySelectorAll('.pick:not([hidden])').length;
+      grids[g].hidden = !shown;
+      grids[g].previousSibling.hidden = !shown;
+    }
+    $('picker-none').textContent = t.iconNone;
+    $('picker-none').hidden = any;
+  };
+  // A remote's arrows move between the tiles, the nearest one that way; OK picks; Back closes.
+  function nearest(from, dx, dy) {
+    var a = from.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    var all = $('picker').querySelectorAll('.pick, #picker-search'), best = null, bestD = Infinity;
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el === from || el.hidden || !el.offsetParent) continue;
+      var r = el.getBoundingClientRect(), x = r.left + r.width / 2 - ax, y = r.top + r.height / 2 - ay;
+      if (dx && (x * dx <= 2 || Math.abs(y) > a.height / 2)) continue;
+      if (dy && y * dy <= 2) continue;
+      var d = dx ? Math.abs(x) : Math.abs(y) * 4 + Math.abs(x);
+      if (d < bestD) { bestD = d; best = el; }
+    }
+    return best;
+  }
+  $('picker').onkeydown = function (e) {
+    var k = e.keyCode, el = document.activeElement;
+    if (k === 27 || k === 461 || (k === 8 && el !== $('picker-search'))) { e.preventDefault(); return closePicker(); }
+    var d = { 37: [-1, 0], 38: [0, -1], 39: [1, 0], 40: [0, 1] }[k];
+    if (!d || !el) return;
+    // In the search field, left and right move the caret.
+    if (el === $('picker-search') && d[0]) return;
+    var next = nearest(el, d[0], d[1]);
+    if (next) {
+      e.preventDefault();
+      next.focus();
+      if (next.scrollIntoView) next.scrollIntoView(false);
+    }
+  };
+
   function renderTiles() {
     var list = $('tiles'), tiles = cfg.tiles || [];
     list.innerHTML = '';
@@ -769,8 +931,11 @@ footer a { color: var(--muted); }
       var li = document.createElement('li');
       li.setAttribute('data-id', tile.id);
       if (window.PointerEvent) li.appendChild(maniglia(li));
-      var ic = document.createElement('div');
+      var ic = document.createElement('button');
+      ic.type = 'button';
       ic.className = 'ic';
+      ic.setAttribute('aria-label', t.iconChange + tile.title);
+      ic.onclick = (function (id, el) { return function () { openPicker(id, el); }; })(tile.id, ic);
       // The logo where there is one, white on the tile; else the app's own icon from the TV.
       var logo = logoDi(tile, 'logo');
       if (logo) {

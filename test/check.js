@@ -57,6 +57,15 @@ assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x' }] }, keys), 'til
 assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'x', url: 'https://netflix.com' }] }, keys), 'tiles'); // an app has none
 assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x', url: 'https://a.it', device: 'tv' }] }, keys), 'tiles');
 assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: '', url: 'https://a.it' }] }, keys), 'tiles');
+// A logo or icon picked for a tile, from the catalogue only; none means automatic.
+assert.deepEqual(s.validate({ tiles: [{ id: 'com.amazoff.patcher', title: 'AmazOff', logo: 'xbox' }] }, keys),
+  { tiles: [{ id: 'com.amazoff.patcher', title: 'AmazOff', logo: 'xbox' }] });
+assert.deepEqual(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x', url: 'https://a.it', logo: 'hdmi' }] }, keys).tiles[0].logo, 'hdmi');
+assert.deepEqual(s.validate({ tiles: [{ id: 'com.webos.app.hdmi1', title: 'x', device: 'ps5', logo: 'arte' }] }, keys).tiles[0].logo, 'arte');
+['nope', '', 'XBOX', '__proto__', 'toString', 3, null].forEach(function (v) {
+  assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'x', logo: v }] }, keys), 'tiles', String(v));
+});
+assert.ok(Object.keys(s.CATALOG).length > 100 && s.CATALOG.hdmi && s.CATALOG.netflix && s.CATALOG.arte);
 
 // Updates: versions compared by number, the manifest checked, the package checked against it.
 assert.ok(s.newer('1.0.9', '1.0.10') && s.newer('1.0.5', '1.1') && !s.newer('1.0.5', '1.0.5') && !s.newer('1.0.6', '1.0.5'));
@@ -203,6 +212,15 @@ assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), '')
 ['https://www.meteo.it', 'http://192.168.0.1:8080/x?a=1', 'https://[::1]/', 'javascript:alert(1)', 'https://', 'https://a b.com', 'https://x.com/"><b>']
   .forEach(function (u) { assert.equal(logos.indirizzoWeb(u), s.webUrl(u), 'page and server agree on ' + u); });
 assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it' }, 'logo'), 'browser');
+// The picked one takes the automatic one's place with logos and app icons, not with names;
+// a name that is not in the catalogue is ignored.
+var amazoff = { id: 'com.amazoff.patcher', title: 'AmazOff' };
+assert.equal(logos.logoDi(amazoff, 'logo'), '');
+assert.equal(logos.logoDi({ id: amazoff.id, title: amazoff.title, logo: 'xbox' }, 'logo'), 'xbox');
+assert.equal(logos.logoDi({ id: amazoff.id, title: amazoff.title, logo: 'xbox' }, 'icon'), 'xbox');
+assert.equal(logos.logoDi({ id: amazoff.id, title: amazoff.title, logo: 'xbox' }, 'text'), '');
+assert.equal(logos.logoDi({ id: 'com.webos.app.hdmi3', title: 'PS5', device: 'ps5', logo: 'tv' }, 'logo'), 'tv');
+assert.equal(logos.logoDi({ id: 'netflix', title: 'Netflix', logo: 'gone' }, 'logo'), 'netflix');
 // The clock: no class, so the Home's rule for it as it has always been, unless a style or size is chosen.
 assert.equal(logos.classeOra({}), '');
 assert.equal(logos.classeOra({ clockStyle: 'thin', clockSize: 'medium' }), '');

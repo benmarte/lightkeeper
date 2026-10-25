@@ -23,6 +23,7 @@ var path = require('path');
 var os = require('os');
 var net = require('net');
 var crypto = require('crypto');
+var vm = require('vm');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
@@ -291,6 +292,11 @@ function validate(body, keyNames) {
           if (!isWeb(t.id) || !webUrl(t.url)) return 'tiles';
           tile.url = t.url;
         }
+        // A logo or icon chosen for the tile; without one, Lightkeeper picks it.
+        if (t.logo !== undefined) {
+          if (typeof t.logo !== 'string' || !has(CATALOG, t.logo)) return 'tiles';
+          tile.logo = t.logo;
+        }
         tiles.push(tile);
       }
       out[k] = tiles;
@@ -337,6 +343,16 @@ function listApps(cb) {
 }
 
 function isInput(id) { return /^com\.webos\.app\.(hdmi|livetv$)/.test(id); }
+
+// The logos and icons Lightkeeper draws, by name, from logos.js itself: a tile may pick one.
+var CATALOG = (function () {
+  var names = {}, ctx = {};
+  try {
+    vm.runInNewContext(fs.readFileSync(path.join(APP_DIR, 'logos.js'), 'utf8'), ctx);
+    [ctx.SIMPLE_ICONS, ctx.IMMAGINI, ctx.ICONE].forEach(function (t) { Object.keys(t || {}).forEach(function (k) { names[k] = true; }); });
+  } catch (e) { console.log('logos.js: ' + e.message); }
+  return names;
+})();
 
 // A tile that opens a web page in the TV's browser: an id of its own, and an http or
 // https address, as logos.js's indirizzoWeb checks it for the page.
@@ -995,7 +1011,7 @@ function start() {
   process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
-module.exports = { DEVICES: DEVICES, DEFAULTS: DEFAULTS, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
+module.exports = { DEVICES: DEVICES, DEFAULTS: DEFAULTS, CATALOG: CATALOG, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
   applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 

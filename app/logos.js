@@ -228,6 +228,8 @@ function apertura(tile, browser) {
  * titoloTv is the name the TV gives the input, when known.
  */
 function logoDi(tile, modo, titoloTv) {
+  // One chosen in the settings, with logos or app icons.
+  if (tile.logo && modo !== 'text' && (SIMPLE_ICONS[tile.logo] || IMMAGINI[tile.logo] || ICONE[tile.logo])) return tile.logo;
   // A web page: the browser's plain icon with logos; no favicon is fetched.
   if (tile.url) return modo === 'logo' ? 'browser' : '';
   if (eIngresso(tile.id)) {
@@ -290,6 +292,14 @@ function disegnaLogo(nome, alto, maxW, maxH, dove) {
   svg.setAttribute('width', Math.round(b.w * s));
   svg.setAttribute('height', Math.round(b.h * s));
   return svg;
+}
+
+// A logo chosen for a tile, with app icons: white on a dark tile the size of the icons.
+function riquadro(nome) {
+  var d = document.createElement('div');
+  d.className = 'riquadro';
+  d.appendChild(disegnaLogo(nome, 56, 100, 60));
+  return d;
 }
 
 /*

@@ -4,6 +4,7 @@
 {"id":"youtube.leanback.v4","title":"YouTube","icon":"@F@/icons/youtube.png","folderPath":"@F@","visible":true},
 {"id":"cdp-30","title":"Plex","icon":"@F@/icons/plex.png","folderPath":"@F@","visible":true},
 {"id":"spotify-beehive","title":"Spotify","icon":"@F@/icons/music.png","folderPath":"@F@","visible":true},
+{"id":"com.amazoff.patcher","title":"AmazOff Patcher","icon":"@F@/icons/amazoff.png","folderPath":"@F@","visible":true},
 {"id":"com.webos.app.browser","title":"Web Browser","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":true},
 {"id":"com.webos.app.hdmi1","title":"HDMI 1","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":false},
 {"id":"com.webos.app.hdmi2","title":"HDMI 2","icon":"@F@/icons/hdmi.png","folderPath":"@F@","visible":false},
