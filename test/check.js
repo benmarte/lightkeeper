@@ -8,7 +8,14 @@ var fs = require('fs');
 var os = require('os');
 var path = require('path');
 var http = require('http');
-var spawn = require('child_process').spawn;
+// Every process a check starts is stopped when the checks end, also after a failed
+// assertion, Ctrl-C or a hang: a server left running keeps its port, and the output
+// it shares, so `node test/check.js | tail` never ends.
+var children = [];
+function spawn() { var c = require('child_process').spawn.apply(null, arguments); children.push(c); return c; }
+process.on('exit', function () { children.forEach(function (c) { c.kill(); }); });
+['SIGINT', 'SIGTERM', 'SIGHUP'].forEach(function (s) { process.on(s, function () { process.exit(1); }); });
+setTimeout(function () { console.error('check: no end after a minute'); process.exit(1); }, 60000).unref();
 
 var FAKE = path.join(__dirname, 'fake-tv');
 var tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lightkeeper-'));
