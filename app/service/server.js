@@ -739,10 +739,12 @@ function closeApps(ids, cb) {
  * ponytail: a sandboxed frame in the TV's browser also sends "null"; a token read by
  * the Home through the Homebrew Channel would close that.
  */
+// webOS 6 sends the Home's own file:// origin with a POST, as the TV's log showed on a C1.
 function fromHome(req) {
   var a = String(req.socket.remoteAddress || '').replace(/^::ffff:/, ''), o = req.headers.origin;
   return (a === '127.0.0.1' || a === '::1') &&
-    (o === undefined || o === 'null' || o === 'file://' || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(o));
+    (o === undefined || o === 'null' || o === 'file://' || o === 'file://' + APP_ID + '-webos' ||
+      /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(o));
 }
 
 // The TV itself and the private ranges: nothing from beyond the local network.

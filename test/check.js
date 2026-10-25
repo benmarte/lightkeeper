@@ -95,6 +95,8 @@ assert.deepEqual(s.openApps({ running: [{ appId: 'netflix' }, null, 'netflix'] }
 function fromHome(addr, origin) { return s.fromHome({ socket: { remoteAddress: addr }, headers: origin === undefined ? {} : { origin: origin } }); }
 assert.ok(fromHome('127.0.0.1', 'null') && fromHome('::ffff:127.0.0.1', 'null') && fromHome('::1', 'file://'));
 assert.ok(fromHome('127.0.0.1') && fromHome('127.0.0.1', 'http://127.0.0.1:8091') && fromHome('127.0.0.1', 'http://localhost'));
+assert.ok(fromHome('127.0.0.1', 'file://io.github.chiotas.lightkeeper-webos'), 'the Home on webOS 6');
+assert.ok(!fromHome('127.0.0.1', 'file://other.app-webos') && !fromHome('192.168.0.20', 'file://io.github.chiotas.lightkeeper-webos'));
 assert.ok(!fromHome('192.168.0.20', 'null') && !fromHome('192.168.0.20'), 'not from a phone');
 assert.ok(!fromHome('127.0.0.1', 'https://evil.example') && !fromHome('127.0.0.1', 'http://127.0.0.1.evil.example') && !fromHome('127.0.0.1', 'http://192.168.0.53:8090'));
 
