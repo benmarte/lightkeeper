@@ -12,7 +12,7 @@ It shows the time, the weather for one city and a short row of your apps and inp
 2. Find Lightkeeper in the channel's list and install it.
 3. Open Lightkeeper once from the TV's apps. Then set it up from your phone at `http://<your-tv>:8090`.
 
-**What's new:** 1.0.5 adds white logos for 91 more streaming services, from arte to ZDF, and GlassHouse's mark. 1.0.4 also opens at power on over the app left open when the TV went off, and brings Back from the last app to webOS 3. 1.0.3 adds TV, Media player and *Automatic* to the devices an input can show, 1.0.2 lets you choose the settings' port, and 1.0.1 brought icons without names and up to fifty tiles. Every change is in the [changelog](CHANGELOG.md).
+**What's new:** 1.0.6 brings updates from the settings, web pages as tiles, and a choice of clock styles and sizes. 1.0.5 adds white logos for 91 more streaming services, from arte to ZDF, and GlassHouse's mark. 1.0.4 also opens at power on over the app left open when the TV went off, and brings Back from the last app to webOS 3. 1.0.3 adds TV, Media player and *Automatic* to the devices an input can show, 1.0.2 lets you choose the settings' port, and 1.0.1 brought icons without names and up to fifty tiles. Every change is in the [changelog](CHANGELOG.md).
 
 GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs before those, and it started on an LG C1 running webOS 6.5.3.
 
@@ -197,7 +197,7 @@ The code is MIT, © 2026 Francesco Gola: see [LICENSE](LICENSE). The default bac
 2. Trovate Lightkeeper nella lista del canale e installatela.
 3. Apritela una volta dalle app della TV. Poi si configura dal telefono su `http://<tv>:8090`.
 
-**Novità.** La 1.0.5 aggiunge i loghi bianchi di altri 91 servizi di streaming, da arte a ZDF, e il marchio di GlassHouse. La 1.0.4 all'accensione si apre anche sopra l'app rimasta aperta allo spegnimento, e porta Indietro dall'ultima app sul webOS 3. La 1.0.3 aggiunge TV, lettore multimediale (*Media player*) e *Automatic* agli apparecchi che un ingresso può mostrare, la 1.0.2 permette di scegliere la porta delle impostazioni, la 1.0.1 ha portato le icone senza nomi e fino a cinquanta voci. Tutte le modifiche sono nel [changelog](CHANGELOG.md).
+**Novità.** La 1.0.6 porta gli aggiornamenti dalle impostazioni, le tessere che aprono una pagina web e la scelta di stile e dimensione dell'orologio. La 1.0.5 aggiunge i loghi bianchi di altri 91 servizi di streaming, da arte a ZDF, e il marchio di GlassHouse. La 1.0.4 all'accensione si apre anche sopra l'app rimasta aperta allo spegnimento, e porta Indietro dall'ultima app sul webOS 3. La 1.0.3 aggiunge TV, lettore multimediale (*Media player*) e *Automatic* agli apparecchi che un ingresso può mostrare, la 1.0.2 permette di scegliere la porta delle impostazioni, la 1.0.1 ha portato le icone senza nomi e fino a cinquanta voci. Tutte le modifiche sono nel [changelog](CHANGELOG.md).
 
 **Cosa serve.** Una TV LG con root, il **Homebrew Channel** ([webosbrew](https://github.com/webosbrew/webos-homebrew-channel)) e **GlassHouse** ([documentazione](https://rorygallagher2024.github.io/glasshouse/)) già installati: questo progetto non spiega come installarli, seguite le loro guide. Poi un telefono o un computer sulla stessa rete della TV, e internet sulla TV per il meteo.
 
