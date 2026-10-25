@@ -279,6 +279,10 @@ function validate(body, keyNames) {
           if (!isInput(t.id) || DEVICES.indexOf(t.device) === -1) return 'tiles';
           tile.device = t.device;
         }
+        if (isWeb(t.id) || t.url !== undefined) {
+          if (!isWeb(t.id) || !webUrl(t.url)) return 'tiles';
+          tile.url = t.url;
+        }
         tiles.push(tile);
       }
       out[k] = tiles;
@@ -325,6 +329,14 @@ function listApps(cb) {
 }
 
 function isInput(id) { return /^com\.webos\.app\.(hdmi|livetv$)/.test(id); }
+
+// A tile that opens a web page in the TV's browser: an id of its own, and an http or
+// https address, as logos.js's indirizzoWeb checks it for the page.
+function isWeb(id) { return /^web\.[a-z0-9]{1,16}$/.test(id); }
+function webUrl(u) {
+  return typeof u === 'string' && u.length <= 500 &&
+    /^https?:\/\/([A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(:\d{1,5})?([\/?#][^\s<>"'\\]*)?$/.test(u);
+}
 
 // The apps a tile can open: those on the Home screen, by title.
 function appChoices(apps) {
@@ -974,7 +986,7 @@ function start() {
   process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
-module.exports = { DEVICES: DEVICES, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
+module.exports = { DEVICES: DEVICES, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
   applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 

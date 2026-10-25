@@ -40,6 +40,17 @@ assert.equal(s.validate({ tiles: [{ id: 'a', title: 'x' }, { id: 'a', title: 'y'
 assert.equal(s.validate({ veil: 101 }, keys), 'veil');
 assert.equal(s.validate({ key: 'power' }, keys), 'key');
 assert.deepEqual(s.validate({ port: 8091 }, keys), { port: 8091 });
+// Web page tiles: an id of their own and an http or https address.
+var webTile = { id: 'web.k3x9', title: ' Meteo  ', url: 'https://www.meteo.it/oggi?citta=Stradella#ora' };
+assert.deepEqual(s.validate({ tiles: [webTile] }, keys), { tiles: [{ id: 'web.k3x9', title: 'Meteo', url: webTile.url }] });
+['javascript:alert(1)', 'ftp://example.com', 'https://', 'https://a b.com', 'https://x.com/"><b>', 'file:///etc/passwd',
+ 'https://x.com/' + new Array(500).join('a'), 42, null].forEach(function (u) {
+  assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x', url: u }] }, keys), 'tiles', String(u));
+});
+assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x' }] }, keys), 'tiles'); // a web id needs its address
+assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'x', url: 'https://netflix.com' }] }, keys), 'tiles'); // an app has none
+assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: 'x', url: 'https://a.it', device: 'tv' }] }, keys), 'tiles');
+assert.equal(s.validate({ tiles: [{ id: 'web.k3x9', title: '', url: 'https://a.it' }] }, keys), 'tiles');
 
 // Updates: versions compared by number, the manifest checked, the package checked against it.
 assert.ok(s.newer('1.0.9', '1.0.10') && s.newer('1.0.5', '1.1') && !s.newer('1.0.5', '1.0.5') && !s.newer('1.0.6', '1.0.5'));
@@ -181,7 +192,16 @@ Object.keys(logos.LOGHI_TITOLI).forEach(function (t) {
   assert.ok(logos.SIMPLE_ICONS[n] || logos.IMMAGINI[n] || logos.ICONE[n], t + ' leads to ' + n);
 });
 ['arte', 'ARTE', 'arte.tv'].forEach(function (t) { assert.equal(logos.logoDi({ id: 'some.arte.app', title: t }, 'logo'), 'arte', t); });
-assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), ''); // not free everywhere on Commons: the TV's icon
+assert.equal(logos.logoDi({ id: 'some.app', title: 'BBC iPlayer' }, 'logo'), '');
+// A web page: the browser's icon with logos, none fetched otherwise; it opens in the browser, as the gear does.
+['https://www.meteo.it', 'http://192.168.0.1:8080/x?a=1', 'https://[::1]/', 'javascript:alert(1)', 'https://', 'https://a b.com', 'https://x.com/"><b>']
+  .forEach(function (u) { assert.equal(logos.indirizzoWeb(u), s.webUrl(u), 'page and server agree on ' + u); });
+assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it' }, 'logo'), 'browser');
+assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it' }, 'icon'), '');
+assert.deepEqual(JSON.parse(JSON.stringify(logos.apertura({ id: 'web.k3x9', url: 'https://a.it/' }, 'com.webos.app.browser'))),
+  { id: 'com.webos.app.browser', params: { target: 'https://a.it/' } });
+assert.deepEqual(JSON.parse(JSON.stringify(logos.apertura({ id: 'netflix' }, 'com.webos.app.browser'))), { id: 'netflix' });
+ // not free everywhere on Commons: the TV's icon
 assert.equal(logos.logoDi({ id: 'com.tvweb.dashboard', title: 'Glasshouse' }, 'logo'), 'glasshouse');
 assert.equal(logos.logoDi({ id: 'space.nuvio.webos', title: 'Nuvio TV' }, 'logo'), ''); // GPL-3.0 logo, not taken: the TV's icon
 // Live TV shows the TV unless a device is picked; every device, TV and media player
@@ -426,9 +446,15 @@ function updateChecks(done) {
                 fs.writeFileSync(path.join(data, 'update-test.json'), JSON.stringify({ manifest: 'file://' + other }));
                 req('GET', '/api/update', { port: 18390 }, function (st6, j6) {
                   assert.equal(j6.latest, '98.0.0');
+                  // A web page tile saved with its address.
+                  var tiles = { tiles: [{ id: 'web.k3x9', title: 'Meteo', url: 'https://www.meteo.it/' }] };
+                  req('POST', '/api/config', { port: 18390, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tiles) }, function (st7) {
+                  assert.equal(st7, 200);
+                  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(data, 'config.json'), 'utf8')).tiles, tiles.tiles);
                   child.removeAllListeners('exit');
                   child.kill();
                   done();
+                  });
                 });
               });
             }, 500);

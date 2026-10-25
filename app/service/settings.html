@@ -118,11 +118,11 @@ h2 { font-size: 24px; font-weight: 400; letter-spacing: .005em; line-height: 1.2
 .btn + .btn { margin-left: 10px; }
 .actions { margin-top: 18px; }
 
-input[type=text], input[type=search], input[type=password], select {
+input[type=text], input[type=search], input[type=password], input[type=url], select {
   height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-strong);
   background: var(--wash); transition: border-color .18s, box-shadow .18s; min-width: 0;
 }
-input[type=text]:focus, input[type=search]:focus, input[type=password]:focus, select:focus {
+input[type=text]:focus, input[type=search]:focus, input[type=password]:focus, input[type=url]:focus, select:focus {
   border-color: var(--ink); box-shadow: 0 0 0 3px rgba(244, 241, 236, .16);
 }
 ::-webkit-input-placeholder { color: #8f887f; }
@@ -181,6 +181,11 @@ input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bord
 .empty { padding: 22px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
 .add { display: flex; margin-top: 18px; }
 .add select { -webkit-flex: 1; flex: 1; }
+.add-web { display: flex; flex-wrap: wrap; margin-top: 10px; }
+.add-web input { -webkit-flex: 1 1 180px; flex: 1 1 180px; min-width: 0; margin: 0 10px 10px 0; }
+.add-web input[type=url] { -webkit-flex: 2 1 260px; flex: 2 1 260px; }
+.add-web .btn { margin-bottom: 10px; }
+li .sub.url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The backgrounds the app carries, three to a row. */
 .bgs { display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin: 16px -6px 0; }
@@ -251,10 +256,15 @@ footer a { color: var(--muted); }
     <main>
       <section aria-labelledby="h-tiles">
         <h2 id="h-tiles" data-t="tiles">Tiles</h2>
-        <p class="lede" data-t="tilesLede">The apps and inputs along the bottom of the Home, in this order.</p>
+        <p class="lede" data-t="tilesLede">The apps, inputs and web pages along the bottom of the Home, in this order.</p>
         <ul class="tiles" id="tiles"></ul>
         <div class="add">
           <select id="add" aria-label="Add a tile"></select>
+        </div>
+        <div class="add-web">
+          <input type="text" id="web-name" maxlength="40" placeholder="Web page" aria-label="Name of a web page">
+          <input type="url" id="web-url" maxlength="500" placeholder="https://" aria-label="Its address">
+          <button class="btn" type="button" id="web-add" data-t="webAdd">Add page</button>
         </div>
         <p class="note" id="tiles-note" hidden></p>
         <div class="row">
@@ -407,7 +417,9 @@ footer a { color: var(--muted); }
   var T = {
     en: {
       title: 'Settings', caption: 'As it looks on the TV', saving: 'Saving…', saved: 'Saved', offline: 'The TV does not answer',
-      notSaved: 'Not saved: ', tiles: 'Tiles', tilesLede: 'The apps and inputs along the bottom of the Home, in this order.',
+      notSaved: 'Not saved: ', tiles: 'Tiles', tilesLede: 'The apps, inputs and web pages along the bottom of the Home, in this order.',
+      webName: 'Web page', webAdd: 'Add page', webNoName: 'Give the page a name.',
+      webBadUrl: 'An address starts with http:// or https://, then the site, without spaces.', onWeb: 'Opens ',
       add: 'Add a tile…', apps: 'Apps', inputs: 'Inputs', up: 'Move up', down: 'Move down', drop: 'Remove',
       nameOnTv: 'Name on the TV', onTv: 'On the TV: ', empty: 'No tiles yet. Add the apps and inputs you use most.',
       full: 'Fifty tiles at most.', drag: 'Drag to move', labels: 'Names under them', labelsAll: 'All', labelsSel: 'Selected', labelsNone: 'None', show: 'Show', names: 'Names', logos: 'Logos', icons: 'App icons', background: 'Background',
@@ -755,6 +767,12 @@ footer a { color: var(--muted); }
       input.onkeydown = function (ev) { if (ev.keyCode === 13) input.blur(); };
       name.appendChild(input);
       var orig = tvTitle(tile.id);
+      if (tile.url) {
+        var where = document.createElement('span');
+        where.className = 'sub url';
+        where.textContent = t.onWeb + tile.url;
+        name.appendChild(where);
+      }
       if (orig && orig !== tile.title) {
         var sub = document.createElement('span');
         sub.className = 'sub';
@@ -838,10 +856,23 @@ footer a { color: var(--muted); }
     });
     sel.setAttribute('aria-label', t.add);
     var full = (cfg.tiles || []).length >= 50;
-    sel.disabled = full;
+    sel.disabled = $('web-name').disabled = $('web-url').disabled = $('web-add').disabled = full;
     $('tiles-note').hidden = !full;
     $('tiles-note').textContent = t.full;
   }
+
+  // A web page: a name and an address, opened in the TV's browser.
+  $('web-add').onclick = function () {
+    var title = $('web-name').value.replace(/\s+/g, ' ').replace(/^ | $/g, ''), url = $('web-url').value.replace(/^\s+|\s+$/g, '');
+    $('tiles-note').className = 'note err';
+    if (!title) { $('tiles-note').hidden = false; $('tiles-note').textContent = t.webNoName; return $('web-name').focus(); }
+    if (!indirizzoWeb(url)) { $('tiles-note').hidden = false; $('tiles-note').textContent = t.webBadUrl; return $('web-url').focus(); }
+    $('tiles-note').hidden = true;
+    $('tiles-note').className = 'note';
+    cfg.tiles = (cfg.tiles || []).concat([{ id: 'web.' + Date.now().toString(36), title: title, url: url }]);
+    $('web-name').value = $('web-url').value = '';
+    saveTiles();
+  };
 
   $('add').onchange = function () {
     var id = this.value;

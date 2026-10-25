@@ -188,12 +188,25 @@ var LOGHI_TITOLI = { netflix: 'netflix', youtube: 'youtube', plex: 'plex', spoti
 
 function eIngresso(id) { return /^com\.webos\.app\.(hdmi|livetv$)/.test(id); }
 
+// A web page's address: http or https, a host, at most 500 characters, as the server checks it.
+function indirizzoWeb(u) {
+  return typeof u === 'string' && u.length <= 500 &&
+    /^https?:\/\/([A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(:\d{1,5})?([\/?#][^\s<>"'\\]*)?$/.test(u);
+}
+
+// What a tile opens: a web page in the TV's browser, as the gear does; else the app or input.
+function apertura(tile, browser) {
+  return tile.url ? { id: browser, params: { target: tile.url } } : { id: tile.id };
+}
+
 /*
  * The logo for a tile, or '' where the app's own icon from the TV goes: an
  * input shows its device; an app shows its logo only with "logos" chosen.
  * titoloTv is the name the TV gives the input, when known.
  */
 function logoDi(tile, modo, titoloTv) {
+  // A web page: the browser's plain icon with logos; no favicon is fetched.
+  if (tile.url) return modo === 'logo' ? 'browser' : '';
   if (eIngresso(tile.id)) {
     var tipo = tile.device || apparecchioAuto(tile, titoloTv);
     for (var i = 0; i < APPARECCHI.length; i++) if (APPARECCHI[i].id === tipo) return APPARECCHI[i].logo;

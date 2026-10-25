@@ -160,7 +160,8 @@ function seleziona(i, colPuntatore) {
 function lancia(i) {
   if (voci[i].gear) return apri(BROWSER, { target: server() + '/' });
   try { localStorage.setItem('ultima', String(i)); } catch (e) {}
-  apri(voci[i].id);
+  var a = apertura(voci[i], BROWSER);
+  apri(a.id, a.params);
 }
 
 function iconaTv(url) {
