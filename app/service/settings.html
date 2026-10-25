@@ -583,6 +583,7 @@ footer a { color: var(--muted); }
     $('p-veil').style.opacity = $('veil').value / 100;
     $('p-ora').innerHTML = clockText();
     $('p-ora').className = 'ora ' + classeOra(cfg);
+    $('p-ora').style.marginLeft = rientroOra(cfg.clockStyle, $('p-ora').textContent);
     meteo();
     var nav = $('p-nav'), modo = cfg.tileStyle === 'logo' || cfg.tileStyle === 'icon' ? cfg.tileStyle : 'text';
     nav.className = modo === 'text' ? '' : 'icons' + (cfg.labels === 'none' ? ' bare' : cfg.labels === 'selected' ? ' only-sel' : '');
@@ -1363,6 +1364,7 @@ footer a { color: var(--muted); }
   setInterval(function () {
     if (!cfg || $('page').hidden) return;
     $('p-ora').innerHTML = clockText();
+    $('p-ora').style.marginLeft = rientroOra(cfg.clockStyle, $('p-ora').textContent);
     var times = document.querySelectorAll('#clockstyles .ora');
     for (var i = 0; i < times.length; i++) times[i].innerHTML = clockText();
   }, 10000);

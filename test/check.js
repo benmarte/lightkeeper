@@ -207,7 +207,21 @@ assert.equal(logos.logoDi({ id: 'web.k3x9', title: 'Netflix', url: 'https://a.it
 assert.equal(logos.classeOra({}), '');
 assert.equal(logos.classeOra({ clockStyle: 'thin', clockSize: 'medium' }), '');
 assert.equal(logos.classeOra({ clockStyle: 'digital', clockSize: 'large' }), 'st-digital sz-large');
+// The clock's first digit lined up with the weather: by a fixed, measured amount per font and
+// digit, in em so every size follows; thin, the default, keeps its place.
+assert.equal(logos.rientroOra('thin', '10:41'), '');
+assert.equal(logos.rientroOra(undefined, '10:41'), '');
+assert.equal(logos.rientroOra('digital', '10:41'), '-0.655em');
+assert.equal(logos.rientroOra('digital', '1:41PM'), '-0.655em');
+assert.equal(logos.rientroOra('digital', '8:41'), '-0.099em');
+['bold', 'classic', 'mono', 'rounded', 'digital'].forEach(function (st) {
+  var r = logos.RIENTRO_ORA[st];
+  assert.equal(r.length, 10, st);
+  r.forEach(function (v) { assert.ok(v >= 0 && v < 1, st + ' ' + v); });
+});
+assert.ok(!logos.RIENTRO_ORA.thin);
 var homeHtml = fs.readFileSync(path.join(__dirname, '..', 'app', 'index.html'), 'utf8');
+assert.ok(/ora\.style\.marginLeft = rientroOra\(cfg\.clockStyle, ora\.textContent\)/.test(homeHtml), 'the Home lines the clock up');
 assert.ok(homeHtml.indexOf('#ora { font-size: 150px; font-weight: 200; line-height: 1; letter-spacing: -.02em; }') !== -1, 'the default clock rule is unchanged');
 ['classic', 'mono', 'rounded', 'digital'].forEach(function (n) {
   var f = path.join(__dirname, '..', 'app', 'clock', n + '.woff2');

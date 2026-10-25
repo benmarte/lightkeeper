@@ -101,7 +101,7 @@ nav.icons a.gear svg { width: 52px; height: 52px; margin-bottom: 4px; }
 <div id="hint"></div>
 <script src="logos.js"></script>
 <script>
-var APP_VERSION = '1.0.6';
+var APP_VERSION = '1.0.7';
 var LG_HOME = 'com.webos.app.home';
 var BROWSER = 'com.webos.app.browser';
 var EXEC = 'luna://org.webosbrew.hbchannel.service/exec';
@@ -336,6 +336,7 @@ function aggiorna() {
   var d = new Date(), h = d.getHours(), m = (d.getMinutes() < 10 ? ':0' : ':') + d.getMinutes();
   if (cfg.clock === '12') ora.innerHTML = ((h + 11) % 12 + 1) + m + '<small>' + (h < 12 ? 'AM' : 'PM') + '</small>';
   else ora.textContent = h + m;
+  ora.style.marginLeft = rientroOra(cfg.clockStyle, ora.textContent);
   var per = cfg.weather ? cfg.weather.lat + ',' + cfg.weather.lon + ',' + cfg.units : '';
   if (per !== meteoPer || Date.now() - meteoAlle > 15 * 60000) meteo();
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7 (not released yet)
+
+- **The clock lines up with the weather** in every style but Thin. A digit's ink starts at a different distance from its edge in each typeface: in Digital, a "1" started 98 px to the right at the medium size, so from 10:00 to 19:59 the clock sat out of line. Lightkeeper now moves the clock by the amount measured for its first digit, which also works on older TVs, whose browsers cannot measure ink. Thin, the default, stays where it has always been: its digits start 4 to 14 px in.
+
 ## 1.0.6 (25 October 2026)
 
 - **Updates from the settings.** *Updates* shows the version in use and looks for a newer one in the latest release's manifest. *Update*, behind the PIN like any other change, downloads the package only from this project's GitHub releases, checks its size and sha256 against the manifest, and installs nothing when they do not match. It never installs an older or the same version. The install runs apart from the settings server, which it restarts, and takes a few minutes; the page then shows the new version, or what went wrong.
