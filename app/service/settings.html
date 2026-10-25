@@ -369,6 +369,15 @@ footer a { color: var(--muted); }
         <p class="note" id="port-note" hidden></p>
       </section>
 
+      <section aria-labelledby="h-update">
+        <h2 id="h-update" data-t="updTitle">Updates</h2>
+        <div class="row">
+          <div class="label"><span id="upd-version">Lightkeeper</span><span class="sub" id="upd-state"></span></div>
+          <button class="btn" type="button" id="upd-go" data-t="updGo" hidden>Update</button>
+        </div>
+        <p class="note" id="upd-note" hidden></p>
+      </section>
+
       <section aria-labelledby="h-remove">
         <h2 id="h-remove" data-t="removeTitle">Remove Lightkeeper</h2>
         <p class="lede" data-t="removeLede">Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.</p>
@@ -427,6 +436,11 @@ footer a { color: var(--muted); }
       portLede: 'The Home and this page use it. Change it if another program on the TV needs this one.',
       portTaken: ' is in use by another program on the TV, so this page is on ', portBad: 'A port is a number from 1024 to 65535.',
       portMoving: 'Moving to the new address…',
+      updTitle: 'Updates', updGo: 'Update', updChecking: 'Looking for a newer version…', updLatest: 'This is the latest version.',
+      updAvailable: ' is available.', updNoCheck: 'Could not look for a newer version: ', updWorking: 'Downloading and checking the package…',
+      updInstalling: 'Installing. Lightkeeper starts again on the TV, and this page comes back within a minute or two.',
+      updDone: 'Updated to ', updFailed: 'The update did not go through: ',
+      updSlow: 'No answer after four minutes. The TV\'s log, /tmp/lightkeeper.log, says what happened.',
       removeTitle: 'Remove Lightkeeper', removeLede: 'Gives the Home key back to LG, stops opening at power on, and deletes these settings and the app.',
       removeYes: 'Remove for good', cancel: 'Cancel', removed: 'Lightkeeper has been removed from the TV. You can close this page.',
       licence: 'MIT licence, use at your own risk', lockTitle: 'Enter the PIN', unlock: 'Unlock', wrong: 'Wrong PIN.',
@@ -1078,6 +1092,75 @@ footer a { color: var(--muted); }
 
   function portNote(text, err) { $('port-note').textContent = text; $('port-note').hidden = !text; $('port-note').className = 'note' + (err ? ' err' : ''); }
 
+  /* ---------- updates ---------- */
+
+  function newer(a, b) {
+    var x = String(a).split('.'), y = String(b).split('.');
+    for (var i = 0; i < Math.max(x.length, y.length); i++) {
+      var p = +x[i] || 0, q = +y[i] || 0;
+      if (p !== q) return q > p;
+    }
+    return false;
+  }
+
+  function updNote(text, err) { $('upd-note').textContent = text; $('upd-note').hidden = !text; $('upd-note').className = 'note' + (err ? ' err' : ''); }
+
+  function renderUpdate(u) {
+    $('upd-version').textContent = 'Lightkeeper ' + cfg.version;
+    $('upd-go').hidden = !(u && u.available);
+    if (!u) return ($('upd-state').textContent = t.updChecking);
+    $('upd-state').textContent = u.available ? 'Lightkeeper ' + u.latest + t.updAvailable :
+      u.error ? t.updNoCheck + u.error : t.updLatest;
+    // What the last update did, while it is still news.
+    var st = u.status;
+    if (st && st.state === 'failed' && newer(cfg.version, st.version) && Date.now() - st.at < 3600000) updNote(t.updFailed + st.error, true);
+    else if (st && st.state === 'installed' && st.version === cfg.version && Date.now() - st.at < 600000) updNote(t.updDone + st.version + '.');
+  }
+
+  function checkForUpdate() {
+    renderUpdate(null);
+    api('GET', '/api/update', null, function (r) { renderUpdate(r); });
+  }
+
+  // Asked quietly while Lightkeeper starts again: no "offline" while it is down.
+  function quietly(url, cb) {
+    var x = new XMLHttpRequest();
+    x.open('GET', url);
+    if (pin) x.setRequestHeader('X-Lightkeeper-Pin', pin);
+    x.timeout = 5000;
+    x.onload = function () { var r = null; try { r = JSON.parse(x.responseText); } catch (e) {} cb(x.status === 200 ? r : null); };
+    x.onerror = x.ontimeout = function () { cb(null); };
+    x.send();
+  }
+
+  function waitForUpdate(version, since) {
+    if (Date.now() - since > 240000) { $('upd-go').disabled = false; return updNote(t.updSlow, true); }
+    setTimeout(function () {
+      quietly('/api/update', function (u) {
+        if (u && u.current === version) {
+          updNote(t.updDone + version + '.');
+          return setTimeout(function () { location.reload(); }, 2000);
+        }
+        if (u && u.status && u.status.state === 'failed' && u.status.version === version && u.status.at >= since) {
+          $('upd-go').disabled = false;
+          return updNote(t.updFailed + u.status.error, true);
+        }
+        waitForUpdate(version, since);
+      });
+    }, 4000);
+  }
+
+  $('upd-go').onclick = function () {
+    $('upd-go').disabled = true;
+    updNote(t.updWorking);
+    var since = Date.now();
+    api('POST', '/api/update', {}, function (r, raw) {
+      if (!r) { $('upd-go').disabled = false; return updNote(t.updFailed + ((raw && raw.error) || t.offline), true); }
+      updNote(t.updInstalling);
+      waitForUpdate(r.installing, since);
+    });
+  };
+
   function renderPort() {
     $('port-new').value = cfg.port;
     $('port-state').textContent = cfg.portTaken ? 'Port ' + cfg.portTaken + t.portTaken + cfg.port + '.' : t.portLede;
@@ -1130,6 +1213,7 @@ footer a { color: var(--muted); }
     $('version').textContent = 'Lightkeeper ' + cfg.version;
     renderPin();
     renderPort();
+    checkForUpdate();
     preview();
   }
 

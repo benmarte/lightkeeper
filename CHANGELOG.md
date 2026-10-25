@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.6 (not released yet)
+
+- **Updates from the settings.** *Updates* shows the version in use and looks for a newer one in the latest release's manifest. *Update*, behind the PIN like any other change, downloads the package only from this project's GitHub releases, checks its size and sha256 against the manifest, and installs nothing when they do not match. It never installs an older or the same version. The install runs apart from the settings server, which it restarts, and the page then shows the new version, or what went wrong.
+
 ## 1.0.5 (24 October 2026)
 
 - **91 more streaming services have a white logo** in *Logos*, found by the app's title on the TV: arte, Hulu, Peacock, ESPN, ITVX, Channel 4, ZDF, ARD Mediathek, Joyn, RTL+, Canal+, france.tv, La7, RTVE Play, atresplayer, SkyShowtime, Viaplay, NRK TV, Yle Areena, NPO Start, Eurosport and others. 23 come from Simple Icons (CC0) and 68 from Wikimedia Commons, all public domain there; `docs/art/logos-commons.tsv` lists each file and its licence.

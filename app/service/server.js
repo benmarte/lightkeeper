@@ -2,9 +2,11 @@
  * Lightkeeper settings server.
  *
  * Serves the settings page and the config the Home reads, on port 8090 or the
- * one chosen in the settings, to the TV itself and its local network only. Started and kept running by the boot
- * hook (lightkeeper-init). It runs no command it is sent: the only programs it
- * starts are luna-send, with calls written here, and GlassHouse's tvwebctl.
+ * one chosen in the settings, to the TV itself and its local network only.
+ * Started and kept running by the boot hook (lightkeeper-init). It runs no
+ * command it is sent: the only programs it starts are luna-send, with calls
+ * written here, GlassHouse's tvwebctl, curl for the newest release's manifest
+ * and package, and update.sh to install that package.
  *
  *   node server.js              serve
  *   node server.js --uninstall  put the remote keys back, remove the hook,
@@ -24,7 +26,7 @@ var crypto = require('crypto');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.5';
+var VERSION = '1.0.6';
 var APP_ID = 'io.github.chiotas.lightkeeper';
 var HERE = __dirname;
 var APP_DIR = path.dirname(HERE);
@@ -462,6 +464,138 @@ function keyState(key, changed, cb) {
   });
 }
 
+/* ---------- updates ---------- */
+
+// The newest release, from an address that does not change, and the only place
+// packages are taken from. For a test, a file update-test.json in DATA,
+// {"manifest": "<url>"}, points to another manifest, and packages are then taken
+// from beside it. It is not in the settings; the log says when it is in use.
+var MANIFEST = 'https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.manifest.json';
+var RELEASES = 'https://github.com/chiotas/lightkeeper/releases/';
+var UPDATE_TEST = path.join(DATA, 'update-test.json');
+// What update.sh last did: {state: installing, installed or failed, version, error, at}.
+var UPDATE_STATUS = path.join(DATA, 'update.json');
+var UPDATE_DIR = process.env.LIGHTKEEPER_UPDATE_DIR || '/tmp';
+var CURL = process.env.LIGHTKEEPER_CURL || '/usr/bin/curl';
+var UPDATER = process.env.LIGHTKEEPER_UPDATER || path.join(HERE, 'update.sh');
+var MAX_IPK = 50 * 1024 * 1024;
+
+// True when version b is newer than a: 1.0.10 after 1.0.9.
+function newer(a, b) {
+  var x = String(a).split('.'), y = String(b).split('.');
+  for (var i = 0; i < Math.max(x.length, y.length); i++) {
+    var p = +x[i] || 0, q = +y[i] || 0;
+    if (p !== q) return q > p;
+  }
+  return false;
+}
+
+function updateSource() {
+  var t = null;
+  try { t = JSON.parse(fs.readFileSync(UPDATE_TEST, 'utf8')); } catch (e) {}
+  if (t && typeof t.manifest === 'string' && /^(https?|file):\/\//.test(t.manifest)) {
+    return { manifest: t.manifest, base: t.manifest.replace(/[^\/]*$/, ''), test: true };
+  }
+  return { manifest: MANIFEST, base: RELEASES, test: false };
+}
+
+// The manifest's text, checked: {version, url, sha256, size}, or what is wrong with it.
+function readManifest(text, base) {
+  var m = null;
+  try { m = JSON.parse(text); } catch (e) {}
+  if (!m || typeof m !== 'object') return 'the manifest of the latest version is not readable';
+  if (typeof m.version !== 'string' || !/^\d+(\.\d+){0,3}$/.test(m.version)) return 'the manifest has no version';
+  var url = m.ipkUrl, sha = m.ipkHash && m.ipkHash.sha256, size = m.ipkSize;
+  if (typeof url !== 'string' || url.indexOf(base) !== 0 || url.indexOf('..') !== -1) return 'the package is not from ' + base;
+  if (typeof sha !== 'string' || !/^[0-9a-f]{64}$/.test(sha)) return 'the manifest has no sha256';
+  if (typeof size !== 'number' || size < 1 || size > MAX_IPK) return 'the manifest has no size';
+  return { version: m.version, url: url, sha256: sha, size: size };
+}
+
+// The package as downloaded against the manifest: null when it matches, else why not.
+function verifyIpk(file, m) {
+  var b;
+  try { b = fs.readFileSync(file); } catch (e) { return 'the package could not be read'; }
+  if (b.length !== m.size) return 'the package is ' + b.length + ' bytes, the manifest says ' + m.size;
+  if (crypto.createHash('sha256').update(b).digest('hex') !== m.sha256) return 'the package does not match the manifest\'s sha256';
+  return null;
+}
+
+function curl(args, cb) {
+  if (!fs.existsSync(CURL)) return cb(new Error('this TV has no curl'));
+  execFile(CURL, ['-fsSL', '--max-time', '180'].concat(args), { maxBuffer: 1024 * 1024 }, cb);
+}
+
+// The latest version, asked at most every ten minutes unless an update needs it fresh.
+var latest = null, latestAt = 0;
+function checkUpdate(fresh, cb) {
+  if (!fresh && latest && Date.now() - latestAt < 600000) return cb(latest);
+  var src = updateSource();
+  if (src.test) log('update: test manifest ' + src.manifest);
+  curl([src.manifest], function (err, out) {
+    var r = err ? 'the latest version could not be read: ' + String(err.message).split('\n')[0] : readManifest(out, src.base);
+    latest = typeof r === 'string' ? { error: r } : r;
+    latestAt = Date.now();
+    cb(latest);
+  });
+}
+
+function updateState() {
+  try { return JSON.parse(fs.readFileSync(UPDATE_STATUS, 'utf8')); } catch (e) { return null; }
+}
+
+function setUpdateState(state, version, error) {
+  try {
+    if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, 448);
+    writeAtomic(UPDATE_STATUS, JSON.stringify({ state: state, version: version, error: error || '', at: Date.now() }) + '\n');
+  } catch (e) { log('update: ' + e.message); }
+}
+
+/*
+ * Downloads the newest package, checks its size and sha256 against the manifest,
+ * and hands it to update.sh, detached: installing restarts this server, which must
+ * not be what runs the install. update.sh runs from a copy outside the app, which
+ * the install replaces. cb(error text) or cb(null, version).
+ */
+var updating = false;
+function startUpdate(cb) {
+  if (updating) return cb('an update is already under way');
+  checkUpdate(true, function (m) {
+    if (m.error) return cb(m.error);
+    if (!newer(VERSION, m.version)) return cb('Lightkeeper ' + VERSION + ' is already the latest version');
+    updating = true;
+    var ipk = path.join(UPDATE_DIR, 'lightkeeper-update.ipk');
+    try { fs.unlinkSync(ipk); } catch (e) {}
+    log('update: downloading ' + m.version + ' from ' + m.url);
+    curl(['-o', ipk, m.url], function (err) {
+      var wrong = err ? 'the package could not be downloaded: ' + String(err.message).split('\n')[0] : verifyIpk(ipk, m);
+      if (wrong) {
+        updating = false;
+        try { fs.unlinkSync(ipk); } catch (e) {}
+        log('update: ' + wrong);
+        setUpdateState('failed', m.version, wrong);
+        return cb(wrong);
+      }
+      var script = path.join(UPDATE_DIR, 'lightkeeper-update.sh');
+      try { fs.writeFileSync(script, fs.readFileSync(UPDATER), { mode: 448 }); } catch (e) { updating = false; return cb('update.sh: ' + e.message); }
+      setUpdateState('installing', m.version);
+      log('update: ' + m.version + ' checked, installing');
+      var env = {};
+      Object.keys(process.env).forEach(function (k) { env[k] = process.env[k]; });
+      env.LIGHTKEEPER_STATUS = UPDATE_STATUS;
+      spawn('/bin/sh', [script, ipk, m.version], { detached: true, stdio: 'ignore', env: env, cwd: '/' }).unref();
+      cb(null, m.version);
+    });
+  });
+}
+
+function updateReply() {
+  return {
+    ok: true, current: VERSION, latest: latest && latest.version || null, error: latest && latest.error || null,
+    available: !!(latest && latest.version && newer(VERSION, latest.version)), status: updateState(), test: updateSource().test
+  };
+}
+
 /* ---------- first start, uninstall ---------- */
 
 // The first start picks the usual apps this TV has, or its first few.
@@ -720,6 +854,17 @@ function handle(req, res) {
       send(res, 200, { ok: true, config: publicConfig() });
     });
   }
+  if (m === 'GET' && p === '/api/update') {
+    return checkUpdate(false, function () { send(res, 200, updateReply()); });
+  }
+  if (m === 'POST' && p === '/api/update') {
+    return readJson(req, res, function () {
+      startUpdate(function (err, version) {
+        if (err) return send(res, 409, { ok: false, error: err });
+        send(res, 200, { ok: true, installing: version });
+      });
+    });
+  }
   if (m === 'POST' && p === '/api/uninstall') {
     return readJson(req, res, function (body) {
       if (body.confirm !== true) return send(res, 400, { ok: false, error: 'confirm expected' });
@@ -827,7 +972,7 @@ function start() {
   process.on('exit', function () { if (saverChild) saverChild.kill(); });
 }
 
-module.exports = { DEVICES: DEVICES, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
+module.exports = { DEVICES: DEVICES, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
   applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 

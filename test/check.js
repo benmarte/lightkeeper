@@ -41,6 +41,37 @@ assert.equal(s.validate({ veil: 101 }, keys), 'veil');
 assert.equal(s.validate({ key: 'power' }, keys), 'key');
 assert.deepEqual(s.validate({ port: 8091 }, keys), { port: 8091 });
 
+// Updates: versions compared by number, the manifest checked, the package checked against it.
+assert.ok(s.newer('1.0.9', '1.0.10') && s.newer('1.0.5', '1.1') && !s.newer('1.0.5', '1.0.5') && !s.newer('1.0.6', '1.0.5'));
+var REL = 'https://github.com/chiotas/lightkeeper/releases/';
+var goodManifest = { version: '1.0.6', ipkUrl: REL + 'download/v1.0.6/x.ipk', ipkHash: { sha256: new Array(65).join('a') }, ipkSize: 3 };
+assert.deepEqual(s.readManifest(JSON.stringify(goodManifest), REL), { version: '1.0.6', url: goodManifest.ipkUrl, sha256: new Array(65).join('a'), size: 3 });
+assert.equal(typeof s.readManifest('<html>not found</html>', REL), 'string');
+assert.equal(typeof s.readManifest(JSON.stringify({ version: '1.0.6', ipkUrl: 'https://example.com/x.ipk', ipkHash: { sha256: new Array(65).join('a') }, ipkSize: 3 }), REL), 'string');
+assert.equal(typeof s.readManifest(JSON.stringify({ version: '1.0.6', ipkUrl: REL + '../x.ipk', ipkHash: { sha256: new Array(65).join('a') }, ipkSize: 3 }), REL), 'string');
+assert.equal(typeof s.readManifest(JSON.stringify({ version: '1.0.6', ipkUrl: REL + 'x.ipk', ipkHash: { sha256: 'abc' }, ipkSize: 3 }), REL), 'string');
+var pkg = path.join(tmp, 'pkg.ipk');
+fs.writeFileSync(pkg, 'abc');
+var abcSha = require('crypto').createHash('sha256').update('abc').digest('hex');
+assert.equal(s.verifyIpk(pkg, { size: 3, sha256: abcSha }), null);
+assert.ok(/sha256/.test(s.verifyIpk(pkg, { size: 3, sha256: new Array(65).join('b') })));
+assert.ok(/bytes/.test(s.verifyIpk(pkg, { size: 4, sha256: abcSha })));
+// update.sh: the TV's answer written for the page, installed or not; the package goes either way.
+var UPDATE_SH = path.join(__dirname, '..', 'app', 'service', 'update.sh');
+function runUpdater(lunaSend) {
+  var st = path.join(tmp, 'update-status.json'), ipkFile = path.join(tmp, 'u.ipk');
+  fs.writeFileSync(ipkFile, 'x');
+  require('child_process').execFileSync('sh', [UPDATE_SH, ipkFile, '9.9.9'], { env: Object.assign({}, process.env, {
+    LIGHTKEEPER_LUNA_SEND: lunaSend, LIGHTKEEPER_STATUS: st, LIGHTKEEPER_LOG: path.join(tmp, 'update.log'), LIGHTKEEPER_APPDIR: path.join(tmp, 'no-app') }) });
+  assert.ok(!fs.existsSync(ipkFile));
+  return JSON.parse(fs.readFileSync(st, 'utf8'));
+}
+assert.equal(runUpdater(path.join(FAKE, 'luna-send')).state, 'installed');
+var refusing = path.join(tmp, 'luna-send-refusing');
+fs.writeFileSync(refusing, '#!/bin/sh\necho \'{"returnValue":false,"errorText":"ipk verified failed"}\'\n', { mode: 493 });
+var refused = runUpdater(refusing);
+assert.equal(refused.state, 'failed'); assert.ok(/ipk verified failed/.test(refused.error), refused.error);
+
 // The Home loads logos.js and then its own script into one global scope: a name
 // declared in both overwrites the first (issue #2, the Home's weather icons were ICONE).
 function globals(file) {
@@ -279,7 +310,7 @@ function httpChecks() {
     if (i === steps.length) {
       child.removeAllListeners('exit');
       child.kill();
-      return portChecks(function () { console.log('check: all good'); });
+      return portChecks(function () { updateChecks(function () { console.log('check: all good'); }); });
     }
     steps[i](function () { run(i + 1); });
   }
@@ -339,4 +370,64 @@ function portChecks(done) {
       });
     })(40);
   });
+}
+
+// The update, end to end against a manifest and a package served as files: a manifest
+// that cannot be read, no downgrade, a package whose sha256 does not match (nothing is
+// installed), then the right one, handed to the updater with its version.
+function updateChecks(done) {
+  var server = path.join(__dirname, '..', 'app', 'service', 'server.js');
+  var dir = path.join(tmp, 'release'), data = path.join(tmp, 'data-update'), work = path.join(tmp, 'update-work');
+  [dir, data, work].forEach(function (d) { fs.mkdirSync(d); });
+  var marker = path.join(tmp, 'updater-ran');
+  var updater = path.join(tmp, 'fake-updater.sh');
+  fs.writeFileSync(updater, 'echo "$1 $2" > ' + marker + '\n');
+  var ipk = path.join(dir, 'io.github.chiotas.lightkeeper_99.0.0_all.ipk');
+  fs.writeFileSync(ipk, 'a package');
+  var sha = require('crypto').createHash('sha256').update('a package').digest('hex');
+  var manifestFile = path.join(dir, 'lightkeeper.manifest.json');
+  function manifest(o) { fs.writeFileSync(manifestFile, typeof o === 'string' ? o : JSON.stringify(o)); }
+  var good = { version: '99.0.0', ipkUrl: 'file://' + ipk, ipkHash: { sha256: sha }, ipkSize: 9 };
+  fs.writeFileSync(path.join(data, 'update-test.json'), JSON.stringify({ manifest: 'file://' + manifestFile }));
+  var uenv = {};
+  Object.keys(process.env).forEach(function (k) { uenv[k] = process.env[k]; });
+  uenv.LIGHTKEEPER_PORT = '18390';
+  uenv.LIGHTKEEPER_DATA = data;
+  uenv.LIGHTKEEPER_PORT_FILE = path.join(tmp, 'port-3');
+  uenv.LIGHTKEEPER_UPDATE_DIR = work;
+  uenv.LIGHTKEEPER_UPDATER = updater;
+  uenv.LIGHTKEEPER_CURL = '/usr/bin/curl';
+  var post = { port: 18390, headers: { 'Content-Type': 'application/json' }, body: '{}' };
+  manifest('<html>not a manifest</html>');
+  var child = spawn(process.execPath, [server], { env: uenv });
+  child.on('exit', function (code) { if (code) { console.error('update server exited ' + code); process.exit(1); } });
+  setTimeout(function () {
+    req('GET', '/api/update', { port: 18390 }, function (st, j) {
+      assert.equal(st, 200); assert.equal(j.test, true); assert.equal(j.available, false); assert.ok(/not readable/.test(j.error), j.error);
+      manifest({ version: '0.0.1', ipkUrl: 'file://' + ipk, ipkHash: { sha256: sha }, ipkSize: 9 });
+      req('POST', '/api/update', post, function (st2, j2) {
+        assert.equal(st2, 409); assert.ok(/already the latest/.test(j2.error), j2.error);
+        manifest({ version: '99.0.0', ipkUrl: 'file://' + ipk, ipkHash: { sha256: new Array(65).join('c') }, ipkSize: 9 });
+        req('POST', '/api/update', post, function (st3, j3) {
+          assert.equal(st3, 409); assert.ok(/sha256/.test(j3.error), j3.error);
+          assert.ok(!fs.existsSync(marker), 'nothing installed');
+          assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'update.json'), 'utf8')).state, 'failed');
+          manifest(good);
+          req('POST', '/api/update', post, function (st4, j4) {
+            assert.equal(st4, 200); assert.equal(j4.installing, '99.0.0');
+            setTimeout(function () {
+              assert.equal(fs.readFileSync(marker, 'utf8').trim(), path.join(work, 'lightkeeper-update.ipk') + ' 99.0.0');
+              assert.equal(fs.readFileSync(path.join(work, 'lightkeeper-update.ipk'), 'utf8'), 'a package');
+              req('GET', '/api/update', { port: 18390 }, function (st5, j5) {
+                assert.equal(j5.status.state, 'installing'); assert.equal(j5.status.version, '99.0.0');
+                child.removeAllListeners('exit');
+                child.kill();
+                done();
+              });
+            }, 500);
+          });
+        });
+      });
+    });
+  }, 700);
 }

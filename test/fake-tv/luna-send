@@ -6,6 +6,7 @@ for a; do uri=$params; params=$a; done
 echo "$uri $params" >> "$F/calls.log"
 case "$uri" in
   */listApps) sed "s#@F@#$F#g" "$F/apps.json" ;;
+  */dev/install) echo '{"returnValue":true,"id":"io.github.chiotas.lightkeeper","state":"installed"}' ;;
   */getAllInputStatus) echo '{"returnValue":true,"devices":[{"id":"HDMI_1","label":"HDMI 1","appId":"com.webos.app.hdmi1"},{"id":"HDMI_2","label":"HDMI 2","appId":"com.webos.app.hdmi2"},{"id":"HDMI_3","label":"Game console","appId":"com.webos.app.hdmi3"}]}' ;;
   */getConfigs)
     if [ -f "$F/chain-has-filter" ]; then
