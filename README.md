@@ -37,7 +37,7 @@ GlassHouse brings its own Home to webOS 9, 10 and 11. Lightkeeper is for the TVs
 
 ## Install
 
-Pick one of three ways. Updates come the same way, and your settings stay.
+Pick one of three ways. Updates come the same way, or from *Updates* in the settings from 1.0.6 on, and your settings stay.
 
 1. **From the Homebrew Channel**, the simplest. Add Lightkeeper's repository once: the gear at the top → *Add repository* → `https://github.com/chiotas/lightkeeper/releases/latest/download/apps.json`. Lightkeeper then appears in the channel's list among the other apps: open it and choose *Install*. When a new version is out, the same page shows it and offers *Update*.
 2. **From a file or a link.** `https://github.com/chiotas/lightkeeper/releases/latest/download/lightkeeper.ipk` always leads to the newest release. Paste it in the GlassHouse dashboard → **Apps** → *Install app from a URL or file* ([how](https://rorygallagher2024.github.io/glasshouse/dashboard/apps/)), or download it and install it with [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop) or `ares-install` from LG's webOS CLI.
@@ -80,7 +80,7 @@ All three give the Home key back to LG's Home, remove the start-up hook and dele
 ## How it works
 
 - `app/` is the webOS web app: the Home (`index.html`), the backgrounds it carries in `backgrounds/` (listed, with their credits, in `backgrounds/index.json`), and under `service/` a small node server, the settings page and the start-up hook. It is written in plain ES5 so it runs on the old Chromium and node versions these TVs ship.
-- The server listens on port 8090, or the port chosen in the settings (see *Another port* in [Troubleshooting](#troubleshooting)). It answers only the TV itself and private network addresses, and only to an IP address or `localhost` in the Host header. It runs no command you send it: the only programs it starts are `luna-send`, with calls fixed in its code, and GlassHouse's `tvwebctl restart`. It checks every setting before saving it, takes only JPEG pictures up to 3840 × 2160 and 12 MB, and accepts writes only with a JSON or JPEG content type, which a web page elsewhere cannot send it.
+- The server listens on port 8090, or the port chosen in the settings (see *Another port* in [Troubleshooting](#troubleshooting)). It answers only the TV itself and private network addresses, and only to an IP address or `localhost` in the Host header. It runs no command you send it: the only programs it starts are `luna-send`, with calls fixed in its code, GlassHouse's `tvwebctl restart`, and, for *Update*, `curl` to read the latest release's manifest and download its package from this project's GitHub releases, then `service/update.sh` to install it once its size and sha256 match the manifest. It checks every setting before saving it, takes only JPEG pictures up to 3840 × 2160 and 12 MB, and accepts writes only with a JSON or JPEG content type, which a web page elsewhere cannot send it.
 - What it writes on the TV: `/var/lib/lightkeeper/` (settings and your picture) and a link in `/var/lib/webosbrew/init.d/60-lightkeeper`, pointing into the app. It also adds its own entry to GlassHouse's key map (`/var/lib/tvweb/remotekeys.json` and the `glasshouse.remoteKeys` setting its filter reads), and leaves the keys you set in GlassHouse alone. It touches nothing on the TV's read-only system.
 - The log is in `/tmp/lightkeeper.log`.
 
@@ -147,6 +147,8 @@ A release carries four files from `dist/`: the package, `io.github.chiotas.light
 V=1.0.4  # the version in app/appinfo.json
 gh release create v$V dist/io.github.chiotas.lightkeeper_${V}_all.ipk dist/lightkeeper.ipk dist/apps.json dist/lightkeeper.manifest.json
 ```
+
+To try an update without a release, write `{"manifest": "http://<computer>:8000/lightkeeper.manifest.json"}` to `/var/lib/lightkeeper/update-test.json` on the TV: the settings then read that manifest and take the package from beside it. Remove the file afterwards.
 
 A new background is a 1920 × 1080 JPEG in `app/backgrounds/`, a 384 × 216 copy in `app/backgrounds/thumbs/`, and an entry in `app/backgrounds/index.json`.
 
