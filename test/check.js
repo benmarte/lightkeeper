@@ -18,6 +18,7 @@ process.on('exit', function () { children.forEach(function (c) { c.kill(); }); }
 setTimeout(function () { console.error('check: no end after a minute'); process.exit(1); }, 60000).unref();
 
 var FAKE = path.join(__dirname, 'fake-tv');
+var RUNNING = path.join(FAKE, 'running'); // the fake TV's open apps
 var tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lightkeeper-'));
 var env = {
   LIGHTKEEPER_DATA: path.join(tmp, 'data'),
@@ -73,6 +74,24 @@ assert.deepEqual(s.validate({ tiles: [{ id: 'com.webos.app.hdmi1', title: 'x', d
   assert.equal(s.validate({ tiles: [{ id: 'netflix', title: 'x', logo: v }] }, keys), 'tiles', String(v));
 });
 assert.ok(Object.keys(s.CATALOG).length > 100 && s.CATALOG.hdmi && s.CATALOG.netflix && s.CATALOG.arte);
+
+// Open apps the Home may close: those a tile could open, never Lightkeeper, an input,
+// Live TV, an app kept hidden or LG's Home, even when LG lists it as visible.
+var tvApps = [{ id: 'netflix', title: 'Netflix' }, { id: 'youtube.leanback.v4', title: 'YouTube' },
+  { id: 'io.github.chiotas.lightkeeper', title: 'Lightkeeper' }, { id: 'com.webos.app.hdmi1', title: 'HDMI 1', visible: false },
+  { id: 'com.webos.app.livetv', title: 'Live TV' }, { id: 'com.webos.app.membership', title: 'LG Account', visible: false },
+  { id: 'com.webos.app.home', title: 'Home' }, { id: 'cdp-30', title: 'Plex' }];
+var runningNow = { returnValue: true, running: ['youtube.leanback.v4', 'com.webos.app.home', 'io.github.chiotas.lightkeeper', 'com.webos.app.hdmi1',
+  'com.webos.app.livetv', 'com.webos.app.membership', 'netflix', 'com.palm.service.something'].map(function (id) { return { id: id, defaultWindowType: 'card' }; }) };
+assert.deepEqual(s.openApps(runningNow, tvApps), [{ id: 'netflix', title: 'Netflix' }, { id: 'youtube.leanback.v4', title: 'YouTube' }]);
+assert.deepEqual(s.openApps(null, tvApps), []);
+assert.deepEqual(s.openApps({ running: [{ appId: 'netflix' }, null, 'netflix'] }, tvApps), []);
+// Asked by the Home only: from the TV itself, by its file:// page or one on the TV's own servers.
+function fromHome(addr, origin) { return s.fromHome({ socket: { remoteAddress: addr }, headers: origin === undefined ? {} : { origin: origin } }); }
+assert.ok(fromHome('127.0.0.1', 'null') && fromHome('::ffff:127.0.0.1', 'null') && fromHome('::1', 'file://'));
+assert.ok(fromHome('127.0.0.1') && fromHome('127.0.0.1', 'http://127.0.0.1:8091') && fromHome('127.0.0.1', 'http://localhost'));
+assert.ok(!fromHome('192.168.0.20', 'null') && !fromHome('192.168.0.20'), 'not from a phone');
+assert.ok(!fromHome('127.0.0.1', 'https://evil.example') && !fromHome('127.0.0.1', 'http://127.0.0.1.evil.example') && !fromHome('127.0.0.1', 'http://192.168.0.53:8090'));
 
 // Updates: versions compared by number, the manifest checked, the package checked against it.
 assert.ok(s.newer('1.0.9', '1.0.10') && s.newer('1.0.5', '1.1') && !s.newer('1.0.5', '1.0.5') && !s.newer('1.0.6', '1.0.5'));
@@ -386,7 +405,28 @@ function httpChecks() {
       var saved = JSON.parse(fs.readFileSync(path.join(env.LIGHTKEEPER_DATA, 'config.json'), 'utf8'));
       assert.ok(/^[0-9a-f]{64}$/.test(saved.pin.hash) && JSON.stringify(saved).indexOf('2468') === -1, 'the PIN is kept hashed');
       next();
-    }
+    },
+    // Open apps, from the Home's file:// page, while the PIN is locked: the Home has none.
+    function (next) {
+      fs.writeFileSync(RUNNING, 'netflix\ncom.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\nyoutube.leanback.v4\n');
+      req('GET', '/api/open', { headers: { Origin: 'null' } }, function (st, j, h) {
+        assert.equal(st, 200); assert.equal(h['access-control-allow-origin'], 'null');
+        assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['netflix', 'youtube.leanback.v4']); next(); }); },
+    function (next) { req('GET', '/api/open', { headers: { Origin: 'http://evil.example' } }, function (st) { assert.equal(st, 403); next(); }); },
+    function (next) { req('OPTIONS', '/api/close', { headers: { Origin: 'null', 'Access-Control-Request-Method': 'POST' } }, function (st, j, h) {
+      assert.equal(st, 204); assert.equal(h['access-control-allow-origin'], 'null'); assert.equal(h['access-control-allow-headers'], 'Content-Type'); next(); }); },
+    function (next) { req('POST', '/api/close', { headers: { Origin: 'null', 'Content-Type': 'text/plain' }, body: '{"all":true}' }, function (st) { assert.equal(st, 415); next(); }); },
+    function (next) { var o = json({ id: 'com.webos.app.hdmi1' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.equal(st, 200); assert.deepEqual(j.closed, []); assert.equal(j.apps.length, 2); next(); }); },
+    function (next) { var o = json({ id: 'netflix' }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.deepEqual(j.closed, ['netflix']); assert.deepEqual(j.apps.map(function (a) { return a.id; }), ['youtube.leanback.v4']); next(); }); },
+    function (next) { var o = json({ all: true }); o.headers.Origin = 'null'; req('POST', '/api/close', o, function (st, j) {
+      assert.deepEqual(j.closed, ['youtube.leanback.v4']); assert.deepEqual(j.apps, []);
+      var calls = fs.readFileSync(path.join(FAKE, 'calls.log'), 'utf8').split('\n').filter(function (l) { return /closeByAppId/.test(l); });
+      assert.deepEqual(calls, ['luna://com.webos.applicationManager/closeByAppId {"id":"netflix"}', 'luna://com.webos.applicationManager/closeByAppId {"id":"youtube.leanback.v4"}']);
+      assert.equal(fs.readFileSync(RUNNING, 'utf8'), 'com.webos.app.home\nio.github.chiotas.lightkeeper\ncom.webos.app.hdmi1\n');
+      fs.unlinkSync(RUNNING);
+      next(); }); }
   ];
   function run(i) {
     if (i === steps.length) {

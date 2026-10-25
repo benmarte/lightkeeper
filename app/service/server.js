@@ -694,6 +694,53 @@ function sendFile(res, file, cache, extra) {
   });
 }
 
+/*
+ * The apps open on the TV that the Home offers to close: those a tile could open, which
+ * LG's launcher shows (appChoices: not Lightkeeper, inputs, Live TV or apps kept hidden),
+ * and never LG's Home. Read from applicationManager/running in the form webOS OSE
+ * documents, {running: [{id, processId, defaultWindowType, ...}]}; not yet seen on an LG TV.
+ */
+var LG_HOME = 'com.webos.app.home';
+function openApps(running, apps) {
+  var on = {};
+  ((running && running.running) || []).forEach(function (r) { if (r && typeof r.id === 'string') on[r.id] = true; });
+  return appChoices(apps).filter(function (a) { return on[a.id] && a.id !== LG_HOME; });
+}
+
+function listOpen(cb) {
+  listApps(function (apps) {
+    luna('com.webos.applicationManager/running', {}, function (r) { cb(openApps(r, apps)); });
+  });
+}
+
+// Closes these apps one after the other; cb(the ones closed).
+function closeApps(ids, cb) {
+  var closed = [];
+  (function next(i) {
+    if (i === ids.length) {
+      if (closed.length) log('closed from the Home: ' + closed.join(', '));
+      return cb(closed);
+    }
+    luna('com.webos.applicationManager/closeByAppId', { id: ids[i] }, function (r) {
+      if (r) closed.push(ids[i]);
+      next(i + 1);
+    });
+  })(0);
+}
+
+/*
+ * Open apps are listed and closed for the Home only: from the TV itself, by a page of
+ * its own. The Home is a file:// page, whose Origin is "null"; a page on the TV's own
+ * servers has a loopback one. The PIN, which the Home does not have, is not asked.
+ * ponytail: a sandboxed frame in the TV's browser also sends "null"; a token read by
+ * the Home through the Homebrew Channel would close that.
+ */
+function fromHome(req) {
+  var a = String(req.socket.remoteAddress || '').replace(/^::ffff:/, ''), o = req.headers.origin;
+  return (a === '127.0.0.1' || a === '::1') &&
+    (o === undefined || o === 'null' || o === 'file://' || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(o));
+}
+
 // The TV itself and the private ranges: nothing from beyond the local network.
 function isLocal(addr) {
   addr = String(addr || '').replace(/^::ffff:/, '');
@@ -814,6 +861,37 @@ function handle(req, res) {
     return send(res, 200, c, { 'Access-Control-Allow-Origin': '*' });
   }
 
+  if (p === '/api/open' || p === '/api/close') {
+    if (!fromHome(req)) {
+      log('open apps refused: ' + req.socket.remoteAddress + ', origin ' + req.headers.origin);
+      return send(res, 403, { ok: false, error: 'the Home only' });
+    }
+    var cors = req.headers.origin ? { 'Access-Control-Allow-Origin': req.headers.origin, 'Vary': 'Origin' } : {};
+    if (m === 'GET' && p === '/api/open') return listOpen(function (open) { send(res, 200, { ok: true, apps: open }, cors); });
+    if (m === 'OPTIONS' && p === '/api/close') {
+      cors['Access-Control-Allow-Methods'] = 'POST';
+      cors['Access-Control-Allow-Headers'] = 'Content-Type';
+      cors['Access-Control-Max-Age'] = '600';
+      return send(res, 204, '', cors);
+    }
+    // JSON only: from a page elsewhere, that type needs a preflight, which fromHome refuses.
+    if (m === 'POST' && p === '/api/close') {
+      if (String(req.headers['content-type'] || '').split(';')[0].toLowerCase() !== 'application/json') return send(res, 415, { ok: false, error: 'bad request' }, cors);
+      return readBody(req, MAX_JSON, function (b) {
+        var body = null;
+        try { body = JSON.parse(String(b)); } catch (e) {}
+        if (!body || !(body.all === true || (typeof body.id === 'string' && ID_RE.test(body.id)))) return send(res, 400, { ok: false, error: 'id or all expected' }, cors);
+        // Only what the Home would list: never Lightkeeper, an input or LG's Home.
+        listOpen(function (open) {
+          var ids = open.map(function (a) { return a.id; }).filter(function (id) { return body.all || id === body.id; });
+          closeApps(ids, function (closed) {
+            send(res, 200, { ok: true, closed: closed, apps: open.filter(function (a) { return closed.indexOf(a.id) === -1; }) }, cors);
+          });
+        });
+      });
+    }
+    return send(res, 405, { ok: false, error: 'not allowed' }, cors);
+  }
   if (p.indexOf('/api/') !== 0) return send(res, 404, { ok: false, error: 'not found' });
   if (!pinOk(req)) {
     return send(res, 401, { ok: false, error: Date.now() < pinLockedUntil ? 'locked' : 'pin' });
@@ -1012,7 +1090,7 @@ function start() {
 }
 
 module.exports = { DEVICES: DEVICES, DEFAULTS: DEFAULTS, CATALOG: CATALOG, webUrl: webUrl, newer: newer, readManifest: readManifest, verifyIpk: verifyIpk, validate: validate, jpegSize: jpegSize, isLocal: isLocal, hostOk: hostOk,
-  applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, keysOnTv: keysOnTv,
+  applyKey: applyKey, iconFile: iconFile, appChoices: appChoices, openApps: openApps, fromHome: fromHome, keysOnTv: keysOnTv,
   pinHash: pinHash, same: same };
 
 if (require.main === module) {

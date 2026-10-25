@@ -6,6 +6,8 @@
 
 - **Pick a tile's icon.** In the settings, the icon beside each tile opens every logo and icon Lightkeeper carries, generic ones and services, with a search and *Automatic* at the top; it works with the remote's arrows and OK in the TV's browser too. With *Logos*, the one you pick takes the place of Lightkeeper's. With *App icons*, it shows white on a dark tile the size of the icons. *Names* stays as it is. Without a choice, nothing changes.
 
+- **Close open apps from the Home.** When apps are open, a button with how many comes up before the gear. It opens a list of them, with their icons and names, and *Close all* at the end: OK closes one, Back returns to the Home. Lightkeeper, inputs, Live TV, LG's Home and the apps LG keeps hidden are left out. The server reads the list from the TV and closes the apps, for the Home only. Not yet tried on a TV.
+
 ## 1.0.6 (25 October 2026)
 
 - **Updates from the settings.** *Updates* shows the version in use and looks for a newer one in the latest release's manifest. *Update*, behind the PIN like any other change, downloads the package only from this project's GitHub releases, checks its size and sha256 against the manifest, and installs nothing when they do not match. It never installs an older or the same version. The install runs apart from the settings server, which it restarts, and takes a few minutes; the page then shows the new version, or what went wrong.

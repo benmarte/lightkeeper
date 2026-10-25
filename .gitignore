@@ -12,3 +12,4 @@ test/fake-tv/tvweb/remotekeys.json
 docs/screenshots/candidati/
 __pycache__/
 test/fake-tv/port
+test/fake-tv/running
