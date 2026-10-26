@@ -1,10 +1,12 @@
 # Changelog
 
-## 1.0.9 (not released yet)
+## 1.0.9 (26 October 2026)
 
-- **The Magic Remote's pointer slides the row.** A pointer on a tile only selects it, so a row wider than the screen could be browsed with the arrow keys alone. While the pointer shows, an arrow at each end where there is more slides the row by most of a screen: click it, or rest the pointer on it. The wheel slides it too. The arrow keys work as before. Not yet tried on a TV.
+- **The Magic Remote's pointer slides the row.** A pointer on a tile only selects it, so a row wider than the screen could be browsed with the arrow keys alone. While the pointer shows, an arrow at each end where there is more slides the row by most of a screen: click it, or rest the pointer on it. The wheel slides it too. The arrow keys work as before. Built on LG's documented pointer events and tried on a computer, not yet with a real Magic Remote.
 - **The tile selected at start**, in the settings: the last one opened, as before, or the first. The last one opened is now kept by its id, so moving tiles in the settings no longer selects another one.
 - **Hide the settings gear**, in the settings, off unless you turn it on. The settings stay at the TV's address from a phone or computer, which the settings show next to the switch. With no tiles, the gear stays.
+- **Updating no longer opens Lightkeeper by itself.** The start-up hook took the first power state it read as the TV switching on, so *Update* in the settings, or the setup run again, opened Lightkeeper over what was on screen. Now only a cold start, within five minutes of the TV starting, counts as one; switching on from standby works as before.
+- **Power on in the log.** `/tmp/lightkeeper.log` says how the start-up hook found the TV (a cold start or not), when the TV comes on, what is in front at each look while Lightkeeper waits for it, and when Lightkeeper opens, with the seconds since the TV started.
 
 ## 1.0.8 (26 October 2026)
 
