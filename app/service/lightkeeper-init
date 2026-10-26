@@ -28,6 +28,14 @@ scelta() {
 # For the tests: lightkeeper-init --decide <in front> <in front at power off>
 [ "$1" = --decide ] && { scelta "$2" "$3"; exit 0; }
 
+# The TV taken as off (1) when this script starts within five minutes of the TV
+# starting: a cold start, whose first "Active" opens Lightkeeper. Later (0), it is
+# the installer, an update or setup.sh starting it again with the TV on, and nothing
+# opens over what is being watched. $1: the seconds in /proc/uptime.
+spento_all_avvio() { if [ "${1%%.*}" -lt 300 ] 2>/dev/null; then echo 1; else echo 0; fi; }
+# For the tests: lightkeeper-init --off-at-start <seconds since the TV started>
+[ "$1" = --off-at-start ] && { spento_all_avvio "$2"; exit 0; }
+
 # Back from the last app where LG has no Home app (webOS 3 to 5), as seen on a B7
 # with webOS 3.9 (issue #3): the app gives way to nothing in front, "", then Live
 # TV. So Lightkeeper opens when a real app gives way to nothing, and again if Live
@@ -188,19 +196,26 @@ vecchio=$(cat /tmp/lightkeeper.pid 2>/dev/null)
 
 # Seconds since the TV started, to the hundredth: the log's clock has whole seconds only.
 secondi() { cut -d' ' -f1 /proc/uptime 2>/dev/null; }
+# What is in front, for apri: fg, and luna-send's own answer, cut short, when it names no app.
+guarda() {
+  r=$($LS -n 1 -w 3000 luna://com.webos.applicationManager/getForegroundAppInfo '{}' 2>&1)
+  fg=$(echo "$r" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
+  visto=${fg:-nothing}
+  [ -n "$fg" ] || visto="nothing (luna-send: $(echo "$r" | tr '\n' ' ' | cut -c1-200 | sed 's/ *$//'))"
+}
 
 # $1: the app in front when the TV went off. Whoever switches on with the Netflix button stays on Netflix.
 # Each look at what is in front is logged, to see where the time goes at power on.
 apri() {
   sleep 1
-  fg=$(davanti)
-  diario "1 s after Active, in front: ${fg:-nothing} (up $(secondi) s)"
+  guarda
+  diario "1 s after Active, in front: $visto (up $(secondi) s)"
   # An app switched on with the TV, as by the Netflix button, is still starting:
   # with nothing in front, it is given up to eight seconds to come up.
   n=0
   while [ -z "$fg" ] && [ $n -lt 8 ]; do
-    sleep 1; fg=$(davanti); n=$((n+1))
-    diario "$((n+1)) s after Active, in front: ${fg:-nothing} (up $(secondi) s)"
+    sleep 1; guarda; n=$((n+1))
+    diario "$((n+1)) s after Active, in front: $visto (up $(secondi) s)"
   done
   case $(scelta "$fg" "$1") in
     open) diario "opening Lightkeeper (in front: ${fg:-nothing}) (up $(secondi) s)"; lancia "$APP" ;;
@@ -232,8 +247,9 @@ via_account() {
 ultima=
 [ "$(cut -d. -f1 /proc/uptime)" -lt 300 ] && ultima=$(cat "$FRONT" 2>/dev/null)
 (
-  # This script starts about 40 s into a cold start: the first "Active" is the start.
-  spento=1
+  # This script starts about 40 s into a cold start: then the first "Active" is the start.
+  spento=$(spento_all_avvio "$(secondi)")
+  primo=1
   while vivo; do
     $LS -i luna://com.webos.service.tvpower/power/getPowerState '{"subscribe":true}' 2>/dev/null |
     while read -r riga; do
@@ -241,10 +257,20 @@ ultima=
       stato=$(echo "$riga" | sed -n 's/.*"state" *: *"\([^"]*\)".*/\1/p')
       [ -n "$stato" ] || continue
       echo "$stato" > /tmp/lightkeeper.power
+      # The first state this script reads is how it found the TV, not a change.
+      if [ "$primo" = 1 ]; then
+        primo=0
+        if [ "$stato" = Active ]; then quando="TV on"; else quando="TV $stato"; fi
+        if [ "$spento" = 1 ]; then quando="$quando, a cold start"; else quando="$quando, not opening"; fi
+        diario "script started, $quando (up $(secondi) s)"
+        primo_stato=1
+      else
+        primo_stato=0
+      fi
       case "$stato" in
         Active)
           if [ "$spento" = 1 ]; then
-            diario "TV on (Active) (up $(secondi) s)"
+            [ "$primo_stato" = 1 ] || diario "TV on (Active) (up $(secondi) s)"
             set_to openAtPowerOn true && { apri "$ultima"; via_account & }
           fi
           spento=0 ;;
@@ -255,7 +281,7 @@ ultima=
         *) [ "$spento" = 0 ] && { ultima=$(cat "$FRONT" 2>/dev/null); date +%s > "$SESSIONE"; }; spento=1 ;;
       esac
     done
-    spento=0 # luna-send started again with the TV already on
+    spento=0 primo=0 # luna-send started again with the TV already on
     sleep 5
   done
 ) </dev/null >/dev/null 2>&1 &

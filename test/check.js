@@ -181,6 +181,13 @@ var HOOK_SCRIPT = path.join(__dirname, '..', 'app', 'service', 'lightkeeper-init
   assert.equal(got, c[2], c[0] + ' after ' + c[1]);
 });
 
+// The boot hook started within five minutes of the TV starting is a cold start, and
+// its first "Active" opens Lightkeeper; later it is the installer or an update with the
+// TV on, and nothing opens over what is being watched.
+[['40.12', '1'], ['299.99', '1'], ['300.00', '0'], ['26460.33', '0'], ['', '0']].forEach(function (c) {
+  assert.equal(require('child_process').execFileSync('sh', [HOOK_SCRIPT, '--off-at-start', c[0]]).toString().trim(), c[1], c[0]);
+});
+
 // An app's icon: the largest the TV lists, 192 px extraLargeIcon before the 130 px largeIcon.
 var appDir = path.join(tmp, 'app-icons');
 fs.mkdirSync(appDir);
