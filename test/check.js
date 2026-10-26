@@ -204,9 +204,11 @@ assert.deepEqual(replay(['com.webos.app.livetv', '', 'com.webos.app.livetv']), [
 // front in the same millisecond, no stop), not for apps closed from Lightkeeper, not
 // for LG's Home after Lightkeeper's Down arrow, not while the TV goes off.
 function replayLife(lines, power) {
-  // "<seconds> <event> <appId> [card]", sent as the JSON lines luna-send prints.
+  // "<seconds> <event> <appId> [card]", sent as the JSON lines luna-send prints; "<seconds> front <appId>"
+  // for what the TV has in front from then on, as getForegroundAppInfo would answer.
   var json = lines.map(function (l) {
     var w = l.split(' ');
+    if (w[1] === 'front') return l;
     return w[0] + ' ' + JSON.stringify({ event: w[1], appId: w[2], reason: 'undefined',
       windowType: w[3] === 'card' ? '_WEBOS_WINDOW_TYPE_CARD' : '_WEBOS_WINDOW_TYPE_OVERLAY', returnValue: true, subscribed: true });
   });
@@ -218,11 +220,25 @@ var LK = 'io.github.chiotas.lightkeeper', LGHOME = 'com.webos.app.home';
 var backOut = ['50 foreground amazon card', '56 background amazon', '56 stop amazon'];
 assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card'])), ['open (stop amazon)']);
 // LG's Home in front all the same, right after: covered again; later, it is the Down arrow.
-assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '57 foreground ' + LGHOME + ' card'])),
+assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '57 front ' + LGHOME, '57 foreground ' + LGHOME + ' card'])),
   ['open (stop amazon)', 'open (foreground ' + LGHOME + ')']);
 assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '70 foreground ' + LGHOME + ' card'])), ['open (stop amazon)']);
 // As 1.0.7 measured it, LG's Home before Lightkeeper: covered.
-assert.deepEqual(replayLife(['50 foreground amazon card', '57 foreground ' + LGHOME + ' card']), ['open (foreground ' + LGHOME + ')']);
+assert.deepEqual(replayLife(['50 foreground amazon card', '57 front ' + LGHOME, '57 foreground ' + LGHOME + ' card']), ['open (foreground ' + LGHOME + ')']);
+// YouTube and PlxNative on the C1 (26/10): no stop, LG's Home launched first, in front 0.15 s later.
+// Lightkeeper opens at the launch; if LG's Home still comes over it, once more.
+var youtube = ['40 foreground youtube.leanback.v4 card', '40 front youtube.leanback.v4', '56 launch ' + LGHOME, '56 background youtube.leanback.v4'];
+assert.deepEqual(replayLife(youtube.concat(['56 foreground ' + LGHOME + ' card', '58 foreground ' + LK + ' card'])), ['open (launch ' + LGHOME + ')']);
+assert.deepEqual(replayLife(youtube.concat(['56 front ' + LGHOME, '56 foreground ' + LGHOME + ' card'])),
+  ['open (launch ' + LGHOME + ')', 'open (foreground ' + LGHOME + ')']);
+assert.deepEqual(replayLife(['60 foreground com.beb.plxnative card', '60 front com.beb.plxnative', '69 launch ' + LGHOME,
+  '69 background com.beb.plxnative', '69 foreground ' + LGHOME + ' card', '70 foreground ' + LK + ' card']), ['open (launch ' + LGHOME + ')']);
+// The browser, from the settings page: it stops, and LG's Home never comes.
+assert.deepEqual(replayLife(['80 foreground com.webos.app.browser card', '83 stop com.webos.app.browser', '83 front ',
+  '84 foreground ' + LK + ' card']), ['open (stop com.webos.app.browser)']);
+// Down from Lightkeeper launches LG's Home on purpose; nor while the TV goes off.
+assert.deepEqual(replayLife(['50 foreground ' + LK + ' card', '60 launch ' + LGHOME, '60 foreground ' + LGHOME + ' card']), []);
+assert.deepEqual(replayLife(youtube.concat(['56 foreground ' + LGHOME + ' card']), 'Active Standby'), []);
 // Switching apps, then the old one stopped; apps closed from Lightkeeper; Down from Lightkeeper.
 assert.deepEqual(replayLife(['50 foreground amazon card', '55 background amazon', '55 foreground netflix card', '60 stop amazon']), []);
 assert.deepEqual(replayLife(['50 foreground ' + LK + ' card', '52 stop netflix', '53 stop youtube.leanback.v4']), []);
