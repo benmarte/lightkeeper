@@ -226,13 +226,12 @@ assert.deepEqual(replayLife(backOut.concat(['56 foreground ' + LK + ' card', '70
 // As 1.0.7 measured it, LG's Home before Lightkeeper: covered.
 assert.deepEqual(replayLife(['50 foreground amazon card', '57 front ' + LGHOME, '57 foreground ' + LGHOME + ' card']), ['open (foreground ' + LGHOME + ')']);
 // YouTube and PlxNative on the C1 (26/10): no stop, LG's Home launched first, in front 0.15 s later.
-// Lightkeeper opens at the launch; if LG's Home still comes over it, once more.
+// Covered sooner, LG's Home took the screen back: Lightkeeper opens a second after it is in front.
 var youtube = ['40 foreground youtube.leanback.v4 card', '40 front youtube.leanback.v4', '56 launch ' + LGHOME, '56 background youtube.leanback.v4'];
-assert.deepEqual(replayLife(youtube.concat(['56 foreground ' + LGHOME + ' card', '58 foreground ' + LK + ' card'])), ['open (launch ' + LGHOME + ')']);
-assert.deepEqual(replayLife(youtube.concat(['56 front ' + LGHOME, '56 foreground ' + LGHOME + ' card'])),
-  ['open (launch ' + LGHOME + ')', 'open (foreground ' + LGHOME + ')']);
+assert.deepEqual(replayLife(youtube.concat(['56 foreground ' + LGHOME + ' card', '58 foreground ' + LK + ' card'])), ['open (foreground ' + LGHOME + ')']);
+assert.deepEqual(replayLife(youtube.concat(['56 front ' + LGHOME, '56 foreground ' + LGHOME + ' card'])), ['open (foreground ' + LGHOME + ')']);
 assert.deepEqual(replayLife(['60 foreground com.beb.plxnative card', '60 front com.beb.plxnative', '69 launch ' + LGHOME,
-  '69 background com.beb.plxnative', '69 foreground ' + LGHOME + ' card', '70 foreground ' + LK + ' card']), ['open (launch ' + LGHOME + ')']);
+  '69 background com.beb.plxnative', '69 foreground ' + LGHOME + ' card', '70 foreground ' + LK + ' card']), ['open (foreground ' + LGHOME + ')']);
 // The browser, from the settings page: it stops, and LG's Home never comes.
 assert.deepEqual(replayLife(['80 foreground com.webos.app.browser card', '83 stop com.webos.app.browser', '83 front ',
   '84 foreground ' + LK + ' card']), ['open (stop com.webos.app.browser)']);

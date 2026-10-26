@@ -58,7 +58,9 @@ su_davanti() {
 #   sam launched LG's Home 0.8 s after the stop (Prime Video), or did not (the browser).
 #   Lightkeeper opens at the stop of the app that was in front, before LG's Home.
 # - YouTube and PlxNative do not stop: sam launches LG's Home first, and it is in front
-#   0.15 s later. Lightkeeper opens over it as soon as it launches (sopra_home).
+#   0.15 s later. Covered sooner than a second after it came to the front, LG's Home
+#   took the screen back by itself 0.55 s later, twice in a row, and stayed (C1, 26/10):
+#   so Lightkeeper waits a second, as up to 1.0.7 (sopra_home).
 # Switching apps puts the next one in front in the same millisecond as the last one
 # goes to the background, with no stop and no LG's Home; closing apps from Lightkeeper
 # stops apps that are not in front. LG's Home launched or in front within three
@@ -75,38 +77,31 @@ su_evento() {
         diario "$2 closed: opening Lightkeeper"
         lancia "$APP"
       fi ;;
-    launch|foreground)
-      [ "$1" = launch ] || [ "$3" = card ] || return 0
+    foreground)
+      [ "$3" = card ] || return 0
       if [ "$2" = com.webos.app.home ] && acceso && set_to key '"home"' &&
          { [ $(( $4 - ritorno )) -le 3 ] || { [ -n "$prima" ] && [ "$prima" != "$APP" ] && [ "$prima" != "$2" ]; }; }; then
         ritorno=0
         diario "LG's Home ($1) after ${prima:-nothing}"
         sopra_home
       fi
-      [ "$1" = foreground ] && prima=$2 ;;
+      prima=$2 ;;
   esac
 }
 # A pause in microseconds: BusyBox on webOS 6.5.3 has usleep, and its sleep takes
 # whole seconds only ("invalid number '0.3'"); elsewhere sleep may take tenths.
 pausa() { usleep "$1" 2>/dev/null || sleep "0.$(( $1 / 100000 ))" 2>/dev/null || sleep 1; }
-# Over LG's Home, launched or in front: what is in front is checked every 0.1 s, and
-# Lightkeeper launched while LG's Home, nothing or the app leaving is there, until
-# Lightkeeper is in front twice in a row; launched before LG's Home came up, it may
-# be covered once and is then launched again. Some 25 checks at most.
+# Over LG's Home: a second after it came to the front, as up to 1.0.7, then checked
+# once more two seconds later. Sooner, it takes the screen back (see above).
 sopra_home() {
-  n=0 su=0
-  while [ $n -lt 25 ] && [ $su -lt 2 ]; do
-    pausa 100000
-    fg=$(davanti)
-    if [ "$fg" = "$APP" ]; then su=$((su+1)); else su=0; diario "opening Lightkeeper over ${fg:-nothing}"; lancia "$APP"; fi
-    n=$((n+1))
-  done
+  pausa 1000000; diario "opening Lightkeeper over LG's Home"; lancia "$APP"
+  pausa 2000000; [ "$(davanti)" = com.webos.app.home ] && { diario "still LG's Home: again"; lancia "$APP"; }
 }
-# One line of getAppLifeEvents, as luna-send prints it: evento (stop, launch,
+# One line of getAppLifeEvents, as luna-send prints it: evento (stop,
 # foreground or nothing else), app and card for a full-screen window.
 evento_da() {
   case "$1" in
-    *'"event":"stop"'*) evento=stop ;; *'"event":"launch"'*) evento=launch ;; *'"event":"foreground"'*) evento=foreground ;;
+    *'"event":"stop"'*) evento=stop ;; *'"event":"foreground"'*) evento=foreground ;;
     *) evento= ; return ;;
   esac
   app=$(echo "$1" | sed -n 's/.*"appId" *: *"\([^"]*\)".*/\1/p')
