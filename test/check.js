@@ -517,9 +517,9 @@ function httpChecks() {
     },
     // Short of space: refused, nothing written, and the page told how much is kept free.
     function (next) {
-      fs.writeFileSync(path.join(tmp, 'df-free'), String(256 * 1024 + 100)); // 100 KB over the margin
+      fs.writeFileSync(path.join(tmp, 'df-free'), String(64 * 1024 + 100)); // 100 KB over the margin
       upload('godrevy.jpg', function (st, j) {
-        assert.equal(st, 507); assert.equal(j.error, 'space'); assert.equal(j.keepFree, 256 * 1024 * 1024);
+        assert.equal(st, 507); assert.equal(j.error, 'space'); assert.equal(j.keepFree, 64 * 1024 * 1024);
         assert.deepEqual(fs.readdirSync(path.join(env.LIGHTKEEPER_DATA, 'backgrounds')), []);
         fs.writeFileSync(path.join(tmp, 'df-free'), '10485760');
         next();

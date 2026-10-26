@@ -45,10 +45,13 @@ var CONFIG = path.join(DATA, 'config.json');
 // Up to 1.0.7 there was one, background.jpg, moved into the list at start (migrate).
 var MINE = path.join(DATA, 'backgrounds');
 var MINE_ID = /^my-[0-9a-f]{8}$/;
-// Left free where DATA is after a picture is saved, for what else the TV keeps there:
-// its database and logs, Homebrew apps, Lightkeeper's own updates (3.5 MB a package).
-// ponytail: a guess, 256 MB, until df is read on a TV; one constant to change.
-var MIN_FREE = 256 * 1024 * 1024;
+// Left free where DATA is after a picture is saved, for what else the TV keeps there,
+// its database, logs and settings. On a C1 with webOS 6.5.3 (26/10) /var/lib/lightkeeper
+// is on an overlay of 739536 KB, 391944 KB free: 64 MB keeps 9% of it, and leaves about
+// 319 MB for pictures. Lightkeeper's own updates download to /tmp, not here. Where LG
+// downloads its firmware has not been checked. MB are 1024 × 1024 bytes, here and in
+// the settings page.
+var MIN_FREE = 64 * 1024 * 1024;
 var DF = process.env.LIGHTKEEPER_DF || 'df';
 var MAX_THUMB = 512 * 1024;
 // A new mark each time the TV comes on, written by the boot hook; the background picked for it.

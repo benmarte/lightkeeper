@@ -1243,7 +1243,8 @@ footer a { color: var(--muted); }
   }
 
   // How much the pictures uploaded take, and the room left on the TV.
-  function mb(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : (n / 1e6).toFixed(n < 1e7 ? 1 : 0) + ' MB'; }
+  // In MB of 1024 × 1024 bytes, as the server counts the room it keeps free.
+  function mb(n) { var m = n / 1048576; return m >= 1024 ? (m / 1024).toFixed(1) + ' GB' : m.toFixed(m < 10 ? 1 : 0) + ' MB'; }
   function space() {
     api('GET', '/api/backgrounds', null, function (r) {
       var el = $('bg-space');
