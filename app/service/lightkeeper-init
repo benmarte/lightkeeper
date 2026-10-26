@@ -186,17 +186,25 @@ vecchio=$(cat /tmp/lightkeeper.pid 2>/dev/null)
   done
 ) </dev/null >/dev/null 2>&1 &
 
+# Seconds since the TV started, to the hundredth: the log's clock has whole seconds only.
+secondi() { cut -d' ' -f1 /proc/uptime 2>/dev/null; }
+
 # $1: the app in front when the TV went off. Whoever switches on with the Netflix button stays on Netflix.
+# Each look at what is in front is logged, to see where the time goes at power on.
 apri() {
   sleep 1
   fg=$(davanti)
+  diario "1 s after Active, in front: ${fg:-nothing} (up $(secondi) s)"
   # An app switched on with the TV, as by the Netflix button, is still starting:
   # with nothing in front, it is given up to eight seconds to come up.
   n=0
-  while [ -z "$fg" ] && [ $n -lt 8 ]; do sleep 1; fg=$(davanti); n=$((n+1)); done
+  while [ -z "$fg" ] && [ $n -lt 8 ]; do
+    sleep 1; fg=$(davanti); n=$((n+1))
+    diario "$((n+1)) s after Active, in front: ${fg:-nothing} (up $(secondi) s)"
+  done
   case $(scelta "$fg" "$1") in
-    open) diario "opening Lightkeeper (in front: ${fg:-nothing})"; lancia "$APP" ;;
-    cover) diario "opening Lightkeeper over $fg, in front when the TV went off"; lancia "$APP" ;;
+    open) diario "opening Lightkeeper (in front: ${fg:-nothing}) (up $(secondi) s)"; lancia "$APP" ;;
+    cover) diario "opening Lightkeeper over $fg, in front when the TV went off (up $(secondi) s)"; lancia "$APP" ;;
     *) diario "not opening: $fg is in front" ;;
   esac
 }
@@ -234,7 +242,12 @@ ultima=
       [ -n "$stato" ] || continue
       echo "$stato" > /tmp/lightkeeper.power
       case "$stato" in
-        Active) [ "$spento" = 1 ] && set_to openAtPowerOn true && { apri "$ultima"; via_account & }; spento=0 ;;
+        Active)
+          if [ "$spento" = 1 ]; then
+            diario "TV on (Active) (up $(secondi) s)"
+            set_to openAtPowerOn true && { apri "$ultima"; via_account & }
+          fi
+          spento=0 ;;
         "Screen Saver"|"Screen Off") spento=0 ;;
         Prepared) ;;
         # Going off: the app in front now is the one webOS will put back, and the next
