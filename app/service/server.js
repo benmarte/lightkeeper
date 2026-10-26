@@ -27,7 +27,7 @@ var vm = require('vm');
 var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 
-var VERSION = '1.0.8';
+var VERSION = '1.0.9';
 var APP_ID = 'io.github.chiotas.lightkeeper';
 var HERE = __dirname;
 var APP_DIR = path.dirname(HERE);
@@ -113,6 +113,8 @@ var DEFAULTS = {
   tileStyle: 'text',
   labels: 'all',
   openApps: false,
+  startTile: 'last',
+  hideGear: false,
   preset: 'godrevy',
   background: { custom: false, rev: 0 },
   mine: [],
@@ -377,6 +379,10 @@ function validate(body, keyNames) {
     else if (k === 'openAtPowerOn') { if (typeof v !== 'boolean') return 'openAtPowerOn'; out[k] = v; }
     // The Home's open apps button; off, as before 1.0.7, and then the TV is not even asked.
     else if (k === 'openApps') { if (typeof v !== 'boolean') return 'openApps'; out[k] = v; }
+    // The tile selected when the Home opens: the last one opened, as up to 1.0.8, or the first.
+    else if (k === 'startTile') { if (v !== 'last' && v !== 'first') return 'startTile'; out[k] = v; }
+    // The gear at the end of the row; the settings stay at the TV's address from a phone.
+    else if (k === 'hideGear') { if (typeof v !== 'boolean') return 'hideGear'; out[k] = v; }
     else if (k === 'port') { if (typeof v !== 'number' || v % 1 || v < 1024 || v > 65535) return 'port'; out[k] = v; }
     // One the app carries, or a picture uploaded.
     else if (k === 'preset') { if (PRESETS.indexOf(v) === -1 && mineIds().indexOf(v) === -1) return 'preset'; out[k] = v; }

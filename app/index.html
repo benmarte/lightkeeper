@@ -128,6 +128,18 @@ body.pannello header, body.pannello nav, body.pannello #hint { visibility: hidde
 #aperte li.vuota, #aperte li.vuota.sel { opacity: .8; font-weight: 400; font-weight: 380; cursor: default; }
 #aperte li.vuota span::after { display: none; }
 #aperte p { position: absolute; left: 112px; bottom: 50px; font-size: 26px; font-weight: 300; font-weight: 350; opacity: .8; }
+/* With the Magic Remote's pointer, arrows at the row's ends slide a row wider than the screen. */
+.freccia {
+  position: absolute; bottom: 104px; display: none; align-items: center; width: 200px;
+  color: rgba(244, 241, 236, .72); cursor: pointer; transition: color .2s;
+}
+.freccia svg { width: 60px; height: 60px; -webkit-filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .6)); filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .6)); }
+.freccia:hover { color: #f4f1ec; }
+/* The row fades under each arrow, which says there is more that way. */
+#fr-sx { left: 0; padding-left: 28px; justify-content: flex-start; background: radial-gradient(farthest-side at 0 50%, rgba(18, 13, 8, .9), rgba(18, 13, 8, 0)); }
+#fr-dx { right: 0; padding-right: 28px; justify-content: flex-end; background: radial-gradient(farthest-side at 100% 50%, rgba(18, 13, 8, .9), rgba(18, 13, 8, 0)); }
+body.puntatore .freccia.su { display: flex; }
+body.pannello .freccia { visibility: hidden; }
 #hint {
   bottom: 50px; font-size: 26px; font-weight: 300; font-weight: 350; opacity: 0; transition: opacity .2s;
   white-space: nowrap;
@@ -139,11 +151,12 @@ body.pannello header, body.pannello nav, body.pannello #hint { visibility: hidde
 <div id="veil"></div>
 <header><div id="ora"></div><div id="meteo"></div></header>
 <nav></nav>
+<a class="freccia" id="fr-sx" aria-label="Back along the row"></a><a class="freccia" id="fr-dx" aria-label="On along the row"></a>
 <div id="hint"></div>
 <div id="aperte" hidden><h2></h2><div class="righe"><ul></ul></div><p></p></div>
 <script src="logos.js"></script>
 <script>
-var APP_VERSION = '1.0.8';
+var APP_VERSION = '1.0.9';
 var LG_HOME = 'com.webos.app.home';
 var BROWSER = 'com.webos.app.browser';
 var EXEC = 'luna://org.webosbrew.hbchannel.service/exec';
@@ -193,8 +206,17 @@ function apri(id, params) {
   luna('luna://com.webos.applicationManager/launch', params ? { id: id, params: params } : { id: id });
 }
 
-function ultima() {
-  try { return +localStorage.getItem('ultima') || 0; } catch (e) { return 0; }
+// The tile selected when the Home opens: the first, or the one last opened, kept by
+// id so that moving tiles keeps it (up to 1.0.8 by place only, still read once).
+function iniziale() {
+  if (cfg.startTile === 'first') return 0;
+  var id = null, n = 0;
+  try { id = localStorage.getItem('ultimaId'); n = +localStorage.getItem('ultima') || 0; } catch (e) {}
+  if (id) {
+    for (var k = 0; k < voci.length; k++) if (voci[k].id === id) return k;
+    return 0;
+  }
+  return Math.min(n, voci.length - 1);
 }
 
 var spostamento = 0; // how far a row wider than the screen has slid
@@ -208,6 +230,7 @@ function seleziona(i, colPuntatore) {
     if (el.offsetLeft < spostamento) spostamento = el.offsetLeft;
     nav.style.webkitTransform = nav.style.transform = 'translateX(' + -spostamento + 'px)';
     caricaVisibili();
+    frecce();
   }
   var t = TEXT;
   if (voci[sel] && voci[sel].gear) {
@@ -222,7 +245,7 @@ function seleziona(i, colPuntatore) {
 function lancia(i) {
   if (voci[i].aperte) return apriPannello();
   if (voci[i].gear) return apri(BROWSER, { target: server() + '/' });
-  try { localStorage.setItem('ultima', String(i)); } catch (e) {}
+  try { localStorage.setItem('ultimaId', voci[i].id); localStorage.setItem('ultima', String(i)); } catch (e) {}
   var a = apertura(voci[i], BROWSER);
   apri(a.id, a.params);
 }
@@ -302,7 +325,8 @@ function disegna() {
   caricatori = [];
   voci = (cfg.tiles || []).slice();
   if (cfg.openApps) voci.push({ aperte: true });
-  voci.push({ gear: true });
+  // Without tiles the gear stays, as the Home would have nothing to choose.
+  if (!cfg.hideGear || !(cfg.tiles || []).length) voci.push({ gear: true });
   voci.forEach(function (v, i) {
     var a = document.createElement('a');
     if (v.gear) {
@@ -340,11 +364,14 @@ function disegna() {
   // The random one kept from last time is not shown before the server's answer, for a moment at most.
   if (cfg.randomBackground && !letto) setTimeout(function () { if (!letto) sfondo(url); }, 800);
   else sfondo(url);
-  seleziona(Math.min(ultima(), voci.length - 1));
+  seleziona(iniziale());
   aggiorna();
 }
 
 document.addEventListener('keydown', function (e) {
+  // The arrows put the Magic Remote in its five-way mode, without the pointer; webOS 1 says so with keys.
+  if (e.keyCode >= 37 && e.keyCode <= 40 || e.keyCode === 1537) conPuntatore(false);
+  if (e.keyCode === 1536) conPuntatore(true);
   if (!pannello.hidden) return tastoPannello(e);
   if (e.keyCode === 37) seleziona(sel - 1);
   else if (e.keyCode === 39) seleziona(sel + 1);
@@ -368,7 +395,7 @@ pannello.onclick = function (e) { if (e.target === pannello) chiudiPannello(); }
 
 function quanteAperte() { return !aperte.length ? TEXT.none : aperte.length === 1 ? TEXT.open1 : aperte.length + TEXT.openN; }
 // The button, or the gear when there is none.
-function ultimaVoce() { return voci.length - (cfg.openApps ? 2 : 1); }
+function ultimaVoce() { for (var k = voci.length - 1; k >= 0; k--) if (voci[k].aperte) return k; return voci.length - 1; }
 
 function chiediAperte() {
   // Off in the settings: the TV is not asked.
@@ -455,13 +482,13 @@ function premiP(i) {
 function apriPannello() {
   selP = 0;
   pannello.hidden = false;
-  document.body.className = 'pannello';
+  document.body.classList.add('pannello');
   disegnaPannello();
 }
 
 function chiudiPannello() {
   pannello.hidden = true;
-  document.body.className = '';
+  document.body.classList.remove('pannello');
   seleziona(ultimaVoce());
 }
 
@@ -473,6 +500,58 @@ function tastoPannello(e) {
   else if (e.keyCode !== 37 && e.keyCode !== 39) return;
   e.preventDefault();
 }
+
+/*
+ * The Magic Remote's pointer: webOS raises cursorStateChange, with detail.visibility,
+ * when it shows or hides (LG's System UI Visibility guide, webOS 2 on); a moving
+ * pointer also sends mousemove. A pointer on a tile only selects it, so a row wider
+ * than the screen gets arrows at its ends while the pointer shows: a click slides it
+ * by most of a screen, and so does resting on an arrow, every 0.6 s; the wheel too.
+ */
+var puntatore = false, frSx = document.getElementById('fr-sx'), frDx = document.getElementById('fr-dx');
+var giro = null, rotella = 0;
+// Phosphor Icons' carets, light weight (MIT).
+frSx.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M164.24,203.76a6,6,0,1,1-8.48,8.48l-80-80a6,6,0,0,1,0-8.48l80-80a6,6,0,0,1,8.48,8.48L88.49,128Z"/></svg>';
+frDx.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.48-8.48l80,80A6,6,0,0,1,180.24,132.24Z"/></svg>';
+
+function conPuntatore(on) {
+  if (on === puntatore) return;
+  puntatore = on;
+  if (on) document.body.classList.add('puntatore');
+  else { document.body.classList.remove('puntatore'); clearTimeout(giro); }
+  frecce();
+}
+// How far the row can slide, and the arrows where it can.
+function margine() { return Math.max(0, nav.offsetWidth - (1920 - 224)); }
+function frecce() {
+  frSx.style.height = frDx.style.height = nav.offsetHeight + 'px';
+  frSx.className = 'freccia' + (spostamento > 0 ? ' su' : '');
+  frDx.className = 'freccia' + (spostamento < margine() ? ' su' : '');
+}
+function scorri(dir) {
+  var prima = spostamento;
+  spostamento = Math.max(0, Math.min(margine(), spostamento + dir * (1920 - 224 - 240)));
+  if (spostamento === prima) return clearTimeout(giro);
+  nav.style.webkitTransform = nav.style.transform = 'translateX(' + -spostamento + 'px)';
+  caricaVisibili();
+  frecce();
+}
+[[frSx, -1], [frDx, 1]].forEach(function (f) {
+  f[0].onclick = function () { scorri(f[1]); };
+  f[0].onmouseover = function () {
+    clearTimeout(giro);
+    giro = setTimeout(function ancora() { scorri(f[1]); giro = setTimeout(ancora, 600); }, 600);
+  };
+  f[0].onmouseout = function () { clearTimeout(giro); };
+});
+document.addEventListener('cursorStateChange', function (e) { conPuntatore(!!(e.detail && e.detail.visibility)); });
+document.addEventListener('mousemove', function () { conPuntatore(true); });
+// One step for each turn of the wheel, however many events it sends.
+document.addEventListener('wheel', function (e) {
+  if (!pannello.hidden || Date.now() - rotella < 250) return;
+  rotella = Date.now();
+  scorri(e.deltaY > 0 || e.deltaX > 0 ? 1 : -1);
+});
 
 // The weather icons, from Open-Meteo's WMO codes. Not ICONE, which is logos.js's.
 var NUVOLA_ALTA = '<path d="M6.5 15h11a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.3 8.1 3.5 3.5 0 0 0 6.5 15z"/>';
@@ -593,7 +672,7 @@ function trovaPorta(cb) {
 }
 
 document.addEventListener('visibilitychange', function () {
-  if (document.hidden) { pannello.hidden = true; document.body.className = ''; }
+  if (document.hidden) { pannello.hidden = true; document.body.classList.remove('pannello'); }
   else { aggiorna(); leggi(); chiediAperte(); }
 });
 
@@ -607,8 +686,8 @@ document.addEventListener('webOSRelaunch', function () {
     fatto = true;
     if (sistema) sistema.activate();
     pannello.hidden = true;
-    document.body.className = '';
-    seleziona(Math.min(ultima(), voci.length - 1));
+    document.body.classList.remove('pannello');
+    seleziona(iniziale());
     aggiorna();
     chiediAperte();
   }

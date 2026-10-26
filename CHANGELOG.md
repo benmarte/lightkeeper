@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.9 (not released yet)
+
+- **The Magic Remote's pointer slides the row.** A pointer on a tile only selects it, so a row wider than the screen could be browsed with the arrow keys alone. While the pointer shows, an arrow at each end where there is more slides the row by most of a screen: click it, or rest the pointer on it. The wheel slides it too. The arrow keys work as before. Not yet tried on a TV.
+- **The tile selected at start**, in the settings: the last one opened, as before, or the first. The last one opened is now kept by its id, so moving tiles in the settings no longer selects another one.
+- **Hide the settings gear**, in the settings, off unless you turn it on. The settings stay at the TV's address from a phone or computer, which the settings show next to the switch. With no tiles, the gear stays.
+
 ## 1.0.8 (26 October 2026)
 
 - **Back from the last app, on webOS 6.** An app that closes when you leave it with Back now gives way to Lightkeeper at once, with no LG's Home in between, as tried on a C1 with the web browser. Apps such as YouTube and PlxNative hand over to LG's Home instead, which shows for about a second before Lightkeeper comes back over it, as in 1.0.7: covered sooner, LG's Home took the screen back by itself.

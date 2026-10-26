@@ -49,6 +49,11 @@ var s = require('../app/service/server.js');
 var keys = ['red', 'netflix'];
 assert.deepEqual(s.validate({ clock: '12', veil: 42.4, openAtPowerOn: false }, keys), { clock: '12', veil: 42, openAtPowerOn: false });
 assert.equal(s.DEFAULTS.openApps, false); // the Home looks as before until it is turned on
+// The tile selected at start, the last opened as up to 1.0.8, or the first; the gear shown unless hidden.
+assert.equal(s.DEFAULTS.startTile, 'last'); assert.equal(s.DEFAULTS.hideGear, false);
+assert.deepEqual(s.validate({ startTile: 'first', hideGear: true }, keys), { startTile: 'first', hideGear: true });
+['second', '', null, 1].forEach(function (v) { assert.equal(s.validate({ startTile: v }, keys), 'startTile'); });
+['yes', 0].forEach(function (v) { assert.equal(s.validate({ hideGear: v }, keys), 'hideGear'); });
 
 // A random background: off by default, any of the pool but never the last one, none from fewer than two.
 assert.equal(s.DEFAULTS.randomBackground, false); assert.equal(s.DEFAULTS.backgroundPool, null);
