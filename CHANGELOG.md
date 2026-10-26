@@ -1,10 +1,10 @@
 # Changelog
 
-## 1.0.8 (not released yet)
+## 1.0.8 (26 October 2026)
 
 - **Back from the last app, on webOS 6.** An app that closes when you leave it with Back now gives way to Lightkeeper at once, with no LG's Home in between, as tried on a C1 with the web browser. Apps such as YouTube and PlxNative hand over to LG's Home instead, which shows for about a second before Lightkeeper comes back over it, as in 1.0.7: covered sooner, LG's Home took the screen back by itself.
 - **As many pictures of your own as the TV has room for.** *Add a picture* adds one more each time, and each has a small copy in the settings with a cross to take it away. Lightkeeper keeps 64 MB free where it stores them and refuses a picture that would leave less; the settings show how much your pictures take and how much room is left. The picture you had before 1.0.8 becomes the first of the list, still chosen. Choosing one of the app's backgrounds no longer deletes your picture.
-- **A random background each time the TV turns on**, with *Random each time the TV turns on* under the backgrounds in the settings, off until you turn it on. Tick the pictures it may use, yours included: all of them at first. Lightkeeper picks one when the TV comes on and keeps it until it goes off, and never picks the same one twice in a row. With fewer than two ticked, the Home shows the background you chose, and the settings say so. An update of the app keeps the picture of the moment. Not yet tried on a TV.
+- **A random background each time the TV turns on**, with *Random each time the TV turns on* under the backgrounds in the settings, off until you turn it on. Tick the pictures it may use, yours included: all of them at first. Lightkeeper picks one when the TV comes on and keeps it until it goes off, and never picks the same one twice in a row. With fewer than two ticked, the Home shows the background you chose, and the settings say so. An update of the app keeps the picture of the moment.
 
 ## 1.0.7 (25 October 2026)
 
