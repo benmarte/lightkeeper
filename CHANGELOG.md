@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.10 (27 October 2026)
+
+- **The key renews its own status.** The status of the remote key was asked of the TV at the start and when you changed it, so a GlassHouse installed after Lightkeeper, or one that had only then put its filter in the chain, left the settings saying *pending* or *GlassHouse is not installed* over a key that already worked: nothing changed it until the server restarted. Reading the settings, which the page does every few seconds, now asks the TV again, at most once a minute, and the note updates itself. Found on an LG 43UM7300PUA with webOS 4.10.1, where Lightkeeper was installed before GlassHouse.
+- **Two more older TVs tried.** 1.0.9 ran with no change on an LG 43UM7300PUA (webOS 4.10.1, GlassHouse 0.123.0): the install, the settings, the tiles, the Home key and opening at power on. And on an LG 65UJ6300-UA (webOS 3.9.3) it ran **without GlassHouse at all**: the Home, the settings and opening at power on work, only the key cannot change, which on webOS 3 was never possible; the settings say so with *GlassHouse is not installed*. The README's table now carries both.
+
 ## 1.0.9 (26 October 2026)
 
 - **The Magic Remote's pointer slides the row.** A pointer on a tile only selects it, so a row wider than the screen could be browsed with the arrow keys alone. While the pointer shows, an arrow at each end where there is more slides the row by most of a screen: click it, or rest the pointer on it. The wheel slides it too. The arrow keys work as before. Built on LG's documented pointer events and tried on a computer, not yet with a real Magic Remote.
